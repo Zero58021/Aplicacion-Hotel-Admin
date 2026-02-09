@@ -1,0 +1,49 @@
+// For information on how to create your own theme, please refer to:
+// https://ionicframework.com/docs/theming/
+
+/* Theme variables to force a white (light) application theme */
+
+:root {
+	/* Backgrounds */
+	--ion-background-color: #ffffff;
+	--ion-page-background: #ffffff;
+	--ion-toolbar-background: #ffffff;
+	--ion-card-background: #ffffff;
+	--ion-item-background: #ffffff;
+
+	/* Text / foreground */
+	--ion-text-color: #0b2f1a;
+	--ion-toolbar-text-color: #0b2f1a;
+	--ion-tab-bar-text-color: #0b2f1a;
+
+	/* Primary (app) green palette */
+	--ion-color-primary: #0f9d58;
+	--ion-color-primary-contrast: #ffffff;
+	--ion-color-primary-rgb: 15,157,88;
+	--ion-color-primary-shade: #0c7a45;
+	--ion-color-primary-tint: #36b778;
+
+	/* Secondary / variants also green to keep app coherent */
+	--ion-color-secondary: #2ebf7f;
+	--ion-color-secondary-contrast: #ffffff;
+	--ion-color-secondary-rgb: 46,191,127;
+
+	--ion-color-tertiary: #66d49b;
+	--ion-color-success: #0f9d58;
+	--ion-color-success-contrast: #ffffff;
+	--ion-color-success-rgb: 15,157,88;
+
+	/* Borders / dividers */
+	--ion-border-color: #e6e6e6;
+
+	/* Placeholders */
+	--ion-placeholder-color: #666666;
+}
+
+/* Ensure any .dark class doesn't invert colors — keep app white */
+.dark {
+	--ion-background-color: #ffffff;
+	--ion-page-background: #ffffff;
+	--ion-toolbar-background: #ffffff;
+	--ion-text-color: #0b2f1a;
+}
