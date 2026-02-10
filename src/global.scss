@@ -1,0 +1,204 @@
+/*
+ * App Global CSS
+ * ----------------------------------------------------------------------------
+ * Put style rules here that you want to apply globally. These styles are for
+ * the entire app and not just one component. Additionally, this file can be
+ * used as an entry point to import other CSS/Sass files to be included in the
+ * output CSS.
+ * For more information on global stylesheets, visit the documentation:
+ * https://ionicframework.com/docs/layout/global-stylesheets
+ */
+
+/* Core CSS required for Ionic components to work properly */
+@import "@ionic/angular/css/core.css";
+
+/* Basic CSS for apps built with Ionic */
+@import "@ionic/angular/css/normalize.css";
+@import "@ionic/angular/css/structure.css";
+@import "@ionic/angular/css/typography.css";
+@import "@ionic/angular/css/display.css";
+
+/* Optional CSS utils that can be commented out */
+@import "@ionic/angular/css/padding.css";
+@import "@ionic/angular/css/float-elements.css";
+@import "@ionic/angular/css/text-alignment.css";
+@import "@ionic/angular/css/text-transformation.css";
+@import "@ionic/angular/css/flex-utils.css";
+
+/**
+ * Ionic Dark Mode
+ * -----------------------------------------------------
+ * For more info, please see:
+ * https://ionicframework.com/docs/theming/dark-mode
+ */
+
+/* @import "@ionic/angular/css/palettes/dark.always.css"; */
+/* @import "@ionic/angular/css/palettes/dark.class.css"; */
+/* Force a white theme: import local theme variables and remove dark palette */
+@import "theme/variables.scss";
+
+/* Ensure app root elements use white background and dark text */
+html, body, ion-app, ion-app * {
+	background-color: var(--ion-background-color) !important;
+	color: var(--ion-text-color) !important;
+}
+
+ion-content, ion-page, .ion-page {
+	background: var(--ion-page-background) !important;
+	color: var(--ion-text-color) !important;
+}
+
+ion-header, ion-toolbar, .toolbar-title {
+	background: var(--ion-toolbar-background) !important;
+	color: var(--ion-toolbar-text-color) !important;
+}
+
+/* Make common components white */
+ion-card, ion-item, .card, .item {
+	background: var(--ion-card-background) !important;
+	color: var(--ion-text-color) !important;
+}
+
+/* Use green accents app-wide for actionable elements */
+ion-button, .button, ion-fab, ion-fab-button {
+	--background: var(--ion-color-primary) !important;
+	--color: var(--ion-color-primary-contrast) !important;
+	--box-shadow: none;
+}
+
+/* Icons and tab bar highlights */
+ion-icon, .ion-icon {
+	color: var(--ion-color-primary) !important;
+}
+
+ion-tab-bar ::slotted(ion-tab-button) {
+	--color: var(--ion-tab-bar-text-color);
+	--color-selected: var(--ion-color-primary);
+}
+
+/* Make toolbar controls use primary green for emphasis */
+ion-toolbar .toolbar-title, ion-toolbar ion-buttons, ion-toolbar ion-button {
+	color: var(--ion-text-color);
+}
+
+/* Links and emphasized text */
+a, .link, .ion-text a {
+	color: var(--ion-color-primary) !important;
+}
+
+/* Custom alert button colors for delete confirmations */
+.custom-delete-alert {
+	--background: var(--ion-background-color);
+}
+.custom-delete-alert .alert-button.btn-cancel-green,
+.custom-delete-alert .alert-button.btn-confirm-green {
+	color: #0b6b2a !important; /* darker green for contrast */
+	font-weight: 600;
+}
+.custom-delete-alert .alert-button.btn-confirm-green {
+	color: #0f8f3a !important; /* confirm slightly brighter */
+}
+
+/* Global overrides for Ionic alerts to ensure buttons are visible */
+ion-alert, .alert-wrapper, .alert-button, .alert-button-group {
+	color: inherit !important;
+}
+
+.alert-wrapper {
+	color: #08301b !important;
+}
+
+.alert-button {
+	padding: 8px 12px !important;
+	border-radius: 8px !important;
+	min-width: 88px !important;
+	font-weight: 600 !important;
+	border: none !important;
+	box-shadow: 0 4px 10px rgba(0,0,0,0.06) !important;
+	background: transparent !important;
+	color: #0b3d2e !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+}
+
+.alert-button .alert-button-inner,
+.alert-button .alert-button-text {
+	color: inherit !important;
+	opacity: 1 !important;
+}
+
+/* Cancel (verde) */
+.alert-button[role="cancel"],
+.alert-button.btn-cancel-green {
+	background: transparent !important;
+	border: 1px solid rgba(16,185,129,0.10) !important;
+	color: #10b981 !important; /* texto verde */
+}
+
+/* Destructive / Confirm (rojo) */
+.alert-button[role="destructive"],
+.alert-button.btn-confirm-green,
+.alert-button.alert-button-role-destructive {
+	background: transparent !important;
+	border: 1px solid rgba(231,76,60,0.10) !important;
+	color: #e53935 !important; /* texto rojo */
+}
+
+/* Ensure button group is visible and spaced */
+.alert-button-group {
+	display: flex !important;
+	gap: 8px !important;
+	justify-content: flex-end !important;
+	padding-top: 12px !important;
+}
+
+/* Forzar colores y visibilidad por posición cuando otras reglas no aplican */
+/* Forzar colores y visibilidad por posición cuando otras reglas no aplican */
+ion-alert .alert-button-group .alert-button:first-child .alert-button-inner,
+ion-alert .alert-button-group .alert-checkbox-group .alert-button:first-child .alert-button-inner {
+	color: #10b981 !important; /* cancelar: verde */
+	font-size: 0.95rem !important;
+	font-weight: 600 !important;
+	text-transform: none !important;
+	opacity: 1 !important;
+}
+
+ion-alert .alert-button-group .alert-button:last-child .alert-button-inner,
+ion-alert .alert-button-group .alert-checkbox-group .alert-button:last-child .alert-button-inner {
+	color: #e53935 !important; /* confirmar: rojo */
+	font-size: 0.95rem !important;
+	font-weight: 600 !important;
+	text-transform: none !important;
+	opacity: 1 !important;
+}
+
+/* Forzar visibilidad de cualquier texto hijo dentro del botón (fallback amplio) */
+ion-alert .alert-button, ion-alert .alert-button *, ion-alert .alert-button span, ion-alert .alert-button .alert-button-inner {
+	color: inherit !important;
+	-webkit-text-fill-color: inherit !important;
+	text-shadow: none !important;
+	visibility: visible !important;
+	opacity: 1 !important;
+	display: inline-block !important;
+	font-size: 0.95rem !important;
+	line-height: 1.2 !important;
+}
+
+/* Asegurar colores distintos por posición (fallback extra) */
+ion-alert .alert-button-group .alert-button:first-child, ion-alert .alert-button-group .alert-button:first-child * {
+	color: #10b981 !important;
+	-webkit-text-fill-color: #10b981 !important;
+}
+ion-alert .alert-button-group .alert-button:last-child, ion-alert .alert-button-group .alert-button:last-child * {
+	color: #e53935 !important;
+	-webkit-text-fill-color: #e53935 !important;
+}
+
+/* Fallback targeting span directly in case mode-specific classes are present */
+ion-alert .alert-button .alert-button-inner,
+ion-alert .alert-button span {
+	color: inherit !important;
+	opacity: 1 !important;
+}
+

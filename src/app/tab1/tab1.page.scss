@@ -1,0 +1,123 @@
+.center-text {
+  min-height: 58vh;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-align: center;
+  align-items: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.center-text, .center-text .label {
+  font-size: clamp(140px, 30vw, 700px);
+  font-weight: 900;
+  color: #0f9d58 !important;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  padding: 18px 28px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(15,157,88,0.08), rgba(255,255,255,0));
+  box-shadow: 0 18px 60px rgba(15,157,88,0.20);
+  text-shadow: 0 6px 18px rgba(15,157,88,0.08);
+}
+
+/* Small screens tweak */
+@media (max-width: 420px) {
+  .center-text, .center-text .label { font-size: 48px; padding: 14px 18px; }
+}
+
+/* Actions (4 buttons) */
+.actions {
+  margin-top: 28px;
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 3;
+}
+
+.action-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 110px;
+  transition: transform 320ms cubic-bezier(.2,.9,.2,1);
+  pointer-events: auto !important;
+}
+
+.action-btn {
+  width: 76px !important;
+  height: 76px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 999px !important;
+  --border-radius: 999px;
+  --padding-start: 0px !important;
+  --padding-end: 0px !important;
+  --padding-top: 0px !important;
+  --padding-bottom: 0px !important;
+  min-width: unset !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border: 2px solid rgba(15,157,88,0.14) !important;
+  background: transparent !important;
+  color: #0f9d58 !important;
+  box-shadow: 0 6px 18px rgba(15,157,88,0.06) !important;
+  transition: transform 160ms ease, box-shadow 160ms ease !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+.action-btn:active,
+.action-btn:focus {
+  transform: translateY(2px) scale(0.995);
+}
+
+.action-btn ion-icon {
+  width: 56px !important;
+  height: 56px !important;
+  font-size: 28px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #0f9d58 !important;
+  color: #ffffff !important;
+  border-radius: 0 !important;
+  line-height: 1;
+}
+
+/* Slight U shape: lower the two center items a bit to create a gentle curve */
+.actions .action-item:nth-child(2),
+.actions .action-item:nth-child(3) {
+  transform: translateY(10px);
+}
+.actions .action-item:nth-child(1),
+.actions .action-item:nth-child(4) {
+  transform: translateY(0);
+}
+
+.action-label {
+  margin-top: 8px;
+  font-weight: 700;
+  color: #0f9d58 !important;
+  font-size: 14px;
+  text-align: center;
+}
+
+@media (max-width: 420px) {
+  .action-item { width: 86px; }
+  .action-btn { width: 64px; height: 64px; }
+  .action-btn ion-icon { width:44px !important; height:44px !important; font-size: 22px !important; }
+  .action-label { font-size: 13px; }
+  .actions .action-item:nth-child(2), .actions .action-item:nth-child(3) { transform: translateY(8px); }
+}
+
+.action-link { display: inline-block; text-decoration: none; }
+.action-link ion-button { display: inline-block; }

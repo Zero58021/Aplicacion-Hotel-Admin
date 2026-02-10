@@ -1,0 +1,69 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Reservas</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" (ionScroll)="onContentScroll($event)" scrollEvents="true">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">Reservas</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <div class="filters">
+    <ion-searchbar placeholder="Buscar por titular o número" (ionInput)="onSearch($event)" showClearButton="focus"></ion-searchbar>
+
+    <ion-segment value="Todos" (ionChange)="onFilter($event)" mode="md">
+      <ion-segment-button value="Todos">Todos</ion-segment-button>
+      <ion-segment-button value="Pendiente">Pendiente</ion-segment-button>
+      <ion-segment-button value="Confirmada">Confirmada</ion-segment-button>
+      <ion-segment-button value="Denegada">Denegada</ion-segment-button>
+    </ion-segment>
+  </div>
+  <div class="content-wrapper">
+    <ion-list *ngIf="filteredReservas?.length; else empty">
+    <ng-container *ngFor="let r of filteredReservas">
+      <ion-item button (click)="toggleExpand(r)">
+        <ion-icon slot="start" name="bed-outline" class="room-icon"></ion-icon>
+        <ion-label>
+          <h2>{{ r.numero }} — {{ r.habitacion }}</h2>
+          <p><strong>Titular:</strong> {{ r.titular }}</p>
+          <p>
+            <strong>Entrada:</strong> {{ formatDate(r.fechaEntrada) }}
+            &nbsp;&nbsp;
+            <strong>Salida:</strong> {{ formatDate(r.fechaSalida) }}
+          </p>
+        </ion-label>
+        <ion-badge slot="end" class="status-badge" [ngClass]="r.status?.toLowerCase()">{{ r.status || 'Pendiente' }}</ion-badge>
+        <ion-icon slot="end" [name]="r.expanded ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>
+      </ion-item>
+
+      <div class="details" *ngIf="r.expanded">
+        <div class="detail-row"><strong>Habitaciones:</strong> {{ r.numeroHabitaciones ?? '-' }}</div>
+        <div class="detail-row"><strong>Adultos:</strong> {{ r.adultos ?? '-' }}</div>
+        <div class="detail-row"><strong>Niños:</strong> {{ r.ninos ?? '-' }}</div>
+        <div class="detail-row"><strong>Precio total:</strong> {{ formatCurrency(r.precioTotal) }}</div>
+        <div class="detail-row"><strong>Pensión:</strong> {{ r.pension ?? '-' }}</div>
+        <div class="detail-row"><strong>Mascota:</strong> {{ r.mascota ? 'Sí' : 'No' }}</div>
+        <div class="detail-row"><strong>Estado:</strong>
+          <span class="status-badge" [ngClass]="r.status?.toLowerCase()">{{ r.status || 'Pendiente' }}</span>
+        </div>
+
+        <div class="actions">
+          <ion-button size="small" color="success" (click)="confirmReservation(r); $event.stopPropagation()">Confirmar</ion-button>
+          <ion-button size="small" color="danger" (click)="denyReservation(r); $event.stopPropagation()">Denegar</ion-button>
+          <ion-button size="small" color="medium" *ngIf="r.status === 'Denegada'" (click)="confirmDeleteReservation(r); $event.stopPropagation()">Borrar</ion-button>
+        </div>
+      </div>
+    </ng-container>
+  </ion-list>
+  </div>
+
+  <ng-template #empty>
+    <div class="empty-state">
+      <p>No hay reservas para mostrar.</p>
+    </div>
+  </ng-template>
+
+</ion-content>

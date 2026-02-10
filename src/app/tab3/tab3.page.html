@@ -1,0 +1,67 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>
+      Calendario
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">Calendario</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <div class="calendar-wrapper">
+    <div class="calendar-card">
+      <div class="calendar-top">
+        <ion-button fill="clear" size="small" (click)="prevMonth()">
+          <ion-icon name="chevron-back-outline"></ion-icon>
+        </ion-button>
+        <div class="month-title" (click)="showMonth()" title="Mostrar reservas del mes">{{ monthName | titlecase }} {{ year }}</div>
+        <ion-button fill="clear" size="small" (click)="nextMonth()">
+          <ion-icon name="chevron-forward-outline"></ion-icon>
+        </ion-button>
+      </div>
+
+        <div class="calendar-grid">
+        <div class="weekday" *ngFor="let wd of weekdays">{{ wd }}</div>
+        <ng-container *ngFor="let week of weeks">
+          <div class="week-row">
+            <div class="day" *ngFor="let day of week"
+              [class.empty]="!day"
+              [class.selected]="isSelected(day)"
+              [class.today]="isToday(day)"
+              (click)="select(day)">
+              <div class="day-inner" *ngIf="day">
+                <span class="day-number">{{ day }}</span>
+                <div class="event-dot" *ngIf="hasEvent(day)"></div>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+    <div class="reservas-list">
+      <h3 class="reservas-title">Reservas</h3>
+      <div *ngIf="visibleReservas.length === 0" class="empty">No hay reservas para la selección.</div>
+
+      <div class="reservas-container" *ngIf="visibleReservas.length > 0">
+        <div class="reserva-card" *ngFor="let r of visibleReservas">
+          <div class="reserva-left">
+            <div class="avatar">{{ getInitials(r) }}</div>
+          </div>
+          <div class="reserva-main">
+            <div class="reserva-top">
+              <div class="reserva-title">{{ r.numero }} — {{ r.titular }}</div>
+              <ion-badge class="status-badge" [color]="r.status === 'Confirmada' ? 'success' : (r.status === 'Denegada' ? 'danger' : 'medium')">{{ r.status }}</ion-badge>
+            </div>
+            <div class="reserva-sub">{{ r.habitacion }}</div>
+            <div class="reserva-meta">Entrada: {{ formatDate(r.fechaEntrada) }} • Salida: {{ formatDate(r.fechaSalida) }} • {{ formatCurrency(r.precioTotal) }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ion-content>
