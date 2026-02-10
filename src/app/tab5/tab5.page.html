@@ -4,10 +4,15 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
+<ion-content [fullscreen]="true" (ionScroll)="onContentScroll($event)" [scrollEvents]="true">
   <ion-header collapse="condense">
     <ion-toolbar>
       <ion-title size="large">tab5</ion-title>
     </ion-toolbar>
   </ion-header>
+
 </ion-content>
+
+<button class="scroll-top" [class.visible]="showScrollTop" (click)="scrollToTop()" aria-label="Ir arriba">
+  <ion-icon name="chevron-up-outline"></ion-icon>
+</button>

@@ -51,6 +51,7 @@
         </div>
 
         <div class="actions">
+          <ion-button size="small" color="primary" (click)="openEditReservation(r); $event.stopPropagation()">Editar</ion-button>
           <ion-button size="small" color="success" (click)="confirmReservation(r); $event.stopPropagation()">Confirmar</ion-button>
           <ion-button size="small" color="danger" (click)="denyReservation(r); $event.stopPropagation()">Denegar</ion-button>
           <ion-button size="small" color="medium" *ngIf="r.status === 'Denegada'" (click)="confirmDeleteReservation(r); $event.stopPropagation()">Borrar</ion-button>
@@ -67,3 +68,14 @@
   </ng-template>
 
 </ion-content>
+
+<button class="scroll-top" [class.visible]="showScrollTop" (click)="scrollToTop()" aria-label="Ir arriba">
+  <ion-icon name="chevron-up-outline"></ion-icon>
+</button>
+
+<!-- botón para añadir reserva -->
+<ion-fab vertical="bottom" horizontal="end" slot="fixed">
+  <ion-fab-button class="add-reserva-fab" color="primary" (click)="openNewReservation()" aria-label="Nueva reserva">
+    <ion-icon name="add-outline"></ion-icon>
+  </ion-fab-button>
+</ion-fab>

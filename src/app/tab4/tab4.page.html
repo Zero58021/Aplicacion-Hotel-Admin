@@ -1,13 +1,205 @@
+
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>tab4</ion-title>
+    <ion-title>Habitaciones</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
+<ion-content class="no-global-white" [fullscreen]="true" (ionScroll)="onContentScroll($event)" [scrollEvents]="true">
+  <div class="search-wrap" style="padding: 8px 12px 0 12px;">
+    <ion-searchbar placeholder="Buscar por nombre o número" [(ngModel)]="searchTerm" debounce="250"></ion-searchbar>
+  </div>
+  <div class="filters-row" style="padding: 6px 12px;">
+    <ion-grid>
+      <ion-row>
+        <ion-col size="4">
+          <ion-item>
+            <ion-label>Tipo</ion-label>
+            <ion-select multiple [(ngModel)]="selectedTypes" interface="popover" okText="OK" cancelText="CANCEL">
+              <ion-select-option *ngFor="let t of roomTypes" [value]="t">{{ t }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-col>
+        <ion-col size="4">
+          <ion-item>
+            <ion-label>Planta</ion-label>
+            <ion-select multiple [(ngModel)]="selectedFloors" interface="popover" okText="OK" cancelText="CANCEL">
+              <ion-select-option *ngFor="let f of floors" [value]="f">{{ f }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-col>
+        <ion-col size="4">
+          <ion-item>
+            <ion-label>Estado</ion-label>
+            <ion-select [(ngModel)]="selectedStatus" interface="popover" okText="OK" cancelText="CANCEL">
+              <ion-select-option value="Todas">Todas</ion-select-option>
+              <ion-select-option value="Activa">Activa</ion-select-option>
+              <ion-select-option value="No activa">No activa</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
   <ion-header collapse="condense">
     <ion-toolbar>
-      <ion-title size="large">tab4</ion-title>
+      <ion-title size="large">Habitaciones</ion-title>
     </ion-toolbar>
   </ion-header>
+
+  <div class="rooms-grid">
+    <ion-card *ngFor="let room of filteredRooms; let i = index" class="room-card" [class.editing]="editingIndex === originalIndex(room)">
+      <div class="card-media">
+        <img style="cursor: zoom-in" (click)="openImage(room, imageIndex[originalIndex(room)] !== undefined ? imageIndex[originalIndex(room)] : 0)" [src]="(room.images && room.images.length) ? room.images[ (imageIndex[originalIndex(room)] !== undefined ? imageIndex[originalIndex(room)] : 0) ] : ''" alt="{{room.title}}">
+        <ion-button *ngIf="room.images && room.images.length > 1" fill="clear" class="nav-btn left" (click)="prevImage(originalIndex(room))" aria-label="Anterior">
+          <ion-icon name="chevron-back-outline"></ion-icon>
+        </ion-button>
+        <ion-button *ngIf="room.images && room.images.length > 1" fill="clear" class="nav-btn right" (click)="nextImage(originalIndex(room))" aria-label="Siguiente">
+          <ion-icon name="chevron-forward-outline"></ion-icon>
+        </ion-button>
+        <div class="image-counter" *ngIf="room.images && room.images.length > 0">{{ (imageIndex[originalIndex(room)] !== undefined ? imageIndex[originalIndex(room)] + 1 : 1) }}/{{ room.images.length }}</div>
+        <ion-button *ngIf="editingIndex !== originalIndex(room)" fill="clear" class="edit-btn" (click)="startEdit(originalIndex(room))" aria-label="Editar">
+          <ion-icon name="pencil-outline"></ion-icon>
+        </ion-button>
+        <ion-button *ngIf="editingIndex !== originalIndex(room)" fill="clear" color="danger" class="delete-btn" (click)="confirmDelete(originalIndex(room))" aria-label="Borrar">
+          <ion-icon name="trash-outline"></ion-icon>
+        </ion-button>
+      </div>
+      <ion-card-content>
+        <ng-container *ngIf="editingIndex !== originalIndex(room); else editForm">
+          <div class="title-row">
+            <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
+              <h3 class="room-title">{{ room.title }}</h3>
+              <div class="room-number-and-status">
+                <div class="room-number">Nº {{ room.roomNumber }}</div>
+                <ion-badge class="status-badge" [ngClass]="{ 'active': room.status === 'Activa', 'inactive': room.status === 'No activa' }">{{ room.status }}</ion-badge>
+              </div>
+              <div class="rating-row">
+                <div class="stars">
+                  <ion-icon *ngFor="let filled of starState(avgRating(room))" [name]="filled ? 'star' : 'star-outline'"></ion-icon>
+                </div>
+                <div class="avg-text">{{ avgRating(room) | number:'1.1-1' }} · {{ (room.reviews?.length || 0) }} opiniones</div>
+              </div>
+            </div>
+            <ion-button fill="clear" class="reviews-btn" (click)="showReviews(room)" aria-label="Opiniones">
+              <ion-icon name="chatbubbles-outline"></ion-icon>
+            </ion-button>
+          </div>
+
+            <div class="type-floor-row">
+            <div class="type">{{ room.type }}</div>
+            <div class="floor">Planta: {{ room.floor }}</div>
+          </div>
+
+          <div class="meta-row">
+            <div class="extras">
+              <ion-badge *ngFor="let ex of room.extras" color="medium" class="extra">{{ ex }}</ion-badge>
+            </div>
+          </div>
+
+          <div class="price-row">
+            <div class="old-price">{{ room.oldPrice }}</div>
+            <div class="price">{{ room.price }}</div>
+          </div>
+
+          <div class="note">{{ room.note }}</div>
+        </ng-container>
+
+        <ng-template #editForm>
+          <div class="edit-form">
+              <div class="image-edit">
+                <div class="images-list">
+                  <div class="thumb" *ngFor="let p of editModel.images; let idx = index">
+                    <img [src]="p" alt="foto {{idx + 1}}">
+                    <div class="thumb-actions">
+                      <label class="file-label small">
+                        Reemplazar
+                        <input type="file" accept="image/*" (change)="replacePhotoFile(idx, $event)">
+                      </label>
+                      <ion-button size="small" color="danger" fill="clear" (click)="removePhoto(idx)">Borrar</ion-button>
+                    </div>
+                  </div>
+                </div>
+
+                <label class="file-label add-photo">
+                  Añadir foto
+                  <input type="file" accept="image/*" (change)="addPhotoFile($event)">
+                </label>
+              </div>
+
+            <ion-item>
+              <ion-label position="stacked">Nombre</ion-label>
+              <ion-input [(ngModel)]="editModel.title" [attr.name]="'title' + originalIndex(room)"></ion-input>
+            </ion-item>
+
+            <ion-item>
+              <ion-label position="stacked">Número de habitación</ion-label>
+              <ion-input [(ngModel)]="editModel.roomNumber" [attr.name]="'roomNumber' + originalIndex(room)"></ion-input>
+            </ion-item>
+
+            <ion-item>
+              <ion-label position="stacked">Precio anterior</ion-label>
+              <ion-input [(ngModel)]="editModel.oldPrice" [attr.name]="'old' + i"></ion-input>
+            </ion-item>
+
+            <ion-item>
+              <ion-label position="stacked">Precio</ion-label>
+              <ion-input [(ngModel)]="editModel.price" [attr.name]="'price' + i"></ion-input>
+            </ion-item>
+
+            <ion-item>
+              <ion-label position="stacked">Descripción</ion-label>
+              <ion-textarea [(ngModel)]="editModel.note" [attr.name]="'note' + i"></ion-textarea>
+            </ion-item>
+
+            <ion-item>
+              <ion-label position="stacked">Extras (selecciona varios)</ion-label>
+              <ion-select interface="alert" [interfaceOptions]="{ cssClass: 'extras-alert' }" multiple okText="OK" cancelText="CANCEL" [(ngModel)]="editModel.extras" [attr.name]="'extras' + i">
+                <ion-select-option *ngFor="let exOpt of extrasOptions" [value]="exOpt">{{ exOpt }}</ion-select-option>
+              </ion-select>
+            </ion-item>
+
+            <ion-item>
+              <ion-label position="stacked">Tipo de habitación</ion-label>
+              <ion-select interface="alert" [interfaceOptions]="{ cssClass: 'extras-alert' }" okText="OK" cancelText="CANCEL" [(ngModel)]="editModel.type" [attr.name]="'type' + i">
+                <ion-select-option *ngFor="let t of roomTypes" [value]="t">{{ t }}</ion-select-option>
+              </ion-select>
+            </ion-item>
+
+            <ion-item>
+              <ion-label position="stacked">Planta</ion-label>
+              <ion-select interface="alert" [interfaceOptions]="{ cssClass: 'extras-alert' }" okText="OK" cancelText="CANCEL" [(ngModel)]="editModel.floor" [attr.name]="'floor' + i">
+                <ion-select-option *ngFor="let f of floors" [value]="f">{{ f }}</ion-select-option>
+              </ion-select>
+            </ion-item>
+
+            <ion-item>
+              <ion-label position="stacked">Estado</ion-label>
+              <ion-select interface="alert" [interfaceOptions]="{ cssClass: 'extras-alert' }" okText="OK" cancelText="CANCEL" [(ngModel)]="editModel.status">
+                <ion-select-option value="Activa">Activa</ion-select-option>
+                <ion-select-option value="No activa">No activa</ion-select-option>
+              </ion-select>
+            </ion-item>
+
+            <div class="edit-actions">
+              <ion-button color="primary" (click)="saveEdit()">Guardar</ion-button>
+              <ion-button color="medium" fill="clear" (click)="cancelEdit()">Cancelar</ion-button>
+              <ion-button color="danger" fill="clear" (click)="confirmDelete(originalIndex(room))">Borrar</ion-button>
+            </div>
+          </div>
+        </ng-template>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
 </ion-content>
+
+<ion-fab vertical="bottom" horizontal="end" slot="fixed">
+  <ion-fab-button class="small-fab" color="primary" (click)="addNewRoom()" aria-label="Añadir habitación">
+    <ion-icon class="fab-add-icon" name="add-outline"></ion-icon>
+  </ion-fab-button>
+</ion-fab>
+
+<button class="scroll-top" [class.visible]="showScrollTop" (click)="scrollToTop()" aria-label="Ir arriba">
+  <ion-icon name="chevron-up-outline"></ion-icon>
+</button>

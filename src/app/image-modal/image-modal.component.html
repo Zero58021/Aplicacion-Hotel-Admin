@@ -1,0 +1,19 @@
+<ion-header translucent>
+  <ion-toolbar color="dark">
+    <ion-buttons slot="start">
+      <ion-button (click)="close()"><ion-icon class="white-icon" name="close-outline"></ion-icon></ion-button>
+    </ion-buttons>
+    <ion-title>Imagen</ion-title>
+    <ion-buttons slot="end">
+      <ion-button *ngIf="images && images.length > 1" fill="clear" (click)="prev()"><ion-icon class="white-icon" name="chevron-back-outline"></ion-icon></ion-button>
+      <ion-button *ngIf="images && images.length > 1" fill="clear" (click)="next()"><ion-icon class="white-icon" name="chevron-forward-outline"></ion-icon></ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="image-modal-content" fullscreen>
+  <div class="image-wrapper" [class.zoomed]="zoomed" (click)="toggleZoom()">
+    <img [src]="images && images[index] ? images[index] : ''" alt="Imagen" />
+  </div>
+  <div class="counter" *ngIf="images && images.length > 1">{{ index + 1 }} / {{ images?.length || 0 }}</div>
+</ion-content>

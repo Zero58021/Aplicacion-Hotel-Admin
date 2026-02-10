@@ -1,0 +1,85 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Añadir habitación</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="cancel()">Cerrar</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <ion-item>
+    <ion-label position="stacked">Nombre</ion-label>
+    <ion-input [(ngModel)]="newRoom.title"></ion-input>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="stacked">Número de habitación</ion-label>
+    <ion-input [(ngModel)]="newRoom.roomNumber"></ion-input>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="stacked">Precio anterior</ion-label>
+    <ion-input [(ngModel)]="newRoom.oldPrice"></ion-input>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="stacked">Precio</ion-label>
+    <ion-input [(ngModel)]="newRoom.price"></ion-input>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="stacked">Descripción</ion-label>
+    <ion-textarea [(ngModel)]="newRoom.note"></ion-textarea>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="stacked">Extras</ion-label>
+    <ion-select interface="alert" [interfaceOptions]="{ cssClass: 'extras-alert' }" multiple [(ngModel)]="newRoom.extras">
+      <ion-select-option *ngFor="let ex of extrasOptions" [value]="ex">{{ ex }}</ion-select-option>
+    </ion-select>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="stacked">Tipo</ion-label>
+    <ion-select interface="alert" [interfaceOptions]="{ cssClass: 'extras-alert' }" [(ngModel)]="newRoom.type">
+      <ion-select-option *ngFor="let t of roomTypes" [value]="t">{{ t }}</ion-select-option>
+    </ion-select>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="stacked">Planta</ion-label>
+    <ion-select interface="alert" [interfaceOptions]="{ cssClass: 'extras-alert' }" [(ngModel)]="newRoom.floor">
+      <ion-select-option *ngFor="let f of floors" [value]="f">{{ f }}</ion-select-option>
+    </ion-select>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="stacked">Estado</ion-label>
+    <ion-select interface="alert" [interfaceOptions]="{ cssClass: 'extras-alert' }" [(ngModel)]="newRoom.status">
+      <ion-select-option value="Activa">Activa</ion-select-option>
+      <ion-select-option value="No activa">No activa</ion-select-option>
+    </ion-select>
+  </ion-item>
+
+  <div class="image-edit" style="margin-top:12px;">
+    <div class="images-list">
+      <div class="thumb" *ngFor="let p of newRoom.images; let idx = index">
+        <img [src]="p" alt="foto {{idx + 1}}">
+        <div class="thumb-actions">
+          <ion-button size="small" color="danger" fill="clear" (click)="removePhoto(idx)">Borrar</ion-button>
+        </div>
+      </div>
+    </div>
+
+    <label class="file-label add-photo">
+      Añadir foto
+      <input type="file" accept="image/*" (change)="addPhotoFile($event)">
+    </label>
+  </div>
+
+  <div class="modal-actions" style="display:flex; gap:8px; justify-content:flex-end; margin-top:14px;">
+    <ion-button color="medium" fill="clear" (click)="cancel()">Cancelar</ion-button>
+    <ion-button color="primary" (click)="save()">Guardar</ion-button>
+  </div>
+</ion-content>

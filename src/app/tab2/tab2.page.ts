@@ -1,21 +1,8 @@
-import { Component, ViewChild } from '@angular/core';
-import { AlertController, IonContent } from '@ionic/angular';
-
-interface Reserva {
-  numero: string;
-  habitacion: string;
-  titular: string;
-  fechaEntrada: string; // ISO date or display string
-  fechaSalida: string;  // ISO date or display string
-  numeroHabitaciones?: number;
-  adultos?: number;
-  ninos?: number;
-  precioTotal?: number;
-  pension?: string;
-  mascota?: boolean;
-  expanded?: boolean;
-  status?: 'Pendiente' | 'Confirmada' | 'Denegada';
-}
+import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
+import { AlertController, IonContent, ModalController } from '@ionic/angular';
+import { ReservaService } from '../services/reserva.service';
+import type { Reserva } from '../services/reserva.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-tab2',
@@ -23,131 +10,10 @@ interface Reserva {
   styleUrls: ['tab2.page.scss'],
   standalone: false,
 })
-export class Tab2Page {
+export class Tab2Page implements OnInit, OnDestroy {
 
-  reservas: Reserva[] = [
-    {
-      numero: 'R-0001',
-      habitacion: 'Suite Vista Mar',
-      titular: 'María García',
-      fechaEntrada: '2026-02-14',
-      fechaSalida: '2026-02-18',
-      numeroHabitaciones: 1,
-      adultos: 2,
-      ninos: 0,
-      precioTotal: 520.00,
-      pension: 'Media Pensión',
-      mascota: true,
-      expanded: false,
-      status: 'Pendiente'
-    },
-    {
-      numero: 'R-0002',
-      habitacion: 'Doble Superior',
-      titular: 'Juan Pérez',
-      fechaEntrada: '2026-03-01',
-      fechaSalida: '2026-03-05',
-      numeroHabitaciones: 2,
-      adultos: 4,
-      ninos: 1,
-      precioTotal: 980.00,
-      pension: 'Pensión Completa',
-      mascota: false,
-      expanded: false,
-      status: 'Pendiente'
-    },
-    {
-      numero: 'R-0003',
-      habitacion: 'Individual Económica',
-      titular: 'Ana López',
-      fechaEntrada: '2026-02-20',
-      fechaSalida: '2026-02-21',
-      numeroHabitaciones: 1,
-      adultos: 1,
-      ninos: 0,
-      precioTotal: 60.00,
-      pension: 'Alojamiento y Desayuno',
-      mascota: false,
-      expanded: false,
-      status: 'Pendiente'
-    }
-    ,
-    {
-      numero: 'R-0004',
-      habitacion: 'Familiar Deluxe',
-      titular: 'Carlos Martínez',
-      fechaEntrada: '2026-04-10',
-      fechaSalida: '2026-04-15',
-      numeroHabitaciones: 2,
-      adultos: 2,
-      ninos: 2,
-      precioTotal: 760.00,
-      pension: 'Media Pensión',
-      mascota: true,
-      expanded: false,
-      status: 'Confirmada'
-    },
-    {
-      numero: 'R-0005',
-      habitacion: 'Suite Nupcial',
-      titular: 'Lucía Fernández',
-      fechaEntrada: '2026-05-20',
-      fechaSalida: '2026-05-25',
-      numeroHabitaciones: 1,
-      adultos: 2,
-      ninos: 0,
-      precioTotal: 1250.00,
-      pension: 'Pensión Completa',
-      mascota: false,
-      expanded: false,
-      status: 'Pendiente'
-    },
-    {
-      numero: 'R-0006',
-      habitacion: 'Doble Económica',
-      titular: 'Roberto Díaz',
-      fechaEntrada: '2026-03-12',
-      fechaSalida: '2026-03-13',
-      numeroHabitaciones: 1,
-      adultos: 1,
-      ninos: 0,
-      precioTotal: 45.00,
-      pension: 'Alojamiento',
-      mascota: true,
-      expanded: false,
-      status: 'Denegada'
-    },
-    {
-      numero: 'R-0007',
-      habitacion: 'Apartamento',
-      titular: 'Sofía Ruiz',
-      fechaEntrada: '2026-06-01',
-      fechaSalida: '2026-06-07',
-      numeroHabitaciones: 1,
-      adultos: 3,
-      ninos: 1,
-      precioTotal: 1340.00,
-      pension: 'Media Pensión',
-      mascota: false,
-      expanded: false,
-      status: 'Confirmada'
-    },
-    {
-      numero: 'R-0008',
-      habitacion: 'Suite Ejecutiva',
-      titular: 'Empresa XYZ',
-      fechaEntrada: '2026-07-10',
-      fechaSalida: '2026-07-12',
-      numeroHabitaciones: 2,
-      adultos: 4,
-      ninos: 0,
-      precioTotal: 2100.00,
-      pension: 'Pensión Completa',
-      mascota: false,
-      expanded: false,
-      status: 'Pendiente'
-    }
-  ];
+  reservas: Reserva[] = [];
+  private sub?: Subscription;
 
   // filtro y busqueda
   searchTerm: string = '';
@@ -156,11 +22,22 @@ export class Tab2Page {
   @ViewChild(IonContent, { static: false }) content!: IonContent;
   showScrollTop: boolean = false;
 
-  constructor(private alertCtrl: AlertController) {}
+  constructor(private alertCtrl: AlertController, private modalCtrl: ModalController, private reservaService: ReservaService) {}
+
+  ngOnInit(): void {
+    this.sub = this.reservaService.getReservas$().subscribe(list => {
+      // mantener expanded = false para consistencia y evitar mutaciones directas
+      this.reservas = list.map(r => ({ ...r }));
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.sub?.unsubscribe();
+  }
 
   get filteredReservas(): Reserva[] {
     const term = this.searchTerm?.trim().toLowerCase();
-    return this.reservas.filter(r => {
+    const results = this.reservas.filter(r => {
       // filtro por estado
       if (this.statusFilter && this.statusFilter !== 'Todas') {
         if (r.status !== this.statusFilter) return false;
@@ -171,6 +48,16 @@ export class Tab2Page {
       const inNumero = r.numero?.toLowerCase().includes(term);
       return Boolean(inTitular || inNumero);
     });
+
+    // ordenar por número (R-0001 -> 1) ascendente
+    const parseNum = (s?: string) => {
+      if (!s) return 0;
+      const n = parseInt((s.match(/\d+/) || ['0'])[0], 10);
+      return isNaN(n) ? 0 : n;
+    };
+
+    results.sort((a, b) => parseNum(a.numero) - parseNum(b.numero));
+    return results;
   }
 
   toggleExpand(r: Reserva) {
@@ -234,13 +121,11 @@ export class Tab2Page {
   }
 
   confirmReservation(r: Reserva) {
-    r.status = 'Confirmada';
-    r.expanded = false;
+    this.reservaService.updateReserva(r.numero, { status: 'Confirmada', expanded: false });
   }
 
   denyReservation(r: Reserva) {
-    r.status = 'Denegada';
-    r.expanded = false;
+    this.reservaService.updateReserva(r.numero, { status: 'Denegada', expanded: false });
   }
 
   async confirmDeleteReservation(r: Reserva) {
@@ -333,7 +218,39 @@ export class Tab2Page {
   }
 
   deleteReservation(r: Reserva) {
-    this.reservas = this.reservas.filter(x => x !== r);
+    this.reservaService.deleteReserva(r.numero);
+  }
+
+  async openNewReservation() {
+    const modal = await this.modalCtrl.create({
+      component: (await import('../reserva-modal/reserva-modal.component')).ReservaModalComponent,
+      componentProps: {}
+    });
+
+    modal.onDidDismiss().then((detail) => {
+      if (detail?.data?.reserva) {
+        const newReserva = detail.data.reserva as Partial<Reserva>;
+        this.reservaService.addReserva(newReserva);
+      }
+    });
+
+    return await modal.present();
+  }
+
+  async openEditReservation(r: Reserva) {
+    const modal = await this.modalCtrl.create({
+      component: (await import('../reserva-modal/reserva-modal.component')).ReservaModalComponent,
+      componentProps: { initial: { ...r } }
+    });
+
+    modal.onDidDismiss().then((detail) => {
+      if (detail?.data?.reserva) {
+        const updated = detail.data.reserva as Partial<Reserva>;
+        this.reservaService.updateReserva(r.numero, { ...updated, expanded: false });
+      }
+    });
+
+    return await modal.present();
   }
 
 }

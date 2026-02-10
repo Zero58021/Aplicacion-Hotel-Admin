@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { StateService } from '../services/state.service';
 import { Router } from '@angular/router';
 import { NavController } from '@ionic/angular';
 
@@ -8,13 +9,27 @@ import { NavController } from '@ionic/angular';
   styleUrls: ['tab1.page.scss'],
   standalone: false,
 })
-export class Tab1Page {
+export class Tab1Page implements OnInit {
   showText = false;
 
-  constructor(private router: Router, private navCtrl: NavController) {}
+  constructor(private router: Router, private navCtrl: NavController, private state: StateService) {}
+
+  ngOnInit() {
+    const saved = this.state.getState() || {};
+    if (saved.tab1 && typeof saved.tab1.showText === 'boolean') {
+      this.showText = saved.tab1.showText;
+    }
+    // keep UI in sync if other parts update the global state
+    this.state.state$.subscribe(s => {
+      if (s && s.tab1 && typeof s.tab1.showText === 'boolean') {
+        this.showText = s.tab1.showText;
+      }
+    });
+  }
 
   toggleText() {
     this.showText = !this.showText;
+    this.state.update({ tab1: { showText: this.showText } });
   }
 
   navigate(path: string) {

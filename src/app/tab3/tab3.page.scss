@@ -9,6 +9,34 @@
 	margin-top: 6px;
 }
 
+/* Make the top headers full-bleed (compensate host horizontal padding) */
+:host > ion-header,
+:host ion-content > ion-header {
+	margin-left: -12px;
+	margin-right: -12px;
+	width: calc(100% + 24px);
+}
+
+/* Make header titles green and centered */
+:host ion-header ion-title,
+:host ion-content ion-header ion-title {
+	color: var(--ion-color-success, #10b981) !important;
+	text-align: center;
+	width: 100%;
+	display: block;
+}
+
+/* Center toolbar contents to keep titles visually centered */
+:host ion-toolbar {
+	--justify-content: center;
+}
+
+/* Ensure ion-icon inside nav/edit buttons is white */
+.nav-btn ion-icon,
+.edit-btn ion-icon {
+	color: #fff !important;
+}
+
 .calendar-card {
 	width: 340px;
 	max-width: 92vw;

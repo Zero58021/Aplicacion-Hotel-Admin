@@ -1,0 +1,59 @@
+/* Styles for tab5: ensure headers match other tabs (green centered titles, full-bleed) */
+:host {
+	display: block;
+}
+
+/* Make the top headers full-bleed (compensate host horizontal padding) */
+:host > ion-header,
+:host ion-content > ion-header {
+	margin-left: -12px;
+	margin-right: -12px;
+	width: calc(100% + 24px);
+}
+
+/* Make header titles green and centered */
+:host ion-header ion-title,
+:host ion-content ion-header ion-title {
+	color: var(--ion-color-success, #10b981) !important;
+	text-align: center;
+	width: 100%;
+	display: block;
+}
+
+/* Center toolbar contents to keep titles visually centered */
+:host ion-toolbar {
+	--justify-content: center;
+}
+
+/* Ensure ion-icon inside nav/edit buttons is white */
+.nav-btn ion-icon,
+.edit-btn ion-icon {
+	color: #fff !important;
+}
+/* Scroll-to-top button (shared style) */
+.scroll-top {
+	position: fixed;
+	right: 76px;
+	bottom: 16px;
+	width: 44px;
+	height: 44px;
+	border-radius: 22px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--ion-color-primary, #3880ff);
+	color: #fff;
+	box-shadow: 0 6px 14px rgba(0,0,0,0.18);
+	border: none;
+	z-index: 9999;
+	opacity: 0;
+	transform: translateY(12px) scale(.96);
+	transition: opacity 240ms cubic-bezier(.2,.8,.2,1), transform 240ms cubic-bezier(.2,.8,.2,1);
+}
+.scroll-top ion-icon { font-size: 20px; color: #fff !important; }
+.scroll-top.visible { opacity: 1; transform: translateY(0) scale(1); }
+
+@media (max-width: 480px) {
+	.scroll-top { right: 68px; bottom: 12px; }
+}
+

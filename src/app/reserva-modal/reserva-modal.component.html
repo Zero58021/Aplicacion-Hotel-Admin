@@ -1,0 +1,79 @@
+<ion-header translucent>
+  <ion-toolbar>
+    <ion-title>{{ initial?.numero ? 'Editar reserva' : 'Nueva reserva' }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="cancel()">Cancelar</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-list>
+    <ion-item>
+      <ion-label position="stacked">Habitación</ion-label>
+      <ion-input [(ngModel)]="reserva.habitacion" placeholder="Nombre de la habitación"></ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="stacked">Titular</ion-label>
+      <ion-input [(ngModel)]="reserva.titular" placeholder="Nombre del titular"></ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="stacked">Fecha entrada</ion-label>
+      <ion-datetime presentation="date" display-format="DD/MM/YYYY" picker-format="DD/MM/YYYY" [(ngModel)]="reserva.fechaEntrada"></ion-datetime>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="stacked">Fecha salida</ion-label>
+      <ion-datetime presentation="date" display-format="DD/MM/YYYY" picker-format="DD/MM/YYYY" [(ngModel)]="reserva.fechaSalida"></ion-datetime>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="stacked">Número de habitaciones</ion-label>
+      <ion-input type="number" [(ngModel)]="reserva.numeroHabitaciones"></ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="stacked">Adultos</ion-label>
+      <ion-input type="number" [(ngModel)]="reserva.adultos"></ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="stacked">Niños</ion-label>
+      <ion-input type="number" [(ngModel)]="reserva.ninos"></ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="stacked">Precio total</ion-label>
+      <ion-input type="number" [(ngModel)]="reserva.precioTotal" step="0.01"></ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="stacked">Pensión</ion-label>
+      <ion-select [(ngModel)]="reserva.pension">
+        <ion-select-option *ngFor="let p of pensionOptions" [value]="p">{{ p }}</ion-select-option>
+      </ion-select>
+    </ion-item>
+
+    <ion-item>
+      <ion-label>Mascota</ion-label>
+      <ion-toggle slot="end" [(ngModel)]="reserva.mascota"></ion-toggle>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="stacked">Estado</ion-label>
+      <ion-segment [(ngModel)]="reserva.status">
+        <ion-segment-button *ngFor="let s of statusOptions" [value]="s">{{ s }}</ion-segment-button>
+      </ion-segment>
+    </ion-item>
+  </ion-list>
+</ion-content>
+
+<ion-footer>
+  <ion-toolbar>
+    <ion-buttons slot="end">
+      <ion-button color="primary" (click)="save()">Guardar</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-footer>

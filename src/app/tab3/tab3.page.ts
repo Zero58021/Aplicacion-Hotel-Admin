@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ReservaService } from '../services/reserva.service';
 import type { Reserva } from '../services/reserva.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-tab3',
@@ -18,13 +19,22 @@ export class Tab3Page implements OnInit {
   selected: Date | null = null;
   events: Record<string, boolean> = {};
   reservas: Reserva[] = [];
+  private sub?: Subscription;
 
   constructor(private reservaService: ReservaService) {}
 
   ngOnInit(): void {
     this.updateCalendar();
-    this.loadEventsFromReservas();
-    this.loadReservas();
+    // Suscribirse a cambios en las reservas para actualizar calendario y lista automáticamente
+    this.sub = this.reservaService.getReservas$().subscribe(list => {
+      this.reservas = list.map(r => ({ ...r }));
+      this.loadEventsFromReservas();
+      // si se muestra mes, quizá forzar recálculo (no cambiar displayDate aquí)
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.sub?.unsubscribe();
   }
 
   private updateCalendar() {
@@ -113,8 +123,7 @@ export class Tab3Page implements OnInit {
 
   private loadEventsFromReservas() {
     this.events = {};
-    const reservas = this.reservaService.getReservas();
-    for (const r of reservas) {
+    for (const r of this.reservas) {
       const d = new Date(r.fechaEntrada);
       if (isNaN(d.getTime())) continue;
       const key = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;

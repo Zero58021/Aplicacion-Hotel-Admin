@@ -34,30 +34,11 @@
 
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
-/* Force a white theme: import local theme variables and remove dark palette */
+/* Theme variables (do not force a global white theme) */
 @import "theme/variables.scss";
 
-/* Ensure app root elements use white background and dark text */
-html, body, ion-app, ion-app * {
-	background-color: var(--ion-background-color) !important;
-	color: var(--ion-text-color) !important;
-}
-
-ion-content, ion-page, .ion-page {
-	background: var(--ion-page-background) !important;
-	color: var(--ion-text-color) !important;
-}
-
-ion-header, ion-toolbar, .toolbar-title {
-	background: var(--ion-toolbar-background) !important;
-	color: var(--ion-toolbar-text-color) !important;
-}
-
-/* Make common components white */
-ion-card, ion-item, .card, .item {
-	background: var(--ion-card-background) !important;
-	color: var(--ion-text-color) !important;
-}
+/* The app no longer forces a global white background. Components should
+   rely on theme variables or opt-in classes for specific backgrounds. */
 
 /* Use green accents app-wide for actionable elements */
 ion-button, .button, ion-fab, ion-fab-button {
@@ -201,4 +182,364 @@ ion-alert .alert-button span {
 	color: inherit !important;
 	opacity: 1 !important;
 }
+
+/* User request: force alert text black and make all alert button text green */
+ion-alert .alert-title,
+ion-alert .alert-sub-title,
+ion-alert .alert-message,
+ion-alert .alert-input-label,
+ion-alert .alert-checkbox-label {
+	color: #000 !important;
+}
+
+ion-alert .alert-button .alert-button-inner,
+ion-alert .alert-button .alert-button-text,
+ion-alert .alert-button {
+	color: #10b981 !important; /* green text for buttons */
+	-webkit-text-fill-color: #10b981 !important;
+}
+
+/* Ensure the checkboxes/labels remain visible on lighter backgrounds */
+ion-alert .alert-checkbox-group .alert-checkbox-inner,
+ion-alert .alert-checkbox-group .alert-checkbox {
+	color: #000 !important;
+}
+
+/* Pages that opt-out of the global white theme can use the */
+/* `no-global-white` class on their root container (eg. ion-content) */
+.no-global-white,
+.no-global-white * {
+	background: transparent !important;
+	background-color: transparent !important;
+	color: inherit !important;
+}
+
+.no-global-white ion-card,
+.no-global-white ion-item,
+.no-global-white .card,
+.no-global-white .item,
+.no-global-white ion-input,
+.no-global-white ion-textarea,
+.no-global-white ion-select {
+	--background: transparent !important;
+	background: transparent !important;
+	color: inherit !important;
+}
+
+/* When Tab4 is active we also want overlays created from it to avoid white backgrounds */
+body.tab4-no-white-active ion-alert .alert-wrapper,
+body.tab4-no-white-active ion-modal .modal-wrapper,
+body.tab4-no-white-active ion-popover .popover-wrapper,
+body.tab4-no-white-active ion-action-sheet .action-sheet-wrapper {
+	background: transparent !important;
+	background-color: transparent !important;
+	color: inherit !important;
+}
+
+/* make inner parts transparent / inherit color */
+body.tab4-no-white-active ion-alert .alert-message,
+body.tab4-no-white-active ion-alert .alert-title,
+body.tab4-no-white-active ion-alert .alert-input-label,
+body.tab4-no-white-active ion-alert .alert-checkbox-label,
+body.tab4-no-white-active ion-modal .modal-content,
+body.tab4-no-white-active ion-popover .popover-content,
+body.tab4-no-white-active ion-action-sheet .action-sheet-group {
+	background: transparent !important;
+	color: inherit !important;
+}
+
+/* ensure buttons inside overlays use the same green text if desired */
+body.tab4-no-white-active ion-alert .alert-button,
+body.tab4-no-white-active ion-modal .modal-button,
+body.tab4-no-white-active ion-popover .popover-button,
+body.tab4-no-white-active ion-action-sheet .action-sheet-button {
+	color: #10b981 !important;
+}
+
+/* Specific styling for extras-select alert dialog */
+.extras-alert .alert-wrapper {
+	background: #fff !important;
+	color: #000 !important;
+	border-radius: 8px !important;
+}
+.extras-alert .alert-title,
+.extras-alert .alert-sub-title,
+.extras-alert .alert-message,
+.extras-alert .alert-input-label,
+.extras-alert .alert-checkbox-label {
+	color: #000 !important;
+	font-weight: 500 !important;
+}
+.extras-alert .alert-button {
+	color: #10b981 !important; /* green text for buttons */
+	-webkit-text-fill-color: #10b981 !important;
+	background: transparent !important;
+}
+.extras-alert .alert-checkbox {
+	color: #000 !important;
+}
+.extras-alert .alert-checkbox .alert-checkbox-icon {
+	color: #000 !important;
+}
+.extras-alert .alert-button-group {
+	justify-content: space-between !important;
+	padding-top: 12px !important;
+}
+
+/* Specific styling for reviews dialog to force white background and dark text */
+.reviews-alert .alert-wrapper {
+	background: #ffffff !important;
+	color: #000 !important;
+	border-radius: 8px !important;
+}
+.reviews-alert .alert-title,
+.reviews-alert .alert-sub-title,
+.reviews-alert .alert-message,
+.reviews-alert .alert-input-label,
+.reviews-alert .alert-checkbox-label {
+	color: #000 !important;
+	font-weight: 500 !important;
+}
+.reviews-alert .alert-button {
+	color: #000 !important;
+	-webkit-text-fill-color: #000 !important;
+	background: transparent !important;
+}
+.reviews-alert .alert-checkbox {
+	color: #000 !important;
+}
+.reviews-alert .alert-checkbox .alert-checkbox-icon {
+	color: #000 !important;
+}
+.reviews-alert .alert-button-group {
+	justify-content: space-between !important;
+	padding-top: 12px !important;
+}
+
+/* When Tab4 is active, force the extras-alert dialog to use green/black colors */
+/* Ensure extras-alert stays white even when tab4 disables global whites */
+body.tab4-no-white-active .extras-alert .alert-wrapper {
+	background: #ffffff !important;
+	color: #000 !important;
+	border-radius: 8px !important;
+}
+body.tab4-no-white-active .extras-alert .alert-title,
+body.tab4-no-white-active .extras-alert .alert-sub-title,
+body.tab4-no-white-active .extras-alert .alert-message,
+body.tab4-no-white-active .extras-alert .alert-input-label,
+body.tab4-no-white-active .extras-alert .alert-checkbox-label {
+	color: #000 !important;
+}
+body.tab4-no-white-active .extras-alert .alert-checkbox,
+body.tab4-no-white-active .extras-alert .alert-checkbox .alert-checkbox-icon {
+	color: #000 !important;
+}
+/* Force buttons inside extras-alert to have white background and dark text */
+body.tab4-no-white-active .extras-alert .alert-button,
+body.tab4-no-white-active .extras-alert .alert-button .alert-button-inner,
+body.tab4-no-white-active .extras-alert .alert-button .alert-button-text {
+	color: #000 !important;
+	-webkit-text-fill-color: #000 !important;
+	background: #ffffff !important;
+}
+body.tab4-no-white-active .extras-alert .alert-button {
+	border: 1px solid rgba(0,0,0,0.06) !important;
+	border-radius: 6px;
+}
+body.tab4-no-white-active .extras-alert .alert-button-group {
+	gap: 8px !important;
+}
+
+/* Ensure reviews alert stays white even when tab4 disables global whites */
+body.tab4-no-white-active .reviews-alert .alert-wrapper {
+	background: #ffffff !important;
+	color: #000 !important;
+	border-radius: 8px !important;
+}
+body.tab4-no-white-active .reviews-alert .alert-title,
+body.tab4-no-white-active .reviews-alert .alert-sub-title,
+body.tab4-no-white-active .reviews-alert .alert-message,
+body.tab4-no-white-active .reviews-alert .alert-input-label,
+body.tab4-no-white-active .reviews-alert .alert-checkbox-label {
+	color: #000 !important;
+}
+body.tab4-no-white-active .reviews-alert .alert-checkbox,
+body.tab4-no-white-active .reviews-alert .alert-checkbox .alert-checkbox-icon {
+	color: #000 !important;
+}
+/* Force buttons inside reviews-alert to have white background and dark text */
+body.tab4-no-white-active .reviews-alert .alert-button,
+body.tab4-no-white-active .reviews-alert .alert-button .alert-button-inner,
+body.tab4-no-white-active .reviews-alert .alert-button .alert-button-text {
+	color: #000 !important;
+	-webkit-text-fill-color: #000 !important;
+	background: #ffffff !important;
+}
+body.tab4-no-white-active .reviews-alert .alert-button {
+	border: 1px solid rgba(0,0,0,0.06) !important;
+	border-radius: 6px;
+}
+body.tab4-no-white-active .reviews-alert .alert-button-group {
+	gap: 8px !important;
+}
+
+/* Center button text inside extras-alert (OK/CANCEL) */
+body.tab4-no-white-active .extras-alert .alert-button {
+	display: flex !important;
+	justify-content: center !important;
+	align-items: center !important;
+	text-align: center !important;
+	padding-left: 0.5rem !important;
+	padding-right: 0.5rem !important;
+}
+
+body.tab4-no-white-active .extras-alert .alert-button .alert-button-inner {
+	display: flex !important;
+	justify-content: center !important;
+	align-items: center !important;
+	width: 100%;
+}
+
+/* Alert para campos faltantes: texto verde y botones centrados */
+.missing-alert .alert-button-group {
+	justify-content: center !important;
+	gap: 8px !important;
+	padding-top: 12px !important;
+}
+.missing-alert .alert-button {
+	color: #10b981 !important;
+	-webkit-text-fill-color: #10b981 !important;
+	background: transparent !important;
+	border: 1px solid rgba(16,185,129,0.10) !important;
+	font-weight: 700 !important;
+	min-width: 120px !important;
+	display: flex !important;
+	justify-content: center !important;
+	align-items: center !important;
+}
+.missing-alert .alert-button .alert-button-inner,
+.missing-alert .alert-button .alert-button-text {
+	color: inherit !important;
+	opacity: 1 !important;
+}
+
+/* Extra selector for the specific button class (fallback) */
+.missing-alert .btn-ok-missing {
+	color: #10b981 !important;
+}
+
+/* Forzar centrado y color verde en el texto interior del botón (fallback robusto) */
+.missing-alert .alert-button .alert-button-inner,
+.missing-alert .alert-button .alert-button-text {
+	display: flex !important;
+	justify-content: center !important;
+	align-items: center !important;
+	width: 100% !important;
+	text-align: center !important;
+	color: #10b981 !important;
+	-webkit-text-fill-color: #10b981 !important;
+	opacity: 1 !important;
+}
+
+/* Asegurar que el propio botón también centre su contenido */
+.missing-alert .alert-button {
+	display: flex !important;
+	justify-content: center !important;
+	align-items: center !important;
+	text-align: center !important;
+}
+
+/* Extra strong rules targeting ion-alert with the class, and ::part fallbacks */
+ion-alert.missing-alert .alert-button,
+ion-alert.missing-alert .alert-button .alert-button-inner,
+ion-alert.missing-alert .alert-button .alert-button-text,
+.missing-alert button,
+.missing-alert button .alert-button-inner {
+	color: #10b981 !important;
+	-webkit-text-fill-color: #10b981 !important;
+}
+
+/* If ion-alert exposes parts, target them as fallback */
+ion-alert.missing-alert::part(button),
+ion-alert.missing-alert::part(button-text) {
+	color: #10b981 !important;
+}
+
+/* Forzar que el icono + del FAB de nueva reserva sea blanco siempre */
+.add-reserva-fab ion-icon,
+.add-reserva-fab .ion-icon {
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff !important;
+	opacity: 1 !important;
+	filter: none !important;
+}
+
+/* Asegurar contraste si el icono recibe transformaciones de color internas */
+.add-reserva-fab {
+	--ion-color-contrast: #ffffff;
+}
+
+/* Reducir tamaño del FAB de añadir reserva */
+.add-reserva-fab {
+	width: 44px !important;
+	height: 44px !important;
+	min-width: 44px !important;
+	min-height: 44px !important;
+	--size: 44px !important;
+	border-radius: 22px !important;
+	padding: 0 !important;
+}
+
+.add-reserva-fab ion-icon,
+.add-reserva-fab .ion-icon {
+	font-size: 20px !important;
+	width: 20px !important;
+	height: 20px !important;
+	line-height: 20px !important;
+}
+
+/* Posicionar el FAB de añadir de forma fija y alinearlo verticalmente con el botón scroll-top */
+.add-reserva-fab {
+	position: fixed !important;
+	right: 16px !important;
+	bottom: 16px !important;
+	z-index: 9999 !important;
+}
+
+@media (max-width: 480px) {
+	.add-reserva-fab { right: 12px !important; bottom: 12px !important; }
+	.scroll-top { right: 60px; bottom: 12px; }
+}
+
+body.tab4-no-white-active .extras-alert .alert-button .alert-button-text {
+	width: 100% !important;
+	text-align: center !important;
+	margin: 0 !important;
+}
+
+/* Color buttons: CANCEL = red (first), OK = green (last) */
+body.tab4-no-white-active .extras-alert .alert-button-group .alert-button:first-child,
+body.tab4-no-white-active .extras-alert .alert-button-group .alert-button:first-child .alert-button-inner,
+body.tab4-no-white-active .extras-alert .alert-button-group .alert-button:first-child .alert-button-text {
+	color: #e53935 !important; /* red */
+	-webkit-text-fill-color: #e53935 !important;
+	background: #ffffff !important;
+	border-color: rgba(229,57,53,0.06) !important;
+}
+
+body.tab4-no-white-active .extras-alert .alert-button-group .alert-button:last-child,
+body.tab4-no-white-active .extras-alert .alert-button-group .alert-button:last-child .alert-button-inner,
+body.tab4-no-white-active .extras-alert .alert-button-group .alert-button:last-child .alert-button-text {
+	color: #10b981 !important; /* green */
+	-webkit-text-fill-color: #10b981 !important;
+	background: #ffffff !important;
+	border-color: rgba(16,185,129,0.08) !important;
+}
+
+/* Provide a subtle hover/active contrast for buttons when possible */
+body.tab4-no-white-active .extras-alert .alert-button-group .alert-button:first-child:hover,
+body.tab4-no-white-active .extras-alert .alert-button-group .alert-button:last-child:hover {
+	filter: brightness(0.98);
+}
+
 

@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { StateService } from './services/state.service';
 
 @Component({
   selector: 'app-root',
@@ -7,5 +8,8 @@ import { Component } from '@angular/core';
   standalone: false,
 })
 export class AppComponent {
-  constructor() {}
+  constructor(private stateService: StateService) {
+    // Ensure storage is initialized and state restored on app start
+    this.stateService.init();
+  }
 }
