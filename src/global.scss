@@ -109,21 +109,21 @@ ion-alert, .alert-wrapper, .alert-button, .alert-button-group {
 	opacity: 1 !important;
 }
 
-/* Cancel (verde) */
+/* Cancel (ahora rojo) */
 .alert-button[role="cancel"],
 .alert-button.btn-cancel-green {
 	background: transparent !important;
-	border: 1px solid rgba(16,185,129,0.10) !important;
-	color: #10b981 !important; /* texto verde */
+	border: 1px solid rgba(231,76,60,0.10) !important;
+	color: #e53935 !important; /* texto rojo */
 }
 
-/* Destructive / Confirm (rojo) */
+/* Destructive / Confirm (ahora verde) */
 .alert-button[role="destructive"],
 .alert-button.btn-confirm-green,
 .alert-button.alert-button-role-destructive {
 	background: transparent !important;
-	border: 1px solid rgba(231,76,60,0.10) !important;
-	color: #e53935 !important; /* texto rojo */
+	border: 1px solid rgba(16,185,129,0.10) !important;
+	color: #10b981 !important; /* texto verde */
 }
 
 /* Ensure button group is visible and spaced */
@@ -168,12 +168,12 @@ ion-alert .alert-button, ion-alert .alert-button *, ion-alert .alert-button span
 
 /* Asegurar colores distintos por posición (fallback extra) */
 ion-alert .alert-button-group .alert-button:first-child, ion-alert .alert-button-group .alert-button:first-child * {
-	color: #10b981 !important;
-	-webkit-text-fill-color: #10b981 !important;
-}
-ion-alert .alert-button-group .alert-button:last-child, ion-alert .alert-button-group .alert-button:last-child * {
 	color: #e53935 !important;
 	-webkit-text-fill-color: #e53935 !important;
+}
+ion-alert .alert-button-group .alert-button:last-child, ion-alert .alert-button-group .alert-button:last-child * {
+	color: #10b981 !important;
+	-webkit-text-fill-color: #10b981 !important;
 }
 
 /* Fallback targeting span directly in case mode-specific classes are present */
@@ -183,7 +183,7 @@ ion-alert .alert-button span {
 	opacity: 1 !important;
 }
 
-/* User request: force alert text black and make all alert button text green */
+/* User request: force alert text black (do not force all buttons green) */
 ion-alert .alert-title,
 ion-alert .alert-sub-title,
 ion-alert .alert-message,
@@ -192,11 +192,12 @@ ion-alert .alert-checkbox-label {
 	color: #000 !important;
 }
 
+/* Do not globally force alert button text color here; keep per-button styles intact */
 ion-alert .alert-button .alert-button-inner,
 ion-alert .alert-button .alert-button-text,
 ion-alert .alert-button {
-	color: #10b981 !important; /* green text for buttons */
-	-webkit-text-fill-color: #10b981 !important;
+	color: inherit !important;
+	-webkit-text-fill-color: inherit !important;
 }
 
 /* Ensure the checkboxes/labels remain visible on lighter backgrounds */
