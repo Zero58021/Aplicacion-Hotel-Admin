@@ -1,20 +1,9 @@
-import { Component } from '@angular/core';
-import { AlertController } from '@ionic/angular';
-
-interface Reserva {
-  numero: string;
-  habitacion: string;
-  titular: string;
-  fechaEntrada: string; // ISO date or display string
-  fechaSalida: string;  // ISO date or display string
-  numeroHabitaciones?: number;
-  adultos?: number;
-  ninos?: number;
-  precioTotal?: number;
-  pension?: string;
-  expanded?: boolean;
-  status?: 'Pendiente' | 'Confirmada' | 'Denegada';
-}
+import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
+import { AlertController, IonContent, ModalController } from '@ionic/angular';
+import { ReservaService } from '../services/reserva.service';
+import type { Reserva } from '../services/reserva.service';
+import { Subscription } from 'rxjs';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-tab2',
@@ -22,64 +11,47 @@ interface Reserva {
   styleUrls: ['tab2.page.scss'],
   standalone: false,
 })
-export class Tab2Page {
+export class Tab2Page implements OnInit, OnDestroy {
 
-  reservas: Reserva[] = [
-    {
-      numero: 'R-0001',
-      habitacion: 'Suite Vista Mar',
-      titular: 'María García',
-      fechaEntrada: '2026-02-14',
-      fechaSalida: '2026-02-18',
-      numeroHabitaciones: 1,
-      adultos: 2,
-      ninos: 0,
-      precioTotal: 520.00,
-      pension: 'Media Pensión',
-      expanded: false
-      , status: 'Pendiente'
-    },
-    {
-      numero: 'R-0002',
-      habitacion: 'Doble Superior',
-      titular: 'Juan Pérez',
-      fechaEntrada: '2026-03-01',
-      fechaSalida: '2026-03-05',
-      numeroHabitaciones: 2,
-      adultos: 4,
-      ninos: 1,
-      precioTotal: 980.00,
-      pension: 'Pensión Completa',
-      expanded: false,
-      status: 'Pendiente'
-    },
-    {
-      numero: 'R-0003',
-      habitacion: 'Individual Económica',
-      titular: 'Ana López',
-      fechaEntrada: '2026-02-20',
-      fechaSalida: '2026-02-21',
-      numeroHabitaciones: 1,
-      adultos: 1,
-      ninos: 0,
-      precioTotal: 60.00,
-      pension: 'Alojamiento y Desayuno',
-      expanded: false,
-      status: 'Pendiente'
-    }
-  ];
+  reservas: Reserva[] = [];
+  private sub?: Subscription;
 
   // filtro y busqueda
   searchTerm: string = '';
-  statusFilter: 'Todos' | 'Pendiente' | 'Confirmada' | 'Denegada' = 'Todos';
+  statusFilter: 'Todas' | 'Pendiente' | 'Confirmada' | 'Denegada' = 'Todas';
 
-  constructor(private alertCtrl: AlertController) {}
+  @ViewChild(IonContent, { static: false }) content!: IonContent;
+  showScrollTop: boolean = false;
+
+  constructor(private alertCtrl: AlertController, private modalCtrl: ModalController, private reservaService: ReservaService, public auth: AuthService) {}
+
+  ngOnInit(): void {
+    this.sub = this.reservaService.getReservas$().subscribe(list => {
+      // mantener expanded = false para consistencia y evitar mutaciones directas
+      this.reservas = list.map(r => ({ ...r }));
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.sub?.unsubscribe();
+  }
 
   get filteredReservas(): Reserva[] {
     const term = this.searchTerm?.trim().toLowerCase();
-    return this.reservas.filter(r => {
+    // If role is recepcion, only show confirmed reservations
+    let pool = this.reservas;
+    if (this.auth.getRole() === 'recepcion') {
+      pool = pool.filter(r => r.status === 'Confirmada');
+    }
+
+    // Restaurante solo puede ver reservas confirmadas que tengan alergias
+    if (this.auth.getRole() === 'restaurante') {
+      pool = pool.filter(r => r.status === 'Confirmada' && !!r.hasAllergies);
+    }
+
+    const results = pool.filter(r => {
       // filtro por estado
-      if (this.statusFilter && this.statusFilter !== 'Todos') {
+      if (this.statusFilter && this.statusFilter !== 'Todas') {
         if (r.status !== this.statusFilter) return false;
       }
       // busqueda por titular o numero
@@ -88,6 +60,29 @@ export class Tab2Page {
       const inNumero = r.numero?.toLowerCase().includes(term);
       return Boolean(inTitular || inNumero);
     });
+
+    // ordenar por número (R-0001 -> 1) ascendente
+    const parseNum = (s?: string) => {
+      if (!s) return 0;
+      const n = parseInt((s.match(/\d+/) || ['0'])[0], 10);
+      return isNaN(n) ? 0 : n;
+    };
+
+    results.sort((a, b) => parseNum(a.numero) - parseNum(b.numero));
+    return results;
+  }
+
+  async cancelByClient(r: Reserva) {
+    const alert = await this.alertCtrl.create({
+      cssClass: 'cancel-alert',
+      header: 'Cancelar reserva',
+      message: `¿Confirmas que deseas marcar la reserva ${r.numero} como "Cancelada por cliente"?`,
+      buttons: [
+        { text: 'No', role: 'cancel' },
+        { text: 'Sí', handler: () => this.reservaService.updateReserva(r.numero, { status: 'Cancelada por cliente', expanded: false }) }
+      ]
+    });
+    await alert.present();
   }
 
   toggleExpand(r: Reserva) {
@@ -122,6 +117,17 @@ export class Tab2Page {
     this.reservas.forEach(x => x.expanded = false);
   }
 
+  onContentScroll(ev: any) {
+    const y = ev?.detail?.scrollTop ?? 0;
+    this.showScrollTop = y > 200;
+  }
+
+  scrollToTop() {
+    if (this.content && typeof this.content.scrollToTop === 'function') {
+      this.content.scrollToTop(400);
+    }
+  }
+
   // Maneja el refresher pull-to-refresh
   doRefresh(ev: any) {
     // Simular refresco: aquí podrías volver a cargar datos desde API
@@ -129,7 +135,7 @@ export class Tab2Page {
       // ejemplo: cerrar expansiones y limpiar búsqueda/segmento
       this.reservas.forEach(x => x.expanded = false);
       this.searchTerm = '';
-      this.statusFilter = 'Todos';
+      this.statusFilter = 'Todas';
       // completar el refresher
       if (ev?.target && typeof ev.target.complete === 'function') {
         ev.target.complete();
@@ -140,35 +146,150 @@ export class Tab2Page {
   }
 
   confirmReservation(r: Reserva) {
-    r.status = 'Confirmada';
-    r.expanded = false;
+    this.reservaService.updateReserva(r.numero, { status: 'Confirmada', expanded: false });
   }
 
   denyReservation(r: Reserva) {
-    r.status = 'Denegada';
-    r.expanded = false;
+    this.reservaService.updateReserva(r.numero, { status: 'Denegada', expanded: false });
   }
 
   async confirmDeleteReservation(r: Reserva) {
-    const alert = await this.alertCtrl.create({
-      header: 'Confirmar borrado',
-      message: `¿Borrar reserva ${r.numero}? Esta acción no se puede deshacer.`,
-      buttons: [
-        {
-          text: 'Cancelar',
-          role: 'cancel'
-        },
-        {
-          text: 'Borrar',
-          handler: () => this.deleteReservation(r)
-        }
-      ]
+    // Mostrar confirmación usando un overlay DOM propio (evita problemas de estilos en ion-alert)
+    this.showCustomConfirm(r);
+  }
+
+  // Crea un overlay simple y manejable por DOM para confirmar eliminación
+  showCustomConfirm(r: Reserva) {
+    // evitar múltiples overlays
+    if (document.getElementById('custom-delete-overlay')) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'custom-delete-overlay';
+    overlay.style.position = 'fixed';
+    overlay.style.left = '0';
+    overlay.style.top = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.zIndex = '99999';
+    overlay.style.backdropFilter = 'blur(6px)';
+    overlay.style.background = 'rgba(0,0,0,0.12)';
+
+    const card = document.createElement('div');
+    card.style.width = 'min(92%,480px)';
+    card.style.background = '#fff';
+    card.style.borderRadius = '10px';
+    card.style.padding = '18px';
+    card.style.boxShadow = '0 20px 60px rgba(0,0,0,0.25)';
+    card.style.color = '#0b3d2e';
+
+    const title = document.createElement('h3');
+    title.textContent = 'Confirmar borrado';
+    title.style.margin = '0 0 10px 0';
+    title.style.color = '#0b3d2e';
+
+    const msg = document.createElement('p');
+    msg.textContent = `¿Borrar reserva ${r.numero}? Esta acción no se puede deshacer.`;
+    msg.style.margin = '0 0 18px 0';
+    msg.style.color = 'rgba(11,61,46,0.9)';
+
+    const actions = document.createElement('div');
+    actions.style.display = 'flex';
+    actions.style.gap = '10px';
+    actions.style.justifyContent = 'flex-end';
+
+    const btnCancel = document.createElement('button');
+    btnCancel.textContent = 'Cancelar';
+    btnCancel.style.background = '#fff';
+    btnCancel.style.border = '1px solid rgba(16,185,129,0.12)';
+    btnCancel.style.color = '#10b981';
+    btnCancel.style.padding = '8px 14px';
+    btnCancel.style.borderRadius = '8px';
+    btnCancel.style.cursor = 'pointer';
+
+    const btnConfirm = document.createElement('button');
+    btnConfirm.textContent = 'Borrar';
+    btnConfirm.style.background = '#fff';
+    btnConfirm.style.border = '1px solid rgba(231,76,60,0.12)';
+    btnConfirm.style.color = '#e53935';
+    btnConfirm.style.padding = '8px 14px';
+    btnConfirm.style.borderRadius = '8px';
+    btnConfirm.style.cursor = 'pointer';
+
+    actions.appendChild(btnCancel);
+    actions.appendChild(btnConfirm);
+
+    card.appendChild(title);
+    card.appendChild(msg);
+    card.appendChild(actions);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+
+    const cleanup = () => {
+      try { document.body.removeChild(overlay); } catch(e) {}
+    };
+
+    btnCancel.addEventListener('click', () => cleanup());
+    btnConfirm.addEventListener('click', () => {
+      this.deleteReservation(r);
+      cleanup();
     });
-    await alert.present();
+    // cerrar al hacer click fuera del card
+    overlay.addEventListener('click', (ev) => {
+      if (ev.target === overlay) cleanup();
+    });
   }
 
   deleteReservation(r: Reserva) {
-    this.reservas = this.reservas.filter(x => x !== r);
+    this.reservaService.deleteReserva(r.numero);
+  }
+
+  async openNewReservation() {
+    // bloquear creación de reservas para el rol 'restaurante'
+    if (this.auth.getRole() === 'restaurante') {
+      const a = await this.alertCtrl.create({
+        header: 'Acceso denegado',
+        message: 'No tienes permiso para crear reservas.',
+        buttons: ['OK']
+      });
+      await a.present();
+      return;
+    }
+    const modal = await this.modalCtrl.create({
+      component: (await import('../reserva-modal/reserva-modal.component')).ReservaModalComponent,
+      componentProps: {}
+    });
+
+    modal.onDidDismiss().then((detail) => {
+      if (detail?.data?.reserva) {
+        const newReserva = detail.data.reserva as Partial<Reserva>;
+        // Si quien crea es Recepción, forzar estado a Pendiente
+        if (this.auth.getRole() === 'recepcion') {
+          newReserva.status = 'Pendiente';
+        }
+        this.reservaService.addReserva(newReserva);
+      }
+    });
+
+    return await modal.present();
+  }
+
+  async openEditReservation(r: Reserva) {
+    const modal = await this.modalCtrl.create({
+      component: (await import('../reserva-modal/reserva-modal.component')).ReservaModalComponent,
+      componentProps: { initial: { ...r } }
+    });
+
+    modal.onDidDismiss().then((detail) => {
+      if (detail?.data?.reserva) {
+        const updated = detail.data.reserva as Partial<Reserva>;
+        this.reservaService.updateReserva(r.numero, { ...updated, expanded: false });
+      }
+    });
+
+    return await modal.present();
   }
 
 }

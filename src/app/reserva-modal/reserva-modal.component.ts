@@ -1,0 +1,112 @@
+import { Component, Input, OnInit } from '@angular/core';
+import { ModalController, AlertController, IonicModule } from '@ionic/angular';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { AuthService } from '../services/auth.service';
+
+interface ReservaInput {
+  numero?: string;
+  habitacion: string;
+  titular: string;
+  fechaEntrada: string;
+  fechaSalida: string;
+  numeroHabitaciones: number;
+  adultos: number;
+  ninos: number;
+  precioTotal: number;
+  pension: string;
+  mascota: boolean;
+  hasAllergies?: boolean;
+  alergias?: string;
+  status: 'Pendiente' | 'Confirmada' | 'Denegada' | 'Cancelada por cliente';
+}
+
+@Component({
+  selector: 'app-reserva-modal',
+  standalone: true,
+  imports: [IonicModule, FormsModule, CommonModule],
+  templateUrl: './reserva-modal.component.html',
+  styleUrls: ['./reserva-modal.component.scss']
+})
+export class ReservaModalComponent implements OnInit {
+  @Input() initial?: Partial<ReservaInput>;
+
+  reserva: ReservaInput = {
+    habitacion: '',
+    titular: '',
+    fechaEntrada: '',
+    fechaSalida: '',
+    numeroHabitaciones: 1,
+    adultos: 1,
+    ninos: 0,
+    precioTotal: 0,
+    pension: 'Alojamiento y Desayuno',
+    mascota: false,
+    hasAllergies: false,
+    alergias: '',
+    status: 'Pendiente'
+  };
+
+  pensionOptions = [
+    'Alojamiento',
+    'Alojamiento y Desayuno',
+    'Media Pensión',
+    'Pensión Completa'
+  ];
+
+  statusOptions: Array<ReservaInput['status']> = ['Pendiente', 'Confirmada', 'Denegada'];
+  isRecepcion: boolean = false;
+
+  constructor(private modalCtrl: ModalController, private alertCtrl: AlertController, private auth: AuthService) {}
+
+  ngOnInit(): void {
+    // si se pasa una reserva inicial (modo editar), mezclar los valores sin mutar el objeto original
+    if (this.initial) {
+      this.reserva = { ...this.reserva, ...this.initial } as ReservaInput;
+    }
+    this.isRecepcion = this.auth.getRole() === 'recepcion';
+  }
+
+  cancel() {
+    this.modalCtrl.dismiss();
+  }
+
+  async save() {
+    // validaciones básicas
+    if (!this.reserva.habitacion || !this.reserva.titular || !this.reserva.fechaEntrada || !this.reserva.fechaSalida) {
+      const alert = await this.alertCtrl.create({
+        header: 'Campos requeridos',
+        message: 'Por favor rellena habitación, titular y las fechas de entrada/salida.',
+        cssClass: 'missing-alert',
+        buttons: [
+          {
+            text: 'OK',
+            role: 'cancel',
+            cssClass: 'btn-ok-missing'
+          }
+        ]
+      });
+      await alert.present();
+      return;
+    }
+
+    this.modalCtrl.dismiss({ reserva: this.reserva });
+  }
+
+  // Acción específica para recepcion: cancelar reserva como "Cancelada por cliente"
+  async cancelAsClient() {
+    const alert = await this.alertCtrl.create({
+      cssClass: 'cancel-alert',
+      header: 'Cancelar reserva',
+      message: '¿Confirmas que quieres marcar esta reserva como "Cancelada por cliente"?',
+      buttons: [
+        { text: 'No', role: 'cancel' },
+        { text: 'Sí', handler: () => {
+          this.reserva.status = 'Cancelada por cliente';
+          this.modalCtrl.dismiss({ reserva: this.reserva });
+        } }
+      ]
+    });
+    await alert.present();
+  }
+}

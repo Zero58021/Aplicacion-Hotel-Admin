@@ -1,0 +1,25 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Opiniones</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="close()">Cerrar</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div *ngIf="reviews && reviews.length; else noReviews" class="reviews-list">
+    <ion-item *ngFor="let r of reviews">
+      <ion-label>
+        <div class="stars">
+          <ion-icon *ngFor="let s of getStars(); let i = index" [name]="i < (r.rating || 0) ? 'star' : 'star-outline'"></ion-icon>
+        </div>
+        <h3>{{ r.author || 'Anónimo' }}</h3>
+        <p>{{ r.text }}</p>
+      </ion-label>
+    </ion-item>
+  </div>
+  <ng-template #noReviews>
+    <div class="no-reviews">No hay opiniones para esta habitación.</div>
+  </ng-template>
+</ion-content>
