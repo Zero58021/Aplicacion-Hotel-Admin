@@ -14,7 +14,7 @@
   <div class="filters">
     <ion-searchbar placeholder="Buscar por titular o número" (ionInput)="onSearch($event)" showClearButton="focus"></ion-searchbar>
 
-    <ion-segment value="Todos" (ionChange)="onFilter($event)" mode="md">
+    <ion-segment *ngIf="auth.getRole() !== 'recepcion' && auth.getRole() !== 'restaurante'" value="Todos" (ionChange)="onFilter($event)" mode="md">
       <ion-segment-button value="Todos">Todos</ion-segment-button>
       <ion-segment-button value="Pendiente">Pendiente</ion-segment-button>
       <ion-segment-button value="Confirmada">Confirmada</ion-segment-button>
@@ -40,21 +40,22 @@
       </ion-item>
 
       <div class="details" *ngIf="r.expanded">
-        <div class="detail-row"><strong>Habitaciones:</strong> {{ r.numeroHabitaciones ?? '-' }}</div>
+        <div class="detail-row" *ngIf="auth.getRole() !== 'restaurante'"><strong>Habitaciones:</strong> {{ r.numeroHabitaciones ?? '-' }}</div>
         <div class="detail-row"><strong>Adultos:</strong> {{ r.adultos ?? '-' }}</div>
         <div class="detail-row"><strong>Niños:</strong> {{ r.ninos ?? '-' }}</div>
-        <div class="detail-row"><strong>Precio total:</strong> {{ formatCurrency(r.precioTotal) }}</div>
+        <div class="detail-row" *ngIf="auth.getRole() !== 'recepcion' && auth.getRole() !== 'restaurante'"><strong>Precio total:</strong> {{ formatCurrency(r.precioTotal) }}</div>
         <div class="detail-row"><strong>Pensión:</strong> {{ r.pension ?? '-' }}</div>
-        <div class="detail-row"><strong>Mascota:</strong> {{ r.mascota ? 'Sí' : 'No' }}</div>
+        <div class="detail-row" *ngIf="auth.getRole() !== 'restaurante'"><strong>Mascota:</strong> {{ r.mascota ? 'Sí' : 'No' }}</div>
         <div class="detail-row"><strong>Alergias:</strong> {{ r.hasAllergies ? (r.alergias || 'Sí') : 'No' }}</div>
         <div class="detail-row"><strong>Estado:</strong>
           <span class="status-badge" [ngClass]="r.status?.toLowerCase()">{{ r.status || 'Pendiente' }}</span>
         </div>
 
         <div class="actions">
-          <ion-button size="small" color="primary" (click)="openEditReservation(r); $event.stopPropagation()">Editar</ion-button>
-          <ion-button size="small" color="success" (click)="confirmReservation(r); $event.stopPropagation()">Confirmar</ion-button>
-          <ion-button size="small" color="danger" (click)="denyReservation(r); $event.stopPropagation()">Denegar</ion-button>
+          <ion-button *ngIf="auth.hasPermission('reservas.edit')" size="small" color="primary" (click)="openEditReservation(r); $event.stopPropagation()">Editar</ion-button>
+          <ion-button *ngIf="auth.hasPermission('reservas.confirm')" size="small" color="success" (click)="confirmReservation(r); $event.stopPropagation()">Confirmar</ion-button>
+          <ion-button *ngIf="auth.hasPermission('reservas.confirm')" size="small" color="danger" (click)="denyReservation(r); $event.stopPropagation()">Denegar</ion-button>
+          <ion-button *ngIf="auth.getRole() === 'recepcion'" size="small" color="warning" (click)="cancelByClient(r); $event.stopPropagation()">Cancelar (cliente)</ion-button>
           <ion-button size="small" color="medium" *ngIf="r.status === 'Denegada'" (click)="confirmDeleteReservation(r); $event.stopPropagation()">Borrar</ion-button>
         </div>
       </div>
@@ -75,7 +76,7 @@
 </button>
 
 <!-- botón para añadir reserva -->
-<ion-fab vertical="bottom" horizontal="end" slot="fixed">
+<ion-fab vertical="bottom" horizontal="end" slot="fixed" *ngIf="auth.getRole() !== 'restaurante'">
   <ion-fab-button class="add-reserva-fab" color="primary" (click)="openNewReservation()" aria-label="Nueva reserva">
     <ion-icon name="add-outline"></ion-icon>
   </ion-fab-button>

@@ -36,7 +36,7 @@
               (click)="select(day)">
               <div class="day-inner" *ngIf="day">
                 <span class="day-number">{{ day }}</span>
-                <div class="event-dot" *ngIf="hasEvent(day)"></div>
+                <div class="event-dot" *ngIf="hasEvent(day)" [class.salida]="isSalida(day)" [class.pendiente]="isPendiente(day)"></div>
               </div>
             </div>
           </div>
@@ -44,22 +44,43 @@
       </div>
     </div>
     <div class="reservas-list">
-      <h3 class="reservas-title">Reservas</h3>
+      <h3 class="reservas-title"><span class="reservas-label">Reservas ({{ visibleReservas.length }})</span></h3>
       <div *ngIf="visibleReservas.length === 0" class="empty">No hay reservas para la selección.</div>
 
       <div class="reservas-container" *ngIf="visibleReservas.length > 0">
         <div class="reserva-card" *ngFor="let r of visibleReservas">
-          <div class="reserva-left">
-            <div class="avatar">{{ getInitials(r) }}</div>
+          <div *ngIf="auth.getRole() === 'restaurante'" class="reserva-main--minimal">
+            <div class="reserva-title">{{ r.numero }}</div>
+            <div class="reserva-sub">Titular: {{ r.titular }}</div>
+            <div class="reserva-meta">Entrada: {{ formatDate(r.fechaEntrada) }} • Salida: {{ formatDate(r.fechaSalida) }}</div>
+            <div class="reserva-meta"><strong>Alergias:</strong> {{ r.hasAllergies ? (r.alergias || 'Sí') : 'No' }}</div>
           </div>
-          <div class="reserva-main">
-            <div class="reserva-top">
-              <div class="reserva-title">{{ r.numero }} — {{ r.titular }}</div>
-              <ion-badge class="status-badge" [color]="r.status === 'Confirmada' ? 'success' : (r.status === 'Denegada' ? 'danger' : 'medium')">{{ r.status }}</ion-badge>
+
+          <div *ngIf="auth.getRole() === 'mantenimiento'" class="reserva-main--minimal">
+            <div class="reserva-title">{{ r.numero }}</div>
+            <div class="reserva-sub">
+              Habitaci{{ r.numeroHabitaciones && r.numeroHabitaciones > 1 ? 'ones' : 'ón' }}: {{ r.habitacion }}
+              <span *ngIf="r.numeroHabitaciones"> • Cantidad: {{ r.numeroHabitaciones }}</span>
             </div>
-            <div class="reserva-sub">{{ r.habitacion }}</div>
-            <div class="reserva-meta">Entrada: {{ formatDate(r.fechaEntrada) }} • Salida: {{ formatDate(r.fechaSalida) }} • {{ formatCurrency(r.precioTotal) }}</div>
+            <div class="reserva-meta">Entrada: {{ formatDate(r.fechaEntrada) }} • Salida: {{ formatDate(r.fechaSalida) }}</div>
           </div>
+
+          <ng-container *ngIf="auth.getRole() !== 'restaurante' && auth.getRole() !== 'mantenimiento'">
+            <div class="reserva-left">
+              <div class="avatar">{{ getInitials(r) }}</div>
+            </div>
+            <div class="reserva-main">
+              <div class="reserva-top">
+                <div class="reserva-title">{{ r.numero }} — {{ r.titular }}</div>
+                <ion-badge class="status-badge" [color]="r.status === 'Confirmada' ? 'success' : (r.status === 'Denegada' ? 'danger' : 'medium')">{{ r.status }}</ion-badge>
+              </div>
+              <div class="reserva-sub">{{ r.habitacion }}</div>
+              <div class="reserva-meta">
+                Entrada: {{ formatDate(r.fechaEntrada) }} • Salida: {{ formatDate(r.fechaSalida) }}
+                <span *ngIf="auth.getRole() !== 'limpieza' && auth.getRole() !== 'recepcion'"> • {{ formatCurrency(r.precioTotal) }}</span>
+              </div>
+            </div>
+          </ng-container>
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { ModalController, AlertController, IonicModule } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { AuthService } from '../services/auth.service';
 
 interface ReservaInput {
   numero?: string;
@@ -17,7 +18,7 @@ interface ReservaInput {
   mascota: boolean;
   hasAllergies?: boolean;
   alergias?: string;
-  status: 'Pendiente' | 'Confirmada' | 'Denegada';
+  status: 'Pendiente' | 'Confirmada' | 'Denegada' | 'Cancelada por cliente';
 }
 
 @Component({
@@ -54,14 +55,16 @@ export class ReservaModalComponent implements OnInit {
   ];
 
   statusOptions: Array<ReservaInput['status']> = ['Pendiente', 'Confirmada', 'Denegada'];
+  isRecepcion: boolean = false;
 
-  constructor(private modalCtrl: ModalController, private alertCtrl: AlertController) {}
+  constructor(private modalCtrl: ModalController, private alertCtrl: AlertController, private auth: AuthService) {}
 
   ngOnInit(): void {
     // si se pasa una reserva inicial (modo editar), mezclar los valores sin mutar el objeto original
     if (this.initial) {
       this.reserva = { ...this.reserva, ...this.initial } as ReservaInput;
     }
+    this.isRecepcion = this.auth.getRole() === 'recepcion';
   }
 
   cancel() {
@@ -88,5 +91,22 @@ export class ReservaModalComponent implements OnInit {
     }
 
     this.modalCtrl.dismiss({ reserva: this.reserva });
+  }
+
+  // Acción específica para recepcion: cancelar reserva como "Cancelada por cliente"
+  async cancelAsClient() {
+    const alert = await this.alertCtrl.create({
+      cssClass: 'cancel-alert',
+      header: 'Cancelar reserva',
+      message: '¿Confirmas que quieres marcar esta reserva como "Cancelada por cliente"?',
+      buttons: [
+        { text: 'No', role: 'cancel' },
+        { text: 'Sí', handler: () => {
+          this.reserva.status = 'Cancelada por cliente';
+          this.modalCtrl.dismiss({ reserva: this.reserva });
+        } }
+      ]
+    });
+    await alert.present();
   }
 }

@@ -543,4 +543,44 @@ body.tab4-no-white-active .extras-alert .alert-button-group .alert-button:last-c
 	filter: brightness(0.98);
 }
 
+/* cancel-alert: invert button text colors and center text as requested */
+.cancel-alert .alert-wrapper {
+	border-radius: 8px !important;
+	background: #fff !important;
+	color: #000 !important;
+}
+.cancel-alert .alert-button-group {
+	display: flex !important;
+	gap: 10px !important;
+	justify-content: center !important;
+	padding-top: 12px !important;
+}
+.cancel-alert .alert-button {
+	display: inline-flex !important;
+	justify-content: center !important;
+	align-items: center !important;
+	text-align: center !important;
+	min-width: 110px !important;
+	padding: 10px 14px !important;
+	border-radius: 8px !important;
+	background: transparent !important;
+	font-weight: 600 !important;
+}
+.cancel-alert .alert-button .alert-button-inner,
+.cancel-alert .alert-button .alert-button-text {
+	width: 100% !important;
+	text-align: center !important;
+}
+/* invert colors: first (No) -> green, last (Sí) -> red */
+.cancel-alert .alert-button-group .alert-button:first-child .alert-button-inner,
+.cancel-alert .alert-button-group .alert-button:first-child .alert-button-text {
+	color: #10b981 !important;
+	-webkit-text-fill-color: #10b981 !important;
+}
+.cancel-alert .alert-button-group .alert-button:last-child .alert-button-inner,
+.cancel-alert .alert-button-group .alert-button:last-child .alert-button-text {
+	color: #e53935 !important;
+	-webkit-text-fill-color: #e53935 !important;
+}
+
 

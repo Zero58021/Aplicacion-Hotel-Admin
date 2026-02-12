@@ -1,34 +1,57 @@
 <ion-content>
-  <div class="center-text">BIENVENIDO JEFE</div>
+  <div class="center-text"><span class="label">BIENVENIDO/A {{ roleLabel }}</span></div>
 
   <div class="actions" role="group" aria-label="Acciones rápidas">
-    <div class="action-item">
-      <ion-button fill="solid" class="action-btn" aria-label="Reservas" routerLink="/tabs/tab2" routerDirection="root" href="/tabs/tab2" (click)="navigate('/tabs/tab2')">
-        <ion-icon name="book"></ion-icon>
-      </ion-button>
-      <div class="action-label">Reservas</div>
-    </div>
+    <!-- Diseño especial para limpieza y mantenimiento -->
+    <ng-container *ngIf="auth.getRole() === 'limpieza' || auth.getRole() === 'mantenimiento'">
+      <div class="action-item" style="transform: translateY(0)">
+        <ion-button fill="solid" class="action-btn" aria-label="Calendario" (click)="navigate('/tabs/tab3')">
+          <ion-icon name="calendar"></ion-icon>
+        </ion-button>
+        <div class="action-label">Calendario</div>
+      </div>
 
-    <div class="action-item">
-      <ion-button fill="solid" class="action-btn" aria-label="Calendario" routerLink="/tabs/tab3" routerDirection="root" href="/tabs/tab3" (click)="navigate('/tabs/tab3')">
-        <ion-icon name="calendar"></ion-icon>
-      </ion-button>
-      <div class="action-label">Calendario</div>
-    </div>
+      <div class="action-item" style="transform: translateY(10px)">
+        <ion-button fill="solid" class="action-btn" aria-label="Habitaciones" (click)="navigate('/tabs/tab4')">
+          <ion-icon name="bed"></ion-icon>
+        </ion-button>
+        <div class="action-label">Habitaciones</div>
+      </div>
 
-    <div class="action-item">
-      <ion-button fill="solid" class="action-btn" aria-label="Habitaciones" routerLink="/tabs/tab4" routerDirection="root" href="/tabs/tab4" (click)="navigate('/tabs/tab4')">
-        <ion-icon name="bed"></ion-icon>
-      </ion-button>
-      <div class="action-label">Habitaciones</div>
-    </div>
+      <div class="action-item" style="transform: translateY(0)">
+        <ion-button fill="solid" class="action-btn" aria-label="Salir" (click)="logout()">
+          <ion-icon name="log-out"></ion-icon>
+        </ion-button>
+        <div class="action-label">Salir</div>
+      </div>
+    </ng-container>
+<!-- Diseño por defecto para otros roles -->
+    <ng-container *ngIf="auth.getRole() !== 'limpieza' && auth.getRole() !== 'mantenimiento'">
+      <div class="action-item" *ngFor="let btn of buttons" [ngStyle]="{ transform: 'translateY(' + (btn.shift || 0) + 'px)' }">
+        <ion-button
+          fill="solid"
+          class="action-btn"
+          aria-label="{{ btn.label }}"
+          [routerLink]="btn.path"
+          routerDirection="root"
+          *ngIf="btn.path"
+          (click)="navigate(btn.path)"
+        >
+          <ion-icon [name]="btn.icon"></ion-icon>
+        </ion-button>
 
-    <div class="action-item">
-      <ion-button type="button" fill="solid" class="action-btn" aria-label="Empleados" (click)="selectTab($event)">
-        <ion-icon name="people"></ion-icon>
-      </ion-button>
-      <div class="action-label">Equipo</div>
-    </div>
+        <ion-button
+          fill="solid"
+          class="action-btn"
+          aria-label="{{ btn.label === 'Logout' ? 'Salir' : btn.label }}"
+          *ngIf="btn.onClick"
+          (click)="btn.onClick()"
+        >
+          <ion-icon [name]="btn.icon"></ion-icon>
+        </ion-button>
+
+        <div class="action-label">{{ btn.label === 'Logout' ? 'Salir' : btn.label }}</div>
+      </div>
+    </ng-container>
   </div>
-
 </ion-content>

@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { TabsPage } from './tabs.page';
+import { PermissionGuard } from '../guards/permission-guard';
 
 const routes: Routes = [
   {
@@ -13,19 +14,27 @@ const routes: Routes = [
       },
       {
         path: 'tab2',
-        loadChildren: () => import('../tab2/tab2.module').then(m => m.Tab2PageModule)
+        loadChildren: () => import('../tab2/tab2.module').then(m => m.Tab2PageModule),
+        canActivate: [PermissionGuard],
+        data: { permissions: ['reservas.view'] }
       },
       {
         path: 'tab3',
-        loadChildren: () => import('../tab3/tab3.module').then(m => m.Tab3PageModule)
+        loadChildren: () => import('../tab3/tab3.module').then(m => m.Tab3PageModule),
+        canActivate: [PermissionGuard],
+        data: { permissions: ['calendario.view'] }
       },
       {
         path: 'tab4',
-        loadChildren: () => import('../tab4/tab4.module').then(m => m.Tab4PageModule)
+        loadChildren: () => import('../tab4/tab4.module').then(m => m.Tab4PageModule),
+        canActivate: [PermissionGuard],
+        data: { permissions: ['habitaciones.view', 'habitaciones.estado'] }
       },
       {
         path: 'tab5',
-        loadChildren: () => import('../tab5/tab5.module').then(m => m.Tab5PageModule)
+        loadChildren: () => import('../tab5/tab5.module').then(m => m.Tab5PageModule),
+        canActivate: [PermissionGuard],
+        data: { permissions: ['equipo.view'] }
       },
       {
         path: '',

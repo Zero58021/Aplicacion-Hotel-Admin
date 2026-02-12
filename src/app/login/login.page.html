@@ -1,0 +1,105 @@
+<ion-content class="login-page" fullscreen>
+  <div class="bg-overlay"></div>
+
+  <div class="clouds" aria-hidden="true">
+    <svg class="cloud cloud--1" viewBox="0 0 200 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <g>
+        <ellipse cx="72" cy="60" rx="70" ry="28" fill="#ffffff" stroke="#ffffff" stroke-width="6" stroke-linejoin="round"/>
+        <circle cx="42" cy="42" r="26" fill="#ffffff" stroke="#ffffff" stroke-width="6" stroke-linejoin="round"/>
+        <circle cx="96" cy="34" r="30" fill="#ffffff" stroke="#ffffff" stroke-width="6" stroke-linejoin="round"/>
+        <rect x="18" y="54" width="120" height="28" rx="24" fill="#ffffff" stroke="#ffffff" stroke-width="6" stroke-linejoin="round"/>
+      </g>
+    </svg>
+
+    <svg class="cloud cloud--2" viewBox="0 0 200 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <g>
+        <ellipse cx="72" cy="56" rx="56" ry="24" fill="#ffffff" stroke="#ffffff" stroke-width="5" stroke-linejoin="round"/>
+        <circle cx="46" cy="40" r="20" fill="#ffffff" stroke="#ffffff" stroke-width="5" stroke-linejoin="round"/>
+        <circle cx="84" cy="34" r="22" fill="#ffffff" stroke="#ffffff" stroke-width="5" stroke-linejoin="round"/>
+        <rect x="16" y="52" width="100" height="24" rx="20" fill="#ffffff" stroke="#ffffff" stroke-width="5" stroke-linejoin="round"/>
+      </g>
+    </svg>
+
+    <svg class="cloud cloud--3" viewBox="0 0 300 120" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <g>
+        <ellipse cx="120" cy="70" rx="110" ry="36" fill="#ffffff" stroke="#ffffff" stroke-width="7" stroke-linejoin="round"/>
+        <circle cx="70" cy="50" r="34" fill="#ffffff" stroke="#ffffff" stroke-width="7" stroke-linejoin="round"/>
+        <circle cx="132" cy="44" r="36" fill="#ffffff" stroke="#ffffff" stroke-width="7" stroke-linejoin="round"/>
+        <rect x="40" y="70" width="160" height="32" rx="28" fill="#ffffff" stroke="#ffffff" stroke-width="7" stroke-linejoin="round"/>
+      </g>
+    </svg>
+
+    <svg class="cloud cloud--4" viewBox="0 0 180 90" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <g>
+        <ellipse cx="64" cy="52" rx="64" ry="24" fill="#ffffff" stroke="#ffffff" stroke-width="5" stroke-linejoin="round"/>
+        <circle cx="36" cy="38" r="18" fill="#ffffff" stroke="#ffffff" stroke-width="5" stroke-linejoin="round"/>
+        <circle cx="78" cy="32" r="20" fill="#ffffff" stroke="#ffffff" stroke-width="5" stroke-linejoin="round"/>
+        <rect x="10" y="50" width="120" height="22" rx="18" fill="#ffffff" stroke="#ffffff" stroke-width="5" stroke-linejoin="round"/>
+      </g>
+    </svg>
+    
+    <svg class="cloud cloud--5" viewBox="0 0 160 80" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <g>
+        <ellipse cx="56" cy="44" rx="52" ry="20" fill="#ffffff" stroke="#ffffff" stroke-width="5" stroke-linejoin="round"/>
+        <circle cx="34" cy="34" r="16" fill="#ffffff" stroke="#ffffff" stroke-width="5" stroke-linejoin="round"/>
+        <circle cx="70" cy="28" r="18" fill="#ffffff" stroke="#ffffff" stroke-width="5" stroke-linejoin="round"/>
+        <rect x="8" y="44" width="96" height="20" rx="16" fill="#ffffff" stroke="#ffffff" stroke-width="5" stroke-linejoin="round"/>
+      </g>
+    </svg>
+
+    <svg class="cloud cloud--6" viewBox="0 0 240 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <g>
+        <ellipse cx="96" cy="62" rx="92" ry="30" fill="#ffffff" stroke="#ffffff" stroke-width="6" stroke-linejoin="round"/>
+        <circle cx="62" cy="46" r="28" fill="#ffffff" stroke="#ffffff" stroke-width="6" stroke-linejoin="round"/>
+        <circle cx="110" cy="40" r="30" fill="#ffffff" stroke="#ffffff" stroke-width="6" stroke-linejoin="round"/>
+        <rect x="36" y="64" width="140" height="28" rx="24" fill="#ffffff" stroke="#ffffff" stroke-width="6" stroke-linejoin="round"/>
+      </g>
+    </svg>
+
+    <svg class="cloud cloud--7" viewBox="0 0 320 120" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <g>
+        <ellipse cx="140" cy="76" rx="140" ry="42" fill="#ffffff" stroke="#ffffff" stroke-width="7" stroke-linejoin="round"/>
+        <circle cx="96" cy="56" r="36" fill="#ffffff" stroke="#ffffff" stroke-width="7" stroke-linejoin="round"/>
+        <circle cx="150" cy="48" r="38" fill="#ffffff" stroke="#ffffff" stroke-width="7" stroke-linejoin="round"/>
+        <rect x="72" y="80" width="196" height="32" rx="28" fill="#ffffff" stroke="#ffffff" stroke-width="7" stroke-linejoin="round"/>
+      </g>
+    </svg>
+  </div>
+
+  <div class="login-wrapper">
+    <ion-card class="login-card">
+      <ion-card-content>
+        <div class="brand">
+          <h1>¡Bienvenido!</h1>
+          <p>Inicia sesión para continuar</p>
+        </div>
+
+        <div class="roles-grid">
+          <ion-button expand="block" color="primary" (click)="selectRole('recepcion')">Recepción</ion-button>
+          <ion-button expand="block" color="primary" (click)="selectRole('limpieza')">Limpieza</ion-button>
+          <ion-button expand="block" color="primary" (click)="selectRole('restaurante')">Restaurante</ion-button>
+          <ion-button expand="block" color="primary" (click)="selectRole('mantenimiento')">Mantenimiento</ion-button>
+          <ion-button expand="block" color="warning" (click)="selectRole('jefe')">Jefe</ion-button>
+        </div>
+
+        <div *ngIf="activeRole" class="expand-panel">
+          <h3 class="selected-role">Acceder como: {{ activeRole | titlecase }}</h3>
+
+          <ion-item lines="full" class="password-item">
+            <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
+            <ion-input [(ngModel)]="password" [type]="showPassword ? 'text' : 'password'" placeholder="Contraseña"></ion-input>
+            <ion-button class="toggle-password" fill="clear" slot="end" (click)="toggleShowPassword()" aria-label="Mostrar contraseña">
+              <ion-icon [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+            </ion-button>
+          </ion-item>
+
+          <ion-button expand="block" color="primary" (click)="confirmLogin()">ENTRAR</ion-button>
+
+          <ion-button expand="block" fill="clear" (click)="activeRole = null">CANCELAR</ion-button>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <div class="footer-note">¿Problemas para acceder? Contacta al administrador.</div>
+  </div>
+</ion-content>

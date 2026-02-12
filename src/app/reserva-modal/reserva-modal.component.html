@@ -16,7 +16,7 @@
 
     <ion-item>
       <ion-label position="stacked">Titular</ion-label>
-      <ion-input [(ngModel)]="reserva.titular" placeholder="Nombre del titular"></ion-input>
+      <ion-input [disabled]="isRecepcion && (!!initial?.numero)" [(ngModel)]="reserva.titular" placeholder="Nombre del titular"></ion-input>
     </ion-item>
 
     <ion-item>
@@ -28,6 +28,7 @@
       <ion-label position="stacked">Fecha salida</ion-label>
       <ion-datetime presentation="date" display-format="DD/MM/YYYY" picker-format="DD/MM/YYYY" [(ngModel)]="reserva.fechaSalida"></ion-datetime>
     </ion-item>
+
 
     <ion-item>
       <ion-label position="stacked">Número de habitaciones</ion-label>
@@ -44,7 +45,7 @@
       <ion-input type="number" [(ngModel)]="reserva.ninos"></ion-input>
     </ion-item>
 
-    <ion-item>
+    <ion-item *ngIf="!isRecepcion">
       <ion-label position="stacked">Precio total</ion-label>
       <ion-input type="number" [(ngModel)]="reserva.precioTotal" step="0.01"></ion-input>
     </ion-item>
@@ -73,7 +74,7 @@
 
     <ion-item>
       <ion-label position="stacked">Estado</ion-label>
-      <ion-segment [(ngModel)]="reserva.status">
+      <ion-segment [disabled]="isRecepcion" [(ngModel)]="reserva.status">
         <ion-segment-button *ngFor="let s of statusOptions" [value]="s">{{ s }}</ion-segment-button>
       </ion-segment>
     </ion-item>
@@ -83,6 +84,7 @@
 <ion-footer>
   <ion-toolbar>
     <ion-buttons slot="end">
+      <ion-button *ngIf="isRecepcion && !!initial?.numero" color="warning" (click)="cancelAsClient()">Cancelar reserva</ion-button>
       <ion-button color="primary" (click)="save()">Guardar</ion-button>
     </ion-buttons>
   </ion-toolbar>

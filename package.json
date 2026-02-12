@@ -5,9 +5,14 @@
   "homepage": "https://ionicframework.com/",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "ionic serve",
+    "serve": "ionic serve",
+    "serve:external": "ionic serve --external",
     "build": "ng build",
+    "build:watch": "ng build --watch --configuration development",
     "watch": "ng build --watch --configuration development",
+    "android:live": "ionic capacitor run android -l --external",
+    "android:copy": "npx cap copy android",
     "test": "ng test",
     "lint": "ng lint"
   },
@@ -47,6 +52,7 @@
     "@capacitor/cli": "8.0.2",
     "@ionic/angular-toolkit": "^12.0.0",
     "@types/jasmine": "~5.1.0",
+    "@types/node": "^25.2.3",
     "@typescript-eslint/eslint-plugin": "^8.18.0",
     "@typescript-eslint/parser": "^8.18.0",
     "eslint": "^9.16.0",

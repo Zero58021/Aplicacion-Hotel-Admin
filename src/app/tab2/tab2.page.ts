@@ -3,6 +3,7 @@ import { AlertController, IonContent, ModalController } from '@ionic/angular';
 import { ReservaService } from '../services/reserva.service';
 import type { Reserva } from '../services/reserva.service';
 import { Subscription } from 'rxjs';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-tab2',
@@ -22,7 +23,7 @@ export class Tab2Page implements OnInit, OnDestroy {
   @ViewChild(IonContent, { static: false }) content!: IonContent;
   showScrollTop: boolean = false;
 
-  constructor(private alertCtrl: AlertController, private modalCtrl: ModalController, private reservaService: ReservaService) {}
+  constructor(private alertCtrl: AlertController, private modalCtrl: ModalController, private reservaService: ReservaService, public auth: AuthService) {}
 
   ngOnInit(): void {
     this.sub = this.reservaService.getReservas$().subscribe(list => {
@@ -37,7 +38,18 @@ export class Tab2Page implements OnInit, OnDestroy {
 
   get filteredReservas(): Reserva[] {
     const term = this.searchTerm?.trim().toLowerCase();
-    const results = this.reservas.filter(r => {
+    // If role is recepcion, only show confirmed reservations
+    let pool = this.reservas;
+    if (this.auth.getRole() === 'recepcion') {
+      pool = pool.filter(r => r.status === 'Confirmada');
+    }
+
+    // Restaurante solo puede ver reservas confirmadas que tengan alergias
+    if (this.auth.getRole() === 'restaurante') {
+      pool = pool.filter(r => r.status === 'Confirmada' && !!r.hasAllergies);
+    }
+
+    const results = pool.filter(r => {
       // filtro por estado
       if (this.statusFilter && this.statusFilter !== 'Todas') {
         if (r.status !== this.statusFilter) return false;
@@ -58,6 +70,19 @@ export class Tab2Page implements OnInit, OnDestroy {
 
     results.sort((a, b) => parseNum(a.numero) - parseNum(b.numero));
     return results;
+  }
+
+  async cancelByClient(r: Reserva) {
+    const alert = await this.alertCtrl.create({
+      cssClass: 'cancel-alert',
+      header: 'Cancelar reserva',
+      message: `¿Confirmas que deseas marcar la reserva ${r.numero} como "Cancelada por cliente"?`,
+      buttons: [
+        { text: 'No', role: 'cancel' },
+        { text: 'Sí', handler: () => this.reservaService.updateReserva(r.numero, { status: 'Cancelada por cliente', expanded: false }) }
+      ]
+    });
+    await alert.present();
   }
 
   toggleExpand(r: Reserva) {
@@ -222,6 +247,16 @@ export class Tab2Page implements OnInit, OnDestroy {
   }
 
   async openNewReservation() {
+    // bloquear creación de reservas para el rol 'restaurante'
+    if (this.auth.getRole() === 'restaurante') {
+      const a = await this.alertCtrl.create({
+        header: 'Acceso denegado',
+        message: 'No tienes permiso para crear reservas.',
+        buttons: ['OK']
+      });
+      await a.present();
+      return;
+    }
     const modal = await this.modalCtrl.create({
       component: (await import('../reserva-modal/reserva-modal.component')).ReservaModalComponent,
       componentProps: {}
@@ -230,6 +265,10 @@ export class Tab2Page implements OnInit, OnDestroy {
     modal.onDidDismiss().then((detail) => {
       if (detail?.data?.reserva) {
         const newReserva = detail.data.reserva as Partial<Reserva>;
+        // Si quien crea es Recepción, forzar estado a Pendiente
+        if (this.auth.getRole() === 'recepcion') {
+          newReserva.status = 'Pendiente';
+        }
         this.reservaService.addReserva(newReserva);
       }
     });

@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { NotificationService } from './notification.service';
+import { AuthService } from './auth.service';
 
 export interface Reserva {
   numero: string;
@@ -17,7 +19,7 @@ export interface Reserva {
   hasAllergies?: boolean;
   alergias?: string;
   expanded?: boolean;
-  status?: 'Pendiente' | 'Confirmada' | 'Denegada';
+  status?: 'Pendiente' | 'Confirmada' | 'Denegada' | 'Cancelada por cliente';
 }
 
 @Injectable({ providedIn: 'root' })
@@ -35,7 +37,7 @@ export class ReservaService {
 
   private reservas$ = new BehaviorSubject<Reserva[]>(this.initial.slice());
 
-  constructor() {}
+  constructor(private notificationService: NotificationService, private auth: AuthService) {}
 
   // Observable para que componentes puedan suscribirse y reaccionar a cambios
   getReservas$(): Observable<Reserva[]> {
@@ -55,6 +57,8 @@ export class ReservaService {
     const next = (max + 1).toString().padStart(4, '0');
     const nueva: Reserva = { ...res, numero: `R-${next}`, expanded: false } as Reserva;
     this.reservas$.next([nueva, ...current]);
+    // Notificar cambio
+    this.notificationService.notify('reservas', `ha añadido una nueva reserva en la lista de reservas (${nueva.numero})`);
     return nueva;
   }
 
@@ -62,10 +66,15 @@ export class ReservaService {
     const current = this.reservas$.getValue();
     const idx = current.findIndex(r => r.numero === numero);
     if (idx < 0) return false;
-    const updated: Reserva = { ...current[idx], ...partial, numero } as Reserva;
+    const prev = current[idx];
+    const updated: Reserva = { ...prev, ...partial, numero } as Reserva;
     const copy = [...current];
     copy[idx] = updated;
     this.reservas$.next(copy);
+    // detectar campos cambiados
+    const changedKeys = Object.keys(partial).filter(k => String((prev as any)[k]) !== String((partial as any)[k]));
+    const changedDesc = changedKeys.length ? ` (${changedKeys.join(', ')})` : '';
+    this.notificationService.notify('reservas', `ha actualizado la reserva ${numero}${changedDesc} en la lista de reservas`);
     return true;
   }
 
@@ -73,6 +82,7 @@ export class ReservaService {
     const current = this.reservas$.getValue();
     const copy = current.filter(r => r.numero !== numero);
     this.reservas$.next(copy);
+    this.notificationService.notify('reservas', `ha eliminado la reserva ${numero} de la lista de reservas`);
   }
 
 }

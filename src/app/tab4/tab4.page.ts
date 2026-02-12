@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { ReviewsModalComponent } from '../reviews-modal/reviews-modal.component';
 import { AddRoomModalComponent } from '../add-room-modal/add-room-modal.component';
 import { ImageModalComponent } from '../image-modal/image-modal.component';
+import { AuthService } from '../services/auth.service';
+import { RoomService } from '../services/room.service';
 
 @Component({
   selector: 'app-tab4',
@@ -16,58 +18,7 @@ import { ImageModalComponent } from '../image-modal/image-modal.component';
 export class Tab4Page implements OnInit {
   @ViewChild(IonContent) content: IonContent | undefined;
   showScrollTop: boolean = false;
-  rooms = [
-    {
-      images: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80'],
-      roomNumber: '101',
-      status: 'Libre',
-      title: 'Individual Económica',
-      type: 'Individual',
-      floor: 'Primera',
-      extras: ['WiFi'],
-      oldPrice: '79 €',
-      price: '47 €',
-      note: 'Incluye tasas e impuestos',
-      reviews: [
-        { author: 'María', rating: 5, text: 'Excelente habitación, muy limpia y cómoda.' },
-        { author: 'Carlos', rating: 3, text: 'Buena ubicación pero un poco ruidosa por la noche.' }
-      ]
-    },
-    {
-      images: ['assets/fotosInicio/1.webp'],
-      roomNumber: '102',
-      status: 'Libre',
-      title: 'Doble Confort',
-      type: 'Doble',
-      floor: 'Segunda',
-      extras: ['WiFi', 'Desayuno'],
-      oldPrice: '120 €',
-      price: '89 €',
-      note: 'Cancelación gratuita',
-      reviews: [
-        { author: 'Lucía', rating: 4, text: 'Muy buena estancia, el desayuno merece la pena.' },
-        { author: 'Andrés', rating: 2, text: 'La cama no era cómoda y la limpieza fue mejorable.' },
-        { author: 'Sofía', rating: 5, text: 'Personal atento y habitación amplia.' }
-      ]
-    }
-    ,
-    {
-      images: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80','assets/fotosInicio/2.jpg'],
-      roomNumber: '201',
-      status: 'Libre',
-      title: 'Suite Familiar',
-      type: 'Suite',
-      floor: 'Tercera',
-      extras: ['WiFi', 'Desayuno', 'Terraza'],
-      oldPrice: '220 €',
-      price: '179 €',
-      note: 'Ideal para familias, incluye desayuno y cuna bajo petición',
-      reviews: [
-        { author: 'Miguel', rating: 5, text: 'Perfecta para nuestra familia, amplia y con terraza.' },
-        { author: 'Ana', rating: 4, text: 'Muy cómoda y con buenas vistas.' }
-      ]
-    }
-  ];
+  rooms: any[] = [];
 
   roomTypes = ['Individual', 'Doble', 'Doble individual', 'Triple', 'Suite', 'Familiar'];
   floors = ['Baja', 'Primera', 'Segunda', 'Tercera', 'Cuarta'];
@@ -83,7 +34,7 @@ export class Tab4Page implements OnInit {
   // creatingIndex removed; new rooms are added via modal
 
 
-  constructor(private alertCtrl: AlertController, private modalCtrl: ModalController) {
+  constructor(private alertCtrl: AlertController, private modalCtrl: ModalController, public auth: AuthService, private roomService: RoomService) {
     // Force styles on extras-alert overlays when they present (Shadow DOM safe)
     document.addEventListener('ionAlertDidPresent', (ev: any) => {
       const alertEl = ev.target as HTMLElement;
@@ -146,8 +97,16 @@ export class Tab4Page implements OnInit {
     return this.rooms.indexOf(room);
   }
   ngOnInit() {
-    // initialize visible image index per room
-    this.imageIndex = this.rooms.map(() => 0);
+    // subscribe to global room list and initialize imageIndex when it changes
+    this.roomService.getRooms$().subscribe(list => {
+      this.rooms = list.map(r => ({ ...r }));
+      this.imageIndex = this.rooms.map(() => 0);
+    });
+  }
+
+  get showScrollForRole(): boolean {
+    const r = this.auth.getRole();
+    return r === 'recepcion' || r === 'limpieza';
   }
 
   onContentScroll(ev: any) {
@@ -169,12 +128,15 @@ export class Tab4Page implements OnInit {
   }
 
   startEdit(i: number) {
+    if (!this.auth.hasPermission('habitaciones.edit')) return;
     this.editingIndex = i;
     const room = this.rooms[i];
     this.editModel = { ...room, extras: Array.isArray(room.extras) ? [...room.extras] : [], images: Array.isArray(room.images) ? [...room.images] : [] };
   }
   
   async addNewRoom() {
+    if (!this.auth.hasPermission('habitaciones.edit')) return;
+
     const modal = await this.modalCtrl.create({
       component: AddRoomModalComponent,
       cssClass: 'add-room-modal'
@@ -197,16 +159,8 @@ export class Tab4Page implements OnInit {
       note: data.note || '',
       reviews: Array.isArray(data.reviews) ? data.reviews : []
     };
-    this.rooms.push(room);
-    // sort rooms by numeric roomNumber when possible; fallback to string compare
-    this.rooms.sort((a: any, b: any) => {
-      const na = Number(a.roomNumber);
-      const nb = Number(b.roomNumber);
-      if (!isNaN(na) && !isNaN(nb)) return na - nb;
-      return (a.roomNumber || '').toString().localeCompare((b.roomNumber || '').toString(), undefined, { numeric: true });
-    });
-    // rebuild imageIndex
-    this.imageIndex = this.rooms.map(() => 0);
+    // delegate to RoomService so all subscribers update
+    this.roomService.addRoom(room);
   }
 
   onFileSelected(event: any) {
@@ -270,29 +224,37 @@ export class Tab4Page implements OnInit {
 
   saveEdit() {
     if (this.editingIndex < 0) return;
+    if (!this.auth.hasPermission('habitaciones.edit')) return;
     const extras = Array.isArray(this.editModel.extras) ? this.editModel.extras : [];
     const images = Array.isArray(this.editModel.images) ? this.editModel.images : [];
     const updated = { ...this.editModel, extras, images };
-    this.rooms[this.editingIndex] = updated;
-    // ensure image index for this room stays within bounds
-    if (!this.imageIndex) this.imageIndex = [];
-    if (this.imageIndex[this.editingIndex] === undefined) this.imageIndex[this.editingIndex] = 0;
-    const idx = this.imageIndex[this.editingIndex];
-    if (images.length === 0) {
-      this.imageIndex[this.editingIndex] = 0;
-    } else if (idx >= images.length) {
-      this.imageIndex[this.editingIndex] = images.length - 1;
-    }
+    // update via service so change propagates
+    this.roomService.updateRoom(this.editingIndex, updated);
+    // reset edit state; imageIndex will be adjusted when the rooms list emits
     this.editingIndex = -1;
     this.editModel = {};
   }
 
   cancelEdit() {
+    console.log('cancelEdit invoked');
+    // Ensure any open Ionic overlays (alerts, popovers, action-sheets) are dismissed
+    try {
+      const alert = document.querySelector('ion-alert') as any | null;
+      const pop = document.querySelector('ion-popover') as any | null;
+      const as = document.querySelector('ion-action-sheet') as any | null;
+      if (alert && typeof alert.dismiss === 'function') alert.dismiss().catch(() => {});
+      if (pop && typeof pop.dismiss === 'function') pop.dismiss().catch(() => {});
+      if (as && typeof as.dismiss === 'function') as.dismiss().catch(() => {});
+    } catch (e) {
+      // ignore overlay dismissal errors
+    }
     this.editingIndex = -1;
     this.editModel = {};
   }
 
   async confirmDelete(i: number) {
+    if (!this.auth.hasPermission('habitaciones.edit')) return;
+
     const alert = await this.alertCtrl.create({
       header: 'Borrar habitación',
       message: '¿Estás seguro de que deseas borrar esta habitación?',
@@ -306,18 +268,8 @@ export class Tab4Page implements OnInit {
   }
 
   deleteRoom(i: number) {
-    if (i < 0 || i >= this.rooms.length) return;
-    this.rooms.splice(i, 1);
-    // keep imageIndex array in sync
-    if (this.imageIndex && this.imageIndex.length > i) this.imageIndex.splice(i, 1);
-    // if we were editing this room, cancel edit; if editing index after removed, shift it
-    if (this.editingIndex === i) {
-      this.editingIndex = -1;
-      this.editModel = {};
-    } else if (this.editingIndex > i) {
-      this.editingIndex = this.editingIndex - 1;
-    }
-    // no creatingIndex to adjust (modal-based creation)
+    if (!this.auth.hasPermission('habitaciones.edit')) return;
+    this.roomService.deleteRoom(i);
   }
 
   toggleExtra(opt: string) {
@@ -366,6 +318,20 @@ export class Tab4Page implements OnInit {
         return 'inactive';
       default:
         return '';
+    }
+  }
+
+  async setRoomStatus(i: number, status: string) {
+    if (i < 0 || i >= this.rooms.length) return;
+    this.roomService.setRoomStatus(i, status);
+  }
+
+  onPriceChange(i: number, value: any, field: 'price' | 'oldPrice' = 'price') {
+    if (!this.auth.hasPermission('habitaciones.edit')) return;
+    if (field === 'price') {
+      this.roomService.setRoomPrice(i, value);
+    } else {
+      this.roomService.setRoomOldPrice(i, value);
     }
   }
 

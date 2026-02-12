@@ -2,6 +2,16 @@ import { Component, OnInit } from '@angular/core';
 import { StateService } from '../services/state.service';
 import { Router } from '@angular/router';
 import { NavController } from '@ionic/angular';
+import { AuthService, Permission } from '../services/auth.service';
+
+interface ActionButton {
+  label: string;
+  icon: string;
+  permission?: Permission; // Permiso requerido, opcional (logout no necesita)
+  path?: string;           // Ruta para navegar
+  onClick?: () => void;    // Acción alternativa
+  shift?: number;          // Desplazamiento vertical en px para alineación
+}
 
 @Component({
   selector: 'app-tab1',
@@ -11,15 +21,26 @@ import { NavController } from '@ionic/angular';
 })
 export class Tab1Page implements OnInit {
   showText = false;
+  buttons: ActionButton[] = [];
+  roleLabel = '';
 
-  constructor(private router: Router, private navCtrl: NavController, private state: StateService) {}
+  constructor(
+    private router: Router,
+    private navCtrl: NavController,
+    private state: StateService,
+    public auth: AuthService
+  ) {}
 
   ngOnInit() {
+    this.setupButtons();
+
+    const role = this.auth.getRole();
+    this.roleLabel = role ? role.toUpperCase() : 'INVITADO';
+
     const saved = this.state.getState() || {};
     if (saved.tab1 && typeof saved.tab1.showText === 'boolean') {
       this.showText = saved.tab1.showText;
     }
-    // keep UI in sync if other parts update the global state
     this.state.state$.subscribe(s => {
       if (s && s.tab1 && typeof s.tab1.showText === 'boolean') {
         this.showText = s.tab1.showText;
@@ -27,42 +48,48 @@ export class Tab1Page implements OnInit {
     });
   }
 
-  toggleText() {
-    this.showText = !this.showText;
-    this.state.update({ tab1: { showText: this.showText } });
-  }
+  setupButtons() {
+    const allButtons: ActionButton[] = [
+      { label: 'Reservas', icon: 'book', permission: 'reservas.view', path: '/tabs/tab2', shift: 0 },
+      { label: 'Calendario', icon: 'calendar', permission: 'calendario.view', path: '/tabs/tab3', shift: 10 },
+      { label: 'Habitaciones', icon: 'bed', permission: 'habitaciones.view', path: '/tabs/tab4', shift: 10 },
+      { label: 'Equipo', icon: 'people', permission: 'equipo.view', path: '/tabs/tab5', shift: 0 },
+      { label: 'Logout', icon: 'log-out', onClick: () => this.logout(), shift: 0 } // siempre visible
+    ];
 
-  navigate(path: string) {
-    console.log('[Tab1] navigate()', path);
-    // Prefer navigateRoot to switch tabs and reset navigation stack
-    this.navCtrl.navigateRoot(path).then(() => {
-      console.log('[Tab1] navigate: success', path);
-    }).catch(err => {
-      console.error('[Tab1] navigate: error', err);
-      // fallback to router
-      this.router.navigateByUrl(path).catch(e => console.error('[Tab1] router fallback error', e));
+    const role = this.auth.getRole();
+
+    // Para el rol 'restaurante' solo mostramos Reservas + Logout y los alineamos a la misma altura
+    if (role === 'restaurante') {
+      const reservaBtn = allButtons.find(b => b.label === 'Reservas');
+      const calendarioBtn = allButtons.find(b => b.label === 'Calendario');
+      const logoutBtn = allButtons.find(b => b.label === 'Logout');
+      this.buttons = [];
+      if (reservaBtn) this.buttons.push(reservaBtn);
+      if (calendarioBtn) this.buttons.push(calendarioBtn);
+      if (logoutBtn) this.buttons.push(logoutBtn);
+      return;
+    }
+
+    // Filtramos los botones según permisos para los demás roles
+    this.buttons = allButtons.filter(btn => {
+      if (!btn.permission) return true;
+      return this.auth.hasPermission(btn.permission);
     });
   }
 
-  selectTab(ev: Event) {
-    ev && ev.preventDefault && ev.preventDefault();
-    ev && ev.stopPropagation && ev.stopPropagation();
-    const tabPath = '/tabs/tab5';
-    console.log('[Tab1] selectTab() ->', tabPath);
-    // First try NavController
-    this.navCtrl.navigateRoot(tabPath).then(() => {
-      console.log('[Tab1] selectTab navigateRoot success');
-    }).catch(err => console.error('[Tab1] selectTab navigateRoot error', err));
+  navigate(path: string) {
+    this.navCtrl.navigateRoot(path).catch(() => this.router.navigateByUrl(path));
+  }
 
-    // Also try to select ion-tabs directly as fallback
-    try {
-      const tabs = document.querySelector('ion-tabs') as any;
-      if (tabs && typeof tabs.select === 'function') {
-        tabs.select('tab5').then((res: any) => console.log('[Tab1] tabs.select result', res)).catch((e: any) => console.error('[Tab1] tabs.select error', e));
-      }
-    } catch (e) {
-      console.error('[Tab1] selectTab DOM error', e);
-    }
+  selectTab(ev: Event, path: string) {
+    ev.preventDefault();
+    ev.stopPropagation();
+    this.navCtrl.navigateRoot(path);
+  }
+
+  logout() {
+    this.auth.logout();
+    this.navCtrl.navigateRoot('/login');
   }
 }
-

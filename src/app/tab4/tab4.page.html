@@ -61,10 +61,10 @@
           <ion-icon name="chevron-forward-outline"></ion-icon>
         </ion-button>
         <div class="image-counter" *ngIf="room.images && room.images.length > 0">{{ (imageIndex[originalIndex(room)] !== undefined ? imageIndex[originalIndex(room)] + 1 : 1) }}/{{ room.images.length }}</div>
-        <ion-button *ngIf="editingIndex !== originalIndex(room)" fill="clear" class="edit-btn" (click)="startEdit(originalIndex(room))" aria-label="Editar">
+        <ion-button *ngIf="editingIndex !== originalIndex(room) && auth.hasPermission('habitaciones.edit')" fill="clear" class="edit-btn" (click)="startEdit(originalIndex(room))" aria-label="Editar">
           <ion-icon name="pencil-outline"></ion-icon>
         </ion-button>
-        <ion-button *ngIf="editingIndex !== originalIndex(room)" fill="clear" color="danger" class="delete-btn" (click)="confirmDelete(originalIndex(room))" aria-label="Borrar">
+        <ion-button *ngIf="editingIndex !== originalIndex(room) && auth.hasPermission('habitaciones.edit')" fill="clear" color="danger" class="delete-btn" (click)="confirmDelete(originalIndex(room))" aria-label="Borrar">
           <ion-icon name="trash-outline"></ion-icon>
         </ion-button>
       </div>
@@ -76,15 +76,25 @@
               <div class="room-number-and-status">
                 <div class="room-number">Nº {{ room.roomNumber }}</div>
                 <ion-badge class="status-badge" [ngClass]="getStatusClass(room.status)">{{ room.status }}</ion-badge>
+                <!-- Mantenimiento role: toggle between Libre <-> Mantenimiento -->
+                <ng-container *ngIf="auth.hasPermission('habitaciones.estado') && auth.getRole() === 'mantenimiento'">
+                  <ion-button *ngIf="room.status === 'Mantenimiento'" fill="outline" size="small" color="primary" (click)="setRoomStatus(originalIndex(room), 'Libre')" style="margin-left:8px">Marcar libre</ion-button>
+                  <ion-button *ngIf="room.status !== 'Mantenimiento'" fill="clear" size="small" (click)="setRoomStatus(originalIndex(room), 'Mantenimiento')">Marcar Mantenimiento</ion-button>
+                </ng-container>
+                <!-- Otros roles: mantener comportamiento Limpieza -->
+                <ng-container *ngIf="auth.hasPermission('habitaciones.estado') && auth.getRole() !== 'mantenimiento'">
+                  <ion-button *ngIf="room.status === 'Limpieza'" fill="outline" size="small" color="primary" (click)="setRoomStatus(originalIndex(room), 'Libre')" style="margin-left:8px">Marcar libre</ion-button>
+                  <ion-button *ngIf="room.status !== 'Limpieza' && auth.getRole() !== 'jefe'" fill="clear" size="small" (click)="setRoomStatus(originalIndex(room), 'Limpieza')">Marcar Limpieza</ion-button>
+                </ng-container>
               </div>
-              <div class="rating-row">
-                <div class="stars">
-                  <ion-icon *ngFor="let filled of starState(avgRating(room))" [name]="filled ? 'star' : 'star-outline'"></ion-icon>
+              <div class="rating-row" *ngIf="auth.getRole() !== 'limpieza' && auth.getRole() !== 'mantenimiento'">
+                  <div class="stars">
+                    <ion-icon *ngFor="let filled of starState(avgRating(room))" [name]="filled ? 'star' : 'star-outline'"></ion-icon>
+                  </div>
+                  <div class="avg-text">{{ avgRating(room) | number:'1.1-1' }} · {{ (room.reviews?.length || 0) }} opiniones</div>
                 </div>
-                <div class="avg-text">{{ avgRating(room) | number:'1.1-1' }} · {{ (room.reviews?.length || 0) }} opiniones</div>
-              </div>
             </div>
-            <ion-button fill="clear" class="reviews-btn" (click)="showReviews(room)" aria-label="Opiniones">
+            <ion-button *ngIf="auth.getRole() !== 'limpieza' && auth.getRole() !== 'mantenimiento'" fill="clear" class="reviews-btn" (click)="showReviews(room)" aria-label="Opiniones">
               <ion-icon name="chatbubbles-outline"></ion-icon>
             </ion-button>
           </div>
@@ -94,18 +104,18 @@
             <div class="floor">Planta: {{ room.floor }}</div>
           </div>
 
-          <div class="meta-row">
+          <div class="meta-row" *ngIf="auth.getRole() !== 'limpieza' && auth.getRole() !== 'mantenimiento'">
             <div class="extras">
               <ion-badge *ngFor="let ex of room.extras" color="medium" class="extra">{{ ex }}</ion-badge>
             </div>
           </div>
 
-          <div class="price-row">
+          <div class="price-row" *ngIf="auth.getRole() !== 'limpieza' && auth.getRole() !== 'mantenimiento'">
             <div class="old-price">{{ room.oldPrice }}</div>
             <div class="price">{{ room.price }}</div>
           </div>
 
-          <div class="note">{{ room.note }}</div>
+          <div class="note" *ngIf="auth.getRole() !== 'limpieza' && auth.getRole() !== 'mantenimiento'">{{ room.note }}</div>
         </ng-container>
 
         <ng-template #editForm>
@@ -188,9 +198,9 @@
             </ion-item>
 
             <div class="edit-actions">
-              <ion-button color="primary" (click)="saveEdit()">Guardar</ion-button>
+              <ion-button *ngIf="auth.hasPermission('habitaciones.edit')" color="primary" (click)="saveEdit()">Guardar</ion-button>
               <ion-button color="medium" fill="clear" (click)="cancelEdit()">Cancelar</ion-button>
-              <ion-button color="danger" fill="clear" (click)="confirmDelete(originalIndex(room))">Borrar</ion-button>
+              <ion-button *ngIf="auth.hasPermission('habitaciones.edit')" color="danger" fill="clear" (click)="confirmDelete(originalIndex(room))">Borrar</ion-button>
             </div>
           </div>
         </ng-template>
@@ -201,11 +211,11 @@
 </ion-content>
 
 <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-  <ion-fab-button class="small-fab" color="primary" (click)="addNewRoom()" aria-label="Añadir habitación">
+  <ion-fab-button *ngIf="auth.hasPermission('habitaciones.edit')" class="small-fab" color="primary" (click)="addNewRoom()" aria-label="Añadir habitación">
     <ion-icon class="fab-add-icon" name="add-outline"></ion-icon>
   </ion-fab-button>
 </ion-fab>
 
-<button class="scroll-top" [class.visible]="showScrollTop" (click)="scrollToTop()" aria-label="Ir arriba">
+<button *ngIf="auth.getRole() === 'recepcion' || auth.getRole() === 'limpieza'" class="scroll-top bottom-right" [class.visible]="showScrollTop" (click)="scrollToTop()" aria-label="Ir arriba">
   <ion-icon name="chevron-up-outline"></ion-icon>
 </button>

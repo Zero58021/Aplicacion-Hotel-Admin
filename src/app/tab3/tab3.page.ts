@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ReservaService } from '../services/reserva.service';
+import { AuthService } from '../services/auth.service';
 import type { Reserva } from '../services/reserva.service';
 import { Subscription } from 'rxjs';
 
@@ -17,11 +18,12 @@ export class Tab3Page implements OnInit {
   weeks: (number | null)[][] = [];
   weekdays = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'];
   selected: Date | null = null;
-  events: Record<string, boolean> = {};
+  // 'entrada' = check-in, 'salida' = check-out, 'ambas' = ambos en misma fecha, 'pendiente' = reserva pendiente
+  events: Record<string, 'entrada' | 'salida' | 'ambas' | 'pendiente'> = {};
   reservas: Reserva[] = [];
   private sub?: Subscription;
 
-  constructor(private reservaService: ReservaService) {}
+  constructor(private reservaService: ReservaService, public auth: AuthService) {}
 
   ngOnInit(): void {
     this.updateCalendar();
@@ -116,6 +118,18 @@ export class Tab3Page implements OnInit {
     return !!this.events[this.formatKey(day)];
   }
 
+  isSalida(day: number | null) {
+    if (!day) return false;
+    const v = this.events[this.formatKey(day)];
+    return v === 'salida' || v === 'ambas';
+  }
+
+  isPendiente(day: number | null) {
+    if (!day) return false;
+    const v = this.events[this.formatKey(day)];
+    return v === 'pendiente';
+  }
+
   private populateSampleEvents() {
     // kept for backward compatibility but not used
     this.events = {};
@@ -124,10 +138,40 @@ export class Tab3Page implements OnInit {
   private loadEventsFromReservas() {
     this.events = {};
     for (const r of this.reservas) {
-      const d = new Date(r.fechaEntrada);
-      if (isNaN(d.getTime())) continue;
-      const key = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
-      this.events[key] = true;
+      // Marcar en el calendario según estado y rol
+      // El rol 'restaurante' solo debe ver reservas con alergias (como antes)
+      if (this.auth.getRole() === 'restaurante' && !r.hasAllergies) continue;
+
+      const markAsPendingForJefe = r.status === 'Pendiente' && this.auth.getRole() === 'jefe';
+      const isConfirmed = r.status === 'Confirmada';
+
+      // marcar fecha de entrada
+      const di = new Date(r.fechaEntrada);
+      if (!isNaN(di.getTime())) {
+        const keyI = `${di.getFullYear()}-${(di.getMonth() + 1).toString().padStart(2, '0')}-${di.getDate().toString().padStart(2, '0')}`;
+        if (isConfirmed) {
+          if (this.events[keyI] === 'salida') this.events[keyI] = 'ambas';
+          else this.events[keyI] = 'entrada';
+        } else if (markAsPendingForJefe) {
+          if (this.events[keyI] === 'salida' || this.events[keyI] === 'entrada' || this.events[keyI] === 'ambas') {
+            this.events[keyI] = 'ambas';
+          } else {
+            this.events[keyI] = 'pendiente';
+          }
+        }
+      }
+
+      // marcar fecha de salida (solo para reservas confirmadas)
+      const ds = new Date(r.fechaSalida);
+      if (!isNaN(ds.getTime())) {
+        const keyS = `${ds.getFullYear()}-${(ds.getMonth() + 1).toString().padStart(2, '0')}-${ds.getDate().toString().padStart(2, '0')}`;
+        if (isConfirmed) {
+          if (this.events[keyS] === 'entrada') this.events[keyS] = 'ambas';
+          else this.events[keyS] = 'salida';
+        }
+        // Nota: no marcamos la fecha de salida para reservas pendientes —
+        // los pendientes deben mostrarse únicamente en la fecha de entrada.
+      }
     }
   }
 
@@ -136,15 +180,33 @@ export class Tab3Page implements OnInit {
   }
 
   get visibleReservas(): Reserva[] {
+    // Prepare pool; recepcion should only see confirmed reservations
+    let pool = this.reservas;
+    // Recepción, Limpieza y Mantenimiento solo ven reservas confirmadas
+    if (
+      this.auth.getRole() === 'recepcion' ||
+      this.auth.getRole() === 'limpieza' ||
+      this.auth.getRole() === 'mantenimiento'
+    ) {
+      pool = pool.filter(r => r.status === 'Confirmada');
+    }
+
+    // Restaurante solo puede ver reservas confirmadas que tengan alergias
+    if (this.auth.getRole() === 'restaurante') {
+      pool = pool.filter(r => r.status === 'Confirmada' && !!r.hasAllergies);
+    }
+
     // Si hay día seleccionado, mostrar solo reservas con esa fecha de entrada
     if (this.selected) {
       const key = `${this.selected.getFullYear()}-${(this.selected.getMonth()+1).toString().padStart(2,'0')}-${this.selected.getDate().toString().padStart(2,'0')}`;
-      return this.reservas.filter(r => r.fechaEntrada === key);
+      // Incluir reservas cuya fecha de entrada O de salida coincida con la selección
+      return pool.filter(r => r.fechaEntrada === key || r.fechaSalida === key);
     }
+
     // Si no hay día seleccionado, mostrar reservas del mes mostrado
     const y = this.displayDate.getFullYear();
     const m = this.displayDate.getMonth();
-    return this.reservas.filter(r => {
+    return pool.filter(r => {
       const d = new Date(r.fechaEntrada);
       return d.getFullYear() === y && d.getMonth() === m;
     });

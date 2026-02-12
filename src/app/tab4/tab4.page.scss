@@ -469,8 +469,14 @@ color: #fff !important;
 	transform: translateY(0) scale(1);
 }
 
+/* when shown for recepcion/limpieza, place directly in the bottom-right corner */
+.scroll-top.bottom-right {
+	right: 16px;
+}
+
 @media (max-width: 480px) {
 	/* on narrow screens keep it aligned near the add FAB */
 	.scroll-top { right: 68px; bottom: 12px; }
+	.scroll-top.bottom-right { right: 12px; bottom: 12px; }
 }
 
