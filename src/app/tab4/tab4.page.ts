@@ -20,7 +20,7 @@ export class Tab4Page implements OnInit {
     {
       images: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80'],
       roomNumber: '101',
-      status: 'Activa',
+      status: 'Libre',
       title: 'Individual Económica',
       type: 'Individual',
       floor: 'Primera',
@@ -34,9 +34,9 @@ export class Tab4Page implements OnInit {
       ]
     },
     {
-      images: ['https://images.unsplash.com/photo-1501117716987-c8e5f72b4d97?w=800&q=80'],
+      images: ['assets/fotosInicio/1.webp'],
       roomNumber: '102',
-        status: 'Activa',
+      status: 'Libre',
       title: 'Doble Confort',
       type: 'Doble',
       floor: 'Segunda',
@@ -52,9 +52,9 @@ export class Tab4Page implements OnInit {
     }
     ,
     {
-      images: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80','https://images.unsplash.com/photo-1505691723518-36a7be2f0b11?w=800&q=80'],
+      images: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80','assets/fotosInicio/2.jpg'],
       roomNumber: '201',
-      status: 'Activa',
+      status: 'Libre',
       title: 'Suite Familiar',
       type: 'Suite',
       floor: 'Tercera',
@@ -187,7 +187,7 @@ export class Tab4Page implements OnInit {
     const room = {
       images: Array.isArray(data.images) ? data.images : [],
       roomNumber: data.roomNumber || '',
-      status: data.status || 'Activa',
+      status: data.status || 'Libre',
       title: data.title || '',
       type: data.type || (this.roomTypes && this.roomTypes[0]) || '',
       floor: data.floor || (this.floors && this.floors[0]) || '',
@@ -346,6 +346,27 @@ export class Tab4Page implements OnInit {
     const sum = reviews.reduce((s: number, r: any) => s + (Number(r.rating) || 0), 0);
     // return one decimal precision
     return Math.round((sum / reviews.length) * 10) / 10;
+  }
+
+  getStatusClass(status: string) {
+    switch ((status || '').toString()) {
+      case 'Limpieza':
+        return 'limpieza';
+      case 'Mantenimiento':
+        return 'mantenimiento';
+      case 'Reservada':
+        return 'reservada';
+      case 'Ocupada':
+        return 'ocupada';
+      case 'Libre':
+        return 'libre';
+      case 'Activa':
+        return 'active';
+      case 'No activa':
+        return 'inactive';
+      default:
+        return '';
+    }
   }
 
   starState(avg: number): boolean[] {

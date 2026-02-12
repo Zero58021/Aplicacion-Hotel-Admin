@@ -14,7 +14,7 @@ export class AddRoomModalComponent {
   newRoom: any = {
     images: [],
     roomNumber: '',
-    status: 'Activa',
+    status: 'Libre',
     title: '',
     type: '',
     floor: '',

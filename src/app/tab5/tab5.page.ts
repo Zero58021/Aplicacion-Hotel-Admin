@@ -188,7 +188,6 @@ export class Tab5Page implements OnInit {
         { name: 'dni', type: 'text', placeholder: 'DNI' },
         { name: 'telefono', type: 'tel', placeholder: 'Teléfono' },
         { name: 'email', type: 'email', placeholder: 'Correo electrónico' },
-        { name: 'photo', type: 'text', placeholder: 'URL foto (opcional)' },
         { name: 'puesto', type: 'text', placeholder: 'Puesto (limpieza, restaurante, mostrador)' },
         { name: 'contrato', type: 'text', placeholder: 'Contrato (Indefinido, Temporal, Por obra o servicio, A tiempo completo, A tiempo parcial)', value: 'Indefinido' }
       ],
@@ -246,7 +245,6 @@ export class Tab5Page implements OnInit {
         { name: 'dni', type: 'text', placeholder: 'DNI', value: emp.dni },
         { name: 'telefono', type: 'tel', placeholder: 'Teléfono', value: emp.telefono },
         { name: 'email', type: 'email', placeholder: 'Correo electrónico', value: emp.email },
-        { name: 'photo', type: 'text', placeholder: 'URL foto (opcional)', value: (emp as any).photo || '' },
         { name: 'puesto', type: 'text', placeholder: 'Puesto (limpieza, restaurante, mostrador)', value: emp.puesto },
         { name: 'contrato', type: 'text', placeholder: 'Contrato (Indefinido, Temporal, Por obra o servicio, A tiempo completo, A tiempo parcial)', value: emp.contrato }
       ],

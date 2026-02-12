@@ -46,6 +46,7 @@
         <div class="detail-row"><strong>Precio total:</strong> {{ formatCurrency(r.precioTotal) }}</div>
         <div class="detail-row"><strong>Pensión:</strong> {{ r.pension ?? '-' }}</div>
         <div class="detail-row"><strong>Mascota:</strong> {{ r.mascota ? 'Sí' : 'No' }}</div>
+        <div class="detail-row"><strong>Alergias:</strong> {{ r.hasAllergies ? (r.alergias || 'Sí') : 'No' }}</div>
         <div class="detail-row"><strong>Estado:</strong>
           <span class="status-badge" [ngClass]="r.status?.toLowerCase()">{{ r.status || 'Pendiente' }}</span>
         </div>

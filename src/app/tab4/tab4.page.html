@@ -31,10 +31,13 @@
         <ion-col size="4">
           <ion-item>
             <ion-label>Estado</ion-label>
-            <ion-select [(ngModel)]="selectedStatus" interface="popover" okText="OK" cancelText="CANCEL">
+                <ion-select [(ngModel)]="selectedStatus" interface="popover" okText="OK" cancelText="CANCEL">
               <ion-select-option value="Todas">Todas</ion-select-option>
-              <ion-select-option value="Activa">Activa</ion-select-option>
-              <ion-select-option value="No activa">No activa</ion-select-option>
+              <ion-select-option value="Limpieza">Limpieza</ion-select-option>
+              <ion-select-option value="Mantenimiento">Mantenimiento</ion-select-option>
+              <ion-select-option value="Reservada">Reservada</ion-select-option>
+              <ion-select-option value="Ocupada">Ocupada</ion-select-option>
+              <ion-select-option value="Libre">Libre</ion-select-option>
             </ion-select>
           </ion-item>
         </ion-col>
@@ -72,7 +75,7 @@
               <h3 class="room-title">{{ room.title }}</h3>
               <div class="room-number-and-status">
                 <div class="room-number">Nº {{ room.roomNumber }}</div>
-                <ion-badge class="status-badge" [ngClass]="{ 'active': room.status === 'Activa', 'inactive': room.status === 'No activa' }">{{ room.status }}</ion-badge>
+                <ion-badge class="status-badge" [ngClass]="getStatusClass(room.status)">{{ room.status }}</ion-badge>
               </div>
               <div class="rating-row">
                 <div class="stars">
@@ -176,8 +179,11 @@
             <ion-item>
               <ion-label position="stacked">Estado</ion-label>
               <ion-select interface="alert" [interfaceOptions]="{ cssClass: 'extras-alert' }" okText="OK" cancelText="CANCEL" [(ngModel)]="editModel.status">
-                <ion-select-option value="Activa">Activa</ion-select-option>
-                <ion-select-option value="No activa">No activa</ion-select-option>
+                <ion-select-option value="Limpieza">Limpieza</ion-select-option>
+                <ion-select-option value="Mantenimiento">Mantenimiento</ion-select-option>
+                <ion-select-option value="Reservada">Reservada</ion-select-option>
+                <ion-select-option value="Ocupada">Ocupada</ion-select-option>
+                <ion-select-option value="Libre">Libre</ion-select-option>
               </ion-select>
             </ion-item>
 

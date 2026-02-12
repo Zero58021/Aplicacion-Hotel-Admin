@@ -57,8 +57,11 @@
   <ion-item>
     <ion-label position="stacked">Estado</ion-label>
     <ion-select interface="alert" [interfaceOptions]="{ cssClass: 'extras-alert' }" [(ngModel)]="newRoom.status">
-      <ion-select-option value="Activa">Activa</ion-select-option>
-      <ion-select-option value="No activa">No activa</ion-select-option>
+      <ion-select-option value="Limpieza">Limpieza</ion-select-option>
+      <ion-select-option value="Mantenimiento">Mantenimiento</ion-select-option>
+      <ion-select-option value="Reservada">Reservada</ion-select-option>
+      <ion-select-option value="Ocupada">Ocupada</ion-select-option>
+      <ion-select-option value="Libre">Libre</ion-select-option>
     </ion-select>
   </ion-item>
 

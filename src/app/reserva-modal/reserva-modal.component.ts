@@ -15,6 +15,8 @@ interface ReservaInput {
   precioTotal: number;
   pension: string;
   mascota: boolean;
+  hasAllergies?: boolean;
+  alergias?: string;
   status: 'Pendiente' | 'Confirmada' | 'Denegada';
 }
 
@@ -39,6 +41,8 @@ export class ReservaModalComponent implements OnInit {
     precioTotal: 0,
     pension: 'Alojamiento y Desayuno',
     mascota: false,
+    hasAllergies: false,
+    alergias: '',
     status: 'Pendiente'
   };
 

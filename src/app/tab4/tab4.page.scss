@@ -319,6 +319,27 @@ color: #fff !important;
 	color: var(--ion-color-danger, #ef4444) !important;
 }
 
+.status-badge.limpieza {
+	border-color: var(--ion-color-warning, #f59e0b);
+	color: var(--ion-color-warning, #f59e0b) !important;
+}
+.status-badge.mantenimiento {
+	border-color: var(--ion-color-medium, #9ca3af);
+	color: var(--ion-color-medium, #9ca3af) !important;
+}
+.status-badge.reservada {
+	border-color: var(--ion-color-primary, #3880ff);
+	color: var(--ion-color-primary, #3880ff) !important;
+}
+.status-badge.ocupada {
+	border-color: var(--ion-color-danger, #ef4444);
+	color: var(--ion-color-danger, #ef4444) !important;
+}
+.status-badge.libre {
+	border-color: var(--ion-color-success, #10b981);
+	color: var(--ion-color-success, #10b981) !important;
+}
+
 
 
 .wifi {
