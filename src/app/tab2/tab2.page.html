@@ -75,7 +75,6 @@
   <ion-icon name="chevron-up-outline"></ion-icon>
 </button>
 
-<!-- botón para añadir reserva -->
 <ion-fab vertical="bottom" horizontal="end" slot="fixed" *ngIf="auth.getRole() !== 'restaurante'">
   <ion-fab-button class="add-reserva-fab" color="primary" (click)="openNewReservation()" aria-label="Nueva reserva">
     <ion-icon name="add-outline"></ion-icon>

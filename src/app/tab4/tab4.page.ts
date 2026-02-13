@@ -1,12 +1,12 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { IonicModule, AlertController, ModalController, IonContent } from '@ionic/angular';
+import { IonicModule, AlertController, ModalController, IonContent, ToastController } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ReviewsModalComponent } from '../reviews-modal/reviews-modal.component';
 import { AddRoomModalComponent } from '../add-room-modal/add-room-modal.component';
 import { ImageModalComponent } from '../image-modal/image-modal.component';
 import { AuthService } from '../services/auth.service';
-import { RoomService } from '../services/room.service';
+import { ApiService } from '../services/api';
 
 @Component({
   selector: 'app-tab4',
@@ -31,52 +31,71 @@ export class Tab4Page implements OnInit {
   selectedTypes: string[] = [];
   selectedFloors: string[] = [];
   selectedStatus: string = 'Todas';
-  // creatingIndex removed; new rooms are added via modal
 
-
-  constructor(private alertCtrl: AlertController, private modalCtrl: ModalController, public auth: AuthService, private roomService: RoomService) {
-    // Force styles on extras-alert overlays when they present (Shadow DOM safe)
+  constructor(
+    private alertCtrl: AlertController, 
+    private modalCtrl: ModalController, 
+    public auth: AuthService, 
+    private api: ApiService,
+    private toastCtrl: ToastController
+  ) {
+    // Tu código para forzar estilos en las alertas (intacto)
     document.addEventListener('ionAlertDidPresent', (ev: any) => {
       const alertEl = ev.target as HTMLElement;
       if (!alertEl) return;
       if (alertEl.classList && (alertEl.classList.contains('extras-alert') || alertEl.classList.contains('reviews-alert'))) {
-        // set CSS variables on the ion-alert host so inner shadow DOM picks them up
         try {
-          // Use white background for the extras alert so the selector appears white
           alertEl.style.setProperty('--background', '#ffffff');
           alertEl.style.setProperty('color', '#000');
-          alertEl.style.setProperty('--color', '#000');
-          // Force button backgrounds and colors inside the alert
-          alertEl.style.setProperty('--button-background', '#ffffff');
-          alertEl.style.setProperty('--button-color', '#000');
-          alertEl.style.setProperty('--button-border-color', 'rgba(0,0,0,0.06)');
-          alertEl.style.setProperty('--button-height', '44px');
-
-          // also ensure wrapper children inherit the white background and adjust button nodes
-          const wrapper = alertEl.shadowRoot?.querySelector('.alert-wrapper') as HTMLElement | null;
-          if (wrapper) {
-            wrapper.style.background = '#ffffff';
-            wrapper.style.color = '#000';
-            // try to find button group and style native buttons
-            const btnGroup = wrapper.querySelector('.alert-button-group') as HTMLElement | null;
-            if (btnGroup) {
-              btnGroup.style.background = '#ffffff';
-              const buttons = btnGroup.querySelectorAll('button');
-              buttons.forEach((b: any) => {
-                try {
-                  b.style.background = '#ffffff';
-                  b.style.color = '#000';
-                  b.style.border = '1px solid rgba(0,0,0,0.04)';
-                } catch (err) {
-                  // ignore per-button styling errors
-                }
-              });
-            }
-          }
-        } catch (e) {
-          // silently ignore if styling fails (Shadow DOM may restrict some operations)
-        }
+          const wrapper = alertEl.shadowRoot?.querySelector('.alert-wrapper') as HTMLElement;
+          if (wrapper) { wrapper.style.background = '#ffffff'; wrapper.style.color = '#000'; }
+        } catch (e) {}
       }
+    });
+  }
+
+  ngOnInit() {
+    this.cargarHabitaciones();
+  }
+
+  ionViewWillEnter() {
+    document.body.classList.add('tab4-no-white-active');
+    this.cargarHabitaciones();
+  }
+
+  ionViewWillLeave() {
+    document.body.classList.remove('tab4-no-white-active');
+  }
+
+  cargarHabitaciones() {
+    this.api.getHabitaciones().subscribe({
+      next: (data) => {
+        // MAPEO DE DATOS: JSON -> HTML
+        this.rooms = data.map(r => ({
+          ...r,
+          // Prioridad: nombre en DB (español) || nombre en HTML (inglés)
+          roomNumber: r.numero || r.roomNumber, 
+          status: r.estado || r.status || 'Libre',
+          type: r.tipo || r.type || 'Estándar',
+          floor: r.planta || r.floor || 'Baja',
+          
+          title: r.title || `Habitación ${r.numero || ''}`,
+          price: r.price || r.precio || '0 €',
+          oldPrice: r.oldPrice || r.precioAnterior || '',
+          extras: r.extras || [],
+          
+          note: r.note || r.descripcion || '',
+          reviews: r.reviews || r.comentarios || [],
+          
+          images: r.images || r.imagenes || []
+        }));
+
+        // Inicializar índices de imágenes
+        if (this.imageIndex.length !== this.rooms.length) {
+          this.imageIndex = this.rooms.map(() => 0);
+        }
+      },
+      error: (err) => console.error('Error cargando habitaciones:', err)
     });
   }
 
@@ -86,6 +105,7 @@ export class Tab4Page implements OnInit {
       if (Array.isArray(this.selectedTypes) && this.selectedTypes.length > 0 && !this.selectedTypes.includes(r.type)) return false;
       if (Array.isArray(this.selectedFloors) && this.selectedFloors.length > 0 && !this.selectedFloors.includes(r.floor)) return false;
       if (this.selectedStatus && this.selectedStatus !== 'Todas' && (r.status || '') !== this.selectedStatus) return false;
+      
       const title = (r.title || '').toString().toLowerCase();
       const num = (r.roomNumber || '').toString().toLowerCase();
       if (!term) return true;
@@ -95,13 +115,6 @@ export class Tab4Page implements OnInit {
 
   originalIndex(room: any) {
     return this.rooms.indexOf(room);
-  }
-  ngOnInit() {
-    // subscribe to global room list and initialize imageIndex when it changes
-    this.roomService.getRooms$().subscribe(list => {
-      this.rooms = list.map(r => ({ ...r }));
-      this.imageIndex = this.rooms.map(() => 0);
-    });
   }
 
   get showScrollForRole(): boolean {
@@ -115,25 +128,51 @@ export class Tab4Page implements OnInit {
   }
 
   scrollToTop() {
-    // animate scroll to top; 300ms for smoothness
     this.content?.scrollToTop(300);
   }
 
-  ionViewWillEnter() {
-    document.body.classList.add('tab4-no-white-active');
-  }
-
-  ionViewWillLeave() {
-    document.body.classList.remove('tab4-no-white-active');
-  }
-
+  // --- MODO EDICIÓN ---
   startEdit(i: number) {
     if (!this.auth.hasPermission('habitaciones.edit')) return;
     this.editingIndex = i;
     const room = this.rooms[i];
-    this.editModel = { ...room, extras: Array.isArray(room.extras) ? [...room.extras] : [], images: Array.isArray(room.images) ? [...room.images] : [] };
+    this.editModel = JSON.parse(JSON.stringify(room));
+    // Aseguramos arrays
+    this.editModel.extras = Array.isArray(this.editModel.extras) ? this.editModel.extras : [];
+    this.editModel.images = Array.isArray(this.editModel.images) ? this.editModel.images : [];
   }
   
+  saveEdit() {
+    if (this.editingIndex < 0) return;
+    
+    const roomToUpdate = this.rooms[this.editingIndex];
+    const updatedData = {
+      ...this.editModel,
+      // Guardamos en formato compatible con JSON Server
+      numero: this.editModel.roomNumber,
+      estado: this.editModel.status,
+      tipo: this.editModel.type,
+      planta: this.editModel.floor,
+      precio: this.editModel.price,
+      extras: this.editModel.extras,
+      title: this.editModel.title,
+      images: this.editModel.images
+    };
+
+    this.api.actualizarHabitacion(roomToUpdate.id, updatedData).subscribe(() => {
+      this.showToast('Cambios guardados');
+      this.editingIndex = -1;
+      this.editModel = {};
+      this.cargarHabitaciones();
+    });
+  }
+
+  cancelEdit() {
+    this.editingIndex = -1;
+    this.editModel = {};
+  }
+
+  // --- AÑADIR HABITACIÓN ---
   async addNewRoom() {
     if (!this.auth.hasPermission('habitaciones.edit')) return;
 
@@ -144,39 +183,25 @@ export class Tab4Page implements OnInit {
     await modal.present();
     const res = await modal.onDidDismiss();
     const data = res?.data;
-    if (!data) return;
-    // ensure defaults
-    const room = {
-      images: Array.isArray(data.images) ? data.images : [],
-      roomNumber: data.roomNumber || '',
-      status: data.status || 'Libre',
-      title: data.title || '',
-      type: data.type || (this.roomTypes && this.roomTypes[0]) || '',
-      floor: data.floor || (this.floors && this.floors[0]) || '',
-      extras: Array.isArray(data.extras) ? data.extras : [],
-      oldPrice: data.oldPrice || '',
-      price: data.price || '',
-      note: data.note || '',
-      reviews: Array.isArray(data.reviews) ? data.reviews : []
-    };
-    // delegate to RoomService so all subscribers update
-    this.roomService.addRoom(room);
+    
+    if (data) {
+      const newRoomPayload = {
+        ...data,
+        numero: data.roomNumber,
+        estado: data.status,
+        tipo: data.type,
+        planta: data.floor,
+        precio: data.price
+      };
+      
+      this.api.guardarNuevaHabitacion(newRoomPayload).subscribe(() => {
+        this.showToast('Habitación creada');
+        this.cargarHabitaciones();
+      });
+    }
   }
 
-  onFileSelected(event: any) {
-    // kept for backward compatibility — add first selected as main image
-    const file = event.target.files && event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (!this.editModel.images) this.editModel.images = [];
-      this.editModel.images.push(reader.result as string);
-      this.editModel.images = [...this.editModel.images];
-    };
-    reader.readAsDataURL(file);
-  }
-
-
+  // --- FOTOS ---
   addPhotoFile(event: any) {
     const file = event?.target?.files && event.target.files[0];
     if (!file) return;
@@ -191,7 +216,7 @@ export class Tab4Page implements OnInit {
 
   replacePhotoFile(index: number, event: any) {
     const file = event?.target?.files && event.target.files[0];
-    if (!file || !this.editModel.images) return;
+    if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
       this.editModel.images[index] = reader.result as string;
@@ -200,139 +225,64 @@ export class Tab4Page implements OnInit {
     reader.readAsDataURL(file);
   }
 
+  removePhoto(index: number) {
+    this.editModel.images.splice(index, 1);
+    this.editModel.images = [...this.editModel.images];
+  }
+
   prevImage(roomIdx: number) {
     const imgs = this.rooms[roomIdx]?.images;
     if (!imgs || imgs.length === 0) return;
     const cur = this.imageIndex[roomIdx] ?? 0;
-    const next = (cur - 1 + imgs.length) % imgs.length;
-    this.imageIndex[roomIdx] = next;
+    this.imageIndex[roomIdx] = (cur - 1 + imgs.length) % imgs.length;
   }
 
   nextImage(roomIdx: number) {
     const imgs = this.rooms[roomIdx]?.images;
     if (!imgs || imgs.length === 0) return;
     const cur = this.imageIndex[roomIdx] ?? 0;
-    const next = (cur + 1) % imgs.length;
-    this.imageIndex[roomIdx] = next;
+    this.imageIndex[roomIdx] = (cur + 1) % imgs.length;
   }
 
-  removePhoto(index: number) {
-    if (!this.editModel.images) return;
-    this.editModel.images.splice(index, 1);
-    this.editModel.images = [...this.editModel.images];
-  }
-
-  saveEdit() {
-    if (this.editingIndex < 0) return;
-    if (!this.auth.hasPermission('habitaciones.edit')) return;
-    const extras = Array.isArray(this.editModel.extras) ? this.editModel.extras : [];
-    const images = Array.isArray(this.editModel.images) ? this.editModel.images : [];
-    const updated = { ...this.editModel, extras, images };
-    // update via service so change propagates
-    this.roomService.updateRoom(this.editingIndex, updated);
-    // reset edit state; imageIndex will be adjusted when the rooms list emits
-    this.editingIndex = -1;
-    this.editModel = {};
-  }
-
-  cancelEdit() {
-    console.log('cancelEdit invoked');
-    // Ensure any open Ionic overlays (alerts, popovers, action-sheets) are dismissed
-    try {
-      const alert = document.querySelector('ion-alert') as any | null;
-      const pop = document.querySelector('ion-popover') as any | null;
-      const as = document.querySelector('ion-action-sheet') as any | null;
-      if (alert && typeof alert.dismiss === 'function') alert.dismiss().catch(() => {});
-      if (pop && typeof pop.dismiss === 'function') pop.dismiss().catch(() => {});
-      if (as && typeof as.dismiss === 'function') as.dismiss().catch(() => {});
-    } catch (e) {
-      // ignore overlay dismissal errors
-    }
-    this.editingIndex = -1;
-    this.editModel = {};
-  }
-
+  // --- OTROS ---
   async confirmDelete(i: number) {
-    if (!this.auth.hasPermission('habitaciones.edit')) return;
-
     const alert = await this.alertCtrl.create({
       header: 'Borrar habitación',
-      message: '¿Estás seguro de que deseas borrar esta habitación?',
-      cssClass: 'extras-alert',
+      message: '¿Estás seguro?',
       buttons: [
         { text: 'Cancelar', role: 'cancel' },
-        { text: 'Borrar', cssClass: 'danger', handler: () => this.deleteRoom(i) }
+        { text: 'Borrar', handler: () => this.deleteRoom(i) }
       ]
     });
     await alert.present();
   }
 
   deleteRoom(i: number) {
-    if (!this.auth.hasPermission('habitaciones.edit')) return;
-    this.roomService.deleteRoom(i);
+    const room = this.rooms[i];
+    this.api.borrarHabitacion(room.id).subscribe(() => {
+      this.showToast('Habitación eliminada');
+      this.cargarHabitaciones();
+    });
   }
 
-  toggleExtra(opt: string) {
-    if (!this.editModel || !Array.isArray(this.editModel.extras)) {
-      this.editModel.extras = [];
-    }
-    const idx = this.editModel.extras.indexOf(opt);
-    if (idx >= 0) {
-      this.editModel.extras.splice(idx, 1);
-    } else {
-      this.editModel.extras.push(opt);
-    }
-    this.editModel.extras = [...this.editModel.extras];
-  }
-
-  renderStars(rating: number) {
-    const r = Math.max(0, Math.min(5, Math.floor(rating)));
-    const filled = '★'.repeat(r);
-    const empty = '☆'.repeat(5 - r);
-    return `<span style="color:#f5b50a; font-size:14px; margin-right:6px">${filled}${empty}</span>`;
-  }
-
+  // --- HELPERS ---
   avgRating(room: any): number {
-    const reviews = Array.isArray(room?.reviews) ? room.reviews : [];
+    const reviews = room.reviews || room.comentarios || [];
     if (!reviews.length) return 0;
     const sum = reviews.reduce((s: number, r: any) => s + (Number(r.rating) || 0), 0);
-    // return one decimal precision
     return Math.round((sum / reviews.length) * 10) / 10;
   }
 
   getStatusClass(status: string) {
-    switch ((status || '').toString()) {
-      case 'Limpieza':
-        return 'limpieza';
-      case 'Mantenimiento':
-        return 'mantenimiento';
-      case 'Reservada':
-        return 'reservada';
-      case 'Ocupada':
-        return 'ocupada';
-      case 'Libre':
-        return 'libre';
-      case 'Activa':
-        return 'active';
-      case 'No activa':
-        return 'inactive';
-      default:
-        return '';
-    }
+    return (status || '').toLowerCase();
   }
 
   async setRoomStatus(i: number, status: string) {
-    if (i < 0 || i >= this.rooms.length) return;
-    this.roomService.setRoomStatus(i, status);
-  }
-
-  onPriceChange(i: number, value: any, field: 'price' | 'oldPrice' = 'price') {
-    if (!this.auth.hasPermission('habitaciones.edit')) return;
-    if (field === 'price') {
-      this.roomService.setRoomPrice(i, value);
-    } else {
-      this.roomService.setRoomOldPrice(i, value);
-    }
+    const room = this.rooms[i];
+    this.api.actualizarHabitacion(room.id, { estado: status }).subscribe(() => {
+      this.showToast(`Estado cambiado a ${status}`);
+      this.cargarHabitaciones();
+    });
   }
 
   starState(avg: number): boolean[] {
@@ -341,7 +291,7 @@ export class Tab4Page implements OnInit {
   }
 
   async showReviews(room: any) {
-    const reviews = Array.isArray(room.reviews) ? room.reviews : [];
+    const reviews = room.reviews || room.comentarios || [];
     const modal = await this.modalCtrl.create({
       component: ReviewsModalComponent,
       componentProps: { reviews }
@@ -350,7 +300,7 @@ export class Tab4Page implements OnInit {
   }
 
   async openImage(room: any, idx: number) {
-    const imgs = Array.isArray(room?.images) ? room.images : [];
+    const imgs = room.images || [];
     const modal = await this.modalCtrl.create({
       component: ImageModalComponent,
       componentProps: { images: imgs, index: idx || 0 },
@@ -359,4 +309,8 @@ export class Tab4Page implements OnInit {
     await modal.present();
   }
 
+  async showToast(msg: string) {
+    const t = await this.toastCtrl.create({ message: msg, duration: 2000, color: 'dark' });
+    t.present();
+  }
 }

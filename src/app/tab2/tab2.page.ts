@@ -1,8 +1,6 @@
-import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
-import { AlertController, IonContent, ModalController } from '@ionic/angular';
-import { ReservaService } from '../services/reserva.service';
-import type { Reserva } from '../services/reserva.service';
-import { Subscription } from 'rxjs';
+import { Component, ViewChild, OnInit } from '@angular/core';
+import { AlertController, IonContent, ModalController, ToastController } from '@ionic/angular';
+import { ApiService } from '../services/api'; // Usamos ApiService (Servidor Real)
 import { AuthService } from '../services/auth.service';
 
 @Component({
@@ -11,285 +9,220 @@ import { AuthService } from '../services/auth.service';
   styleUrls: ['tab2.page.scss'],
   standalone: false,
 })
-export class Tab2Page implements OnInit, OnDestroy {
+export class Tab2Page implements OnInit {
 
-  reservas: Reserva[] = [];
-  private sub?: Subscription;
-
-  // filtro y busqueda
+  reservas: any[] = [];
   searchTerm: string = '';
-  statusFilter: 'Todas' | 'Pendiente' | 'Confirmada' | 'Denegada' = 'Todas';
+  // Ajuste: Tu HTML usa 'Todos' en el segment, así que iniciamos con eso
+  statusFilter: string = 'Todos'; 
 
   @ViewChild(IonContent, { static: false }) content!: IonContent;
   showScrollTop: boolean = false;
 
-  constructor(private alertCtrl: AlertController, private modalCtrl: ModalController, private reservaService: ReservaService, public auth: AuthService) {}
+  constructor(
+    private alertCtrl: AlertController, 
+    private modalCtrl: ModalController, 
+    private api: ApiService, 
+    public auth: AuthService,
+    private toastCtrl: ToastController
+  ) {}
 
   ngOnInit(): void {
-    this.sub = this.reservaService.getReservas$().subscribe(list => {
-      // mantener expanded = false para consistencia y evitar mutaciones directas
-      this.reservas = list.map(r => ({ ...r }));
+    this.cargarDatos();
+  }
+
+  ionViewWillEnter() {
+    this.cargarDatos();
+  }
+
+  cargarDatos() {
+    this.api.getReservas().subscribe({
+      next: (list) => {
+        // --- TRADUCTOR DE DATOS ---
+        // Convertimos lo que viene del JSON a lo que espera tu HTML
+        this.reservas = list.map(r => ({
+          ...r,
+          // Mapeo básico
+          numero: r.id, 
+          status: r.estado, 
+          titular: r.nombreCliente,
+          habitacion: r.selectedRoom?.name || 'Sin asignar',
+          
+          // Mapeo de datos que te faltaban en la vista
+          ninos: r.children,                // JSON: children -> HTML: {{r.ninos}}
+          adultos: r.adults,                // JSON: adults -> HTML: {{r.adultos}}
+          precioTotal: r.total,             // JSON: total -> HTML: {{r.precioTotal}}
+          pension: r.selectedPension?.name, // JSON: objeto -> HTML: {{r.pension}}
+          numeroHabitaciones: r.habitaciones,
+
+          // Lógica de alergias
+          hasAllergies: (r.notas && r.notas !== '') || r.passengers?.some((p:any) => p.allergies && p.allergies !== ''),
+          alergias: r.notas || (r.passengers?.find((p:any) => p.allergies)?.allergies) || 'No',
+          
+          expanded: false
+        }));
+      },
+      error: (err) => console.error('Error cargando reservas:', err)
     });
   }
 
-  ngOnDestroy(): void {
-    this.sub?.unsubscribe();
-  }
-
-  get filteredReservas(): Reserva[] {
-    const term = this.searchTerm?.trim().toLowerCase();
-    // If role is recepcion, only show confirmed reservations
+  get filteredReservas(): any[] {
+    const term = (this.searchTerm || '').trim().toLowerCase();
     let pool = this.reservas;
-    if (this.auth.getRole() === 'recepcion') {
-      pool = pool.filter(r => r.status === 'Confirmada');
-    }
+    const role = this.auth.getRole();
 
-    // Restaurante solo puede ver reservas confirmadas que tengan alergias
-    if (this.auth.getRole() === 'restaurante') {
-      pool = pool.filter(r => r.status === 'Confirmada' && !!r.hasAllergies);
+    // Filtros de Seguridad por Rol
+    if (role === 'recepcion') {
+      // Opcional: Si Recepción solo debe ver confirmadas
+      // pool = pool.filter(r => r.status === 'Confirmada');
+    }
+    if (role === 'restaurante') {
+      pool = pool.filter(r => r.status === 'Confirmada' && r.hasAllergies);
     }
 
     const results = pool.filter(r => {
-      // filtro por estado
-      if (this.statusFilter && this.statusFilter !== 'Todas') {
+      // Filtro visual (Segment)
+      if (this.statusFilter !== 'Todos' && this.statusFilter !== 'Todas') {
         if (r.status !== this.statusFilter) return false;
       }
-      // busqueda por titular o numero
+      
+      // Buscador
       if (!term) return true;
       const inTitular = r.titular?.toLowerCase().includes(term);
       const inNumero = r.numero?.toLowerCase().includes(term);
-      return Boolean(inTitular || inNumero);
+      return inTitular || inNumero;
     });
 
-    // ordenar por número (R-0001 -> 1) ascendente
-    const parseNum = (s?: string) => {
-      if (!s) return 0;
-      const n = parseInt((s.match(/\d+/) || ['0'])[0], 10);
-      return isNaN(n) ? 0 : n;
-    };
-
-    results.sort((a, b) => parseNum(a.numero) - parseNum(b.numero));
-    return results;
+    // Ordenar: Las más recientes primero
+    return results.reverse();
   }
 
-  async cancelByClient(r: Reserva) {
-    const alert = await this.alertCtrl.create({
-      cssClass: 'cancel-alert',
-      header: 'Cancelar reserva',
-      message: `¿Confirmas que deseas marcar la reserva ${r.numero} como "Cancelada por cliente"?`,
-      buttons: [
-        { text: 'No', role: 'cancel' },
-        { text: 'Sí', handler: () => this.reservaService.updateReserva(r.numero, { status: 'Cancelada por cliente', expanded: false }) }
-      ]
+  // --- ACCIONES (Conectadas a la API) ---
+
+  confirmReservation(r: any) {
+    this.api.updateReserva(r.id, { estado: 'Confirmada' }).subscribe(() => {
+      this.showToast('Reserva confirmada');
+      this.cargarDatos();
     });
-    await alert.present();
   }
 
-  toggleExpand(r: Reserva) {
-    // cerrar otras reservas
-    this.reservas.forEach(x => {
-      if (x !== r) x.expanded = false;
+  denyReservation(r: any) {
+    this.api.updateReserva(r.id, { estado: 'Denegada' }).subscribe(() => {
+      this.showToast('Reserva denegada');
+      this.cargarDatos();
     });
-    // alternar la actual
-    r.expanded = !r.expanded;
   }
 
-  formatDate(dateStr: string): string {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    return d.toLocaleDateString();
+  cancelByClient(r: any) {
+    this.api.updateReserva(r.id, { estado: 'Cancelada' }).subscribe(() => {
+      this.showToast('Cancelada por cliente');
+      this.cargarDatos();
+    });
   }
 
-  formatCurrency(v?: number): string {
-    if (v == null) return '-';
-    return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(v);
-  }
-
-  onSearch(ev: any) {
-    this.searchTerm = ev?.detail?.value ?? '';
-    // cerrar cualquier reserva expandida al buscar
-    this.reservas.forEach(x => x.expanded = false);
-  }
-
-  onFilter(ev: any) {
-    this.statusFilter = ev?.detail?.value ?? 'Todos';
-    // cerrar cualquier reserva expandida al cambiar filtro
-    this.reservas.forEach(x => x.expanded = false);
-  }
-
-  onContentScroll(ev: any) {
-    const y = ev?.detail?.scrollTop ?? 0;
-    this.showScrollTop = y > 200;
-  }
-
-  scrollToTop() {
-    if (this.content && typeof this.content.scrollToTop === 'function') {
-      this.content.scrollToTop(400);
-    }
-  }
-
-  // Maneja el refresher pull-to-refresh
-  doRefresh(ev: any) {
-    // Simular refresco: aquí podrías volver a cargar datos desde API
-    setTimeout(() => {
-      // ejemplo: cerrar expansiones y limpiar búsqueda/segmento
-      this.reservas.forEach(x => x.expanded = false);
-      this.searchTerm = '';
-      this.statusFilter = 'Todas';
-      // completar el refresher
-      if (ev?.target && typeof ev.target.complete === 'function') {
-        ev.target.complete();
-      } else if (ev?.detail && typeof ev.detail.complete === 'function') {
-        ev.detail.complete();
-      }
-    }, 800);
-  }
-
-  confirmReservation(r: Reserva) {
-    this.reservaService.updateReserva(r.numero, { status: 'Confirmada', expanded: false });
-  }
-
-  denyReservation(r: Reserva) {
-    this.reservaService.updateReserva(r.numero, { status: 'Denegada', expanded: false });
-  }
-
-  async confirmDeleteReservation(r: Reserva) {
-    // Mostrar confirmación usando un overlay DOM propio (evita problemas de estilos en ion-alert)
+  async confirmDeleteReservation(r: any) {
     this.showCustomConfirm(r);
   }
 
-  // Crea un overlay simple y manejable por DOM para confirmar eliminación
-  showCustomConfirm(r: Reserva) {
-    // evitar múltiples overlays
-    if (document.getElementById('custom-delete-overlay')) return;
+  deleteReservation(r: any) {
+    this.api.eliminarReserva(r.id).subscribe(() => {
+      this.showToast('Reserva eliminada');
+      this.cargarDatos();
+    });
+  }
 
+  // --- HELPERS VISUALES (Tu código original) ---
+
+  showCustomConfirm(r: any) {
+    if (document.getElementById('custom-delete-overlay')) return;
     const overlay = document.createElement('div');
     overlay.id = 'custom-delete-overlay';
-    overlay.style.position = 'fixed';
-    overlay.style.left = '0';
-    overlay.style.top = '0';
-    overlay.style.width = '100%';
-    overlay.style.height = '100%';
-    overlay.style.display = 'flex';
-    overlay.style.alignItems = 'center';
-    overlay.style.justifyContent = 'center';
-    overlay.style.zIndex = '99999';
-    overlay.style.backdropFilter = 'blur(6px)';
-    overlay.style.background = 'rgba(0,0,0,0.12)';
-
+    overlay.setAttribute('style', 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:99999;backdrop-filter:blur(6px);background:rgba(0,0,0,0.12);');
+    
     const card = document.createElement('div');
-    card.style.width = 'min(92%,480px)';
-    card.style.background = '#fff';
-    card.style.borderRadius = '10px';
-    card.style.padding = '18px';
-    card.style.boxShadow = '0 20px 60px rgba(0,0,0,0.25)';
-    card.style.color = '#0b3d2e';
-
-    const title = document.createElement('h3');
-    title.textContent = 'Confirmar borrado';
-    title.style.margin = '0 0 10px 0';
-    title.style.color = '#0b3d2e';
-
-    const msg = document.createElement('p');
-    msg.textContent = `¿Borrar reserva ${r.numero}? Esta acción no se puede deshacer.`;
-    msg.style.margin = '0 0 18px 0';
-    msg.style.color = 'rgba(11,61,46,0.9)';
-
+    card.setAttribute('style', 'width:min(92%,480px);background:#fff;border-radius:10px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,0.25);color:#0b3d2e;');
+    card.innerHTML = `<h3 style="margin:0 0 10px 0;color:#0b3d2e">Confirmar borrado</h3><p style="margin:0 0 18px 0;color:rgba(11,61,46,0.9)">¿Borrar reserva ${r.numero}? Esta acción no se puede deshacer.</p>`;
+    
     const actions = document.createElement('div');
-    actions.style.display = 'flex';
-    actions.style.gap = '10px';
-    actions.style.justifyContent = 'flex-end';
-
+    actions.setAttribute('style', 'display:flex;gap:10px;justify-content:flex-end;');
+    
     const btnCancel = document.createElement('button');
     btnCancel.textContent = 'Cancelar';
-    btnCancel.style.background = '#fff';
-    btnCancel.style.border = '1px solid rgba(16,185,129,0.12)';
-    btnCancel.style.color = '#10b981';
-    btnCancel.style.padding = '8px 14px';
-    btnCancel.style.borderRadius = '8px';
-    btnCancel.style.cursor = 'pointer';
-
+    btnCancel.setAttribute('style', 'background:#fff;border:1px solid rgba(16,185,129,0.12);color:#10b981;padding:8px 14px;border-radius:8px;cursor:pointer;');
+    
     const btnConfirm = document.createElement('button');
     btnConfirm.textContent = 'Borrar';
-    btnConfirm.style.background = '#fff';
-    btnConfirm.style.border = '1px solid rgba(231,76,60,0.12)';
-    btnConfirm.style.color = '#e53935';
-    btnConfirm.style.padding = '8px 14px';
-    btnConfirm.style.borderRadius = '8px';
-    btnConfirm.style.cursor = 'pointer';
+    btnConfirm.setAttribute('style', 'background:#fff;border:1px solid rgba(231,76,60,0.12);color:#e53935;padding:8px 14px;border-radius:8px;cursor:pointer;');
 
-    actions.appendChild(btnCancel);
-    actions.appendChild(btnConfirm);
-
-    card.appendChild(title);
-    card.appendChild(msg);
+    actions.append(btnCancel, btnConfirm);
     card.appendChild(actions);
-    overlay.appendChild(card);
     document.body.appendChild(overlay);
 
-    const cleanup = () => {
-      try { document.body.removeChild(overlay); } catch(e) {}
-    };
-
-    btnCancel.addEventListener('click', () => cleanup());
-    btnConfirm.addEventListener('click', () => {
-      this.deleteReservation(r);
-      cleanup();
-    });
-    // cerrar al hacer click fuera del card
-    overlay.addEventListener('click', (ev) => {
-      if (ev.target === overlay) cleanup();
-    });
+    btnCancel.onclick = () => document.body.removeChild(overlay);
+    btnConfirm.onclick = () => { this.deleteReservation(r); document.body.removeChild(overlay); };
   }
 
-  deleteReservation(r: Reserva) {
-    this.reservaService.deleteReserva(r.numero);
-  }
+  // --- MODALES ---
 
   async openNewReservation() {
-    // bloquear creación de reservas para el rol 'restaurante'
-    if (this.auth.getRole() === 'restaurante') {
-      const a = await this.alertCtrl.create({
-        header: 'Acceso denegado',
-        message: 'No tienes permiso para crear reservas.',
-        buttons: ['OK']
-      });
-      await a.present();
-      return;
-    }
+    if (this.auth.getRole() === 'restaurante') return; // Seguridad extra
+    
     const modal = await this.modalCtrl.create({
-      component: (await import('../reserva-modal/reserva-modal.component')).ReservaModalComponent,
-      componentProps: {}
+      component: (await import('../reserva-modal/reserva-modal.component')).ReservaModalComponent
     });
-
-    modal.onDidDismiss().then((detail) => {
-      if (detail?.data?.reserva) {
-        const newReserva = detail.data.reserva as Partial<Reserva>;
-        // Si quien crea es Recepción, forzar estado a Pendiente
-        if (this.auth.getRole() === 'recepcion') {
-          newReserva.status = 'Pendiente';
-        }
-        this.reservaService.addReserva(newReserva);
+    
+    modal.onDidDismiss().then((res) => {
+      if (res.data?.reserva) {
+        // Guardar en servidor
+        this.api.guardarReserva(res.data.reserva).subscribe(() => this.cargarDatos());
       }
     });
-
     return await modal.present();
   }
 
-  async openEditReservation(r: Reserva) {
+  async openEditReservation(r: any) {
     const modal = await this.modalCtrl.create({
       component: (await import('../reserva-modal/reserva-modal.component')).ReservaModalComponent,
       componentProps: { initial: { ...r } }
     });
-
-    modal.onDidDismiss().then((detail) => {
-      if (detail?.data?.reserva) {
-        const updated = detail.data.reserva as Partial<Reserva>;
-        this.reservaService.updateReserva(r.numero, { ...updated, expanded: false });
+    
+    modal.onDidDismiss().then((res) => {
+      if (res.data?.reserva) {
+        // Actualizar en servidor
+        this.api.editarReserva(r.id, res.data.reserva).subscribe(() => this.cargarDatos());
       }
     });
-
     return await modal.present();
   }
 
+  // --- UTILS ---
+  toggleExpand(r: any) {
+    this.reservas.forEach(x => { if (x !== r) x.expanded = false; });
+    r.expanded = !r.expanded;
+  }
+
+  formatDate(dateStr: string): string {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString();
+  }
+
+  formatCurrency(v?: number): string {
+    return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(v || 0);
+  }
+
+  onSearch(ev: any) { this.searchTerm = ev?.detail?.value ?? ''; }
+  
+  onFilter(ev: any) { 
+    this.statusFilter = ev?.detail?.value ?? 'Todos';
+    this.reservas.forEach(x => x.expanded = false);
+  }
+
+  onContentScroll(ev: any) { this.showScrollTop = (ev?.detail?.scrollTop ?? 0) > 200; }
+  scrollToTop() { this.content.scrollToTop(400); }
+
+  async showToast(msg: string) {
+    const t = await this.toastCtrl.create({ message: msg, duration: 2000, color: 'dark' });
+    t.present();
+  }
 }

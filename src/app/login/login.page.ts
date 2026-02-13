@@ -41,19 +41,20 @@ export class LoginPage {
   async confirmLogin() {
     if (!this.activeRole) return;
 
-    const success = this.auth.login(this.activeRole, this.password);
+    // Mostramos un indicador de carga si quieres, o simplemente esperamos
+    // Añadimos 'await' porque ahora el servicio va al servidor a preguntar
+    const success = await this.auth.login(this.activeRole, this.password);
 
     if (success) {
       this.password = '';
       this.activeRole = null;
-      // Always navigate to tab1 regardless of role
+      console.log('Login correcto, entrando...');
       this.router.navigateByUrl('/tabs/tab1');
-      return;
     } else {
       const alert = await this.alertCtrl.create({
         header: 'Error',
-        message: 'Contraseña incorrecta',
-        buttons: ['OK']
+        message: 'Contraseña incorrecta para el perfil seleccionado',
+        buttons: ['Intentar de nuevo']
       });
       await alert.present();
     }

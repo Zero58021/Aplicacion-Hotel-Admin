@@ -30,7 +30,6 @@ export class AddRoomModalComponent {
   extrasOptions = ['Balcón', 'Bañera', 'Cuna', 'Ducha', 'Frigorífico', 'Televisión', 'Terraza', 'WiFi', 'Limpieza', 'Silla de ruedas', 'Toallas extras'];
 
   constructor(private modalCtrl: ModalController) {
-    // default type/floor
     this.newRoom.type = this.roomTypes[0];
     this.newRoom.floor = this.floors[0];
   }
@@ -62,7 +61,6 @@ export class AddRoomModalComponent {
   }
 
   save() {
-    // ensure prices include euro sign
     this.newRoom.price = this.formatPrice(this.newRoom.price);
     this.newRoom.oldPrice = this.formatPrice(this.newRoom.oldPrice);
     this.modalCtrl.dismiss(this.newRoom);
@@ -72,9 +70,7 @@ export class AddRoomModalComponent {
     if (val === null || val === undefined) return '';
     let s = val.toString().trim();
     if (!s) return '';
-    // if already contains euro symbol, return as-is
     if (s.indexOf('€') >= 0) return s;
-    // append space + euro sign
     return s + ' €';
   }
 

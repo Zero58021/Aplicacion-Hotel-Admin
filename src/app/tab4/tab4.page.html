@@ -1,4 +1,3 @@
-
 <ion-header [translucent]="true">
   <ion-toolbar>
     <ion-title>Habitaciones</ion-title>
@@ -76,12 +75,10 @@
               <div class="room-number-and-status">
                 <div class="room-number">Nº {{ room.roomNumber }}</div>
                 <ion-badge class="status-badge" [ngClass]="getStatusClass(room.status)">{{ room.status }}</ion-badge>
-                <!-- Mantenimiento role: toggle between Libre <-> Mantenimiento -->
                 <ng-container *ngIf="auth.hasPermission('habitaciones.estado') && auth.getRole() === 'mantenimiento'">
                   <ion-button *ngIf="room.status === 'Mantenimiento'" fill="outline" size="small" color="primary" (click)="setRoomStatus(originalIndex(room), 'Libre')" style="margin-left:8px">Marcar libre</ion-button>
                   <ion-button *ngIf="room.status !== 'Mantenimiento'" fill="clear" size="small" (click)="setRoomStatus(originalIndex(room), 'Mantenimiento')">Marcar Mantenimiento</ion-button>
                 </ng-container>
-                <!-- Otros roles: mantener comportamiento Limpieza -->
                 <ng-container *ngIf="auth.hasPermission('habitaciones.estado') && auth.getRole() !== 'mantenimiento'">
                   <ion-button *ngIf="room.status === 'Limpieza'" fill="outline" size="small" color="primary" (click)="setRoomStatus(originalIndex(room), 'Libre')" style="margin-left:8px">Marcar libre</ion-button>
                   <ion-button *ngIf="room.status !== 'Limpieza' && auth.getRole() !== 'jefe'" fill="clear" size="small" (click)="setRoomStatus(originalIndex(room), 'Limpieza')">Marcar Limpieza</ion-button>

@@ -1,8 +1,6 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ReservaService } from '../services/reserva.service';
+import { Component, OnInit } from '@angular/core';
+import { ApiService } from '../services/api'; // Usamos ApiService
 import { AuthService } from '../services/auth.service';
-import type { Reserva } from '../services/reserva.service';
-import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-tab3',
@@ -18,25 +16,48 @@ export class Tab3Page implements OnInit {
   weeks: (number | null)[][] = [];
   weekdays = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'];
   selected: Date | null = null;
-  // 'entrada' = check-in, 'salida' = check-out, 'ambas' = ambos en misma fecha, 'pendiente' = reserva pendiente
+  
+  // 'entrada', 'salida', 'ambas', 'pendiente'
   events: Record<string, 'entrada' | 'salida' | 'ambas' | 'pendiente'> = {};
-  reservas: Reserva[] = [];
-  private sub?: Subscription;
+  reservas: any[] = []; // Usamos any[] para permitir el mapeo dinámico
 
-  constructor(private reservaService: ReservaService, public auth: AuthService) {}
+  constructor(
+    private api: ApiService, 
+    public auth: AuthService
+  ) {}
 
   ngOnInit(): void {
     this.updateCalendar();
-    // Suscribirse a cambios en las reservas para actualizar calendario y lista automáticamente
-    this.sub = this.reservaService.getReservas$().subscribe(list => {
-      this.reservas = list.map(r => ({ ...r }));
-      this.loadEventsFromReservas();
-      // si se muestra mes, quizá forzar recálculo (no cambiar displayDate aquí)
-    });
+    this.cargarDatos();
   }
 
-  ngOnDestroy(): void {
-    this.sub?.unsubscribe();
+  // Cargar datos cada vez que entras a la pestaña
+  ionViewWillEnter() {
+    this.cargarDatos();
+  }
+
+  cargarDatos() {
+    this.api.getReservas().subscribe({
+      next: (list) => {
+        // AQUÍ ESTÁ LA MAGIA: Convertimos los datos del servidor al formato de tu diseño
+        this.reservas = list.map(r => ({
+          ...r,
+          // Mapeamos las propiedades para que tu HTML no se rompa
+          numero: r.id,
+          titular: r.nombreCliente,
+          status: r.estado,
+          habitacion: r.selectedRoom?.name || 'Sin asignar',
+          precioTotal: r.total,
+          numeroHabitaciones: r.habitaciones || 1, // Por si acaso
+          
+          // Lógica de alergias (mira en notas y en pasajeros)
+          hasAllergies: (r.notas && r.notas.trim() !== '') || r.passengers?.some((p:any) => p.allergies && p.allergies.trim() !== '')
+        }));
+        
+        this.loadEventsFromReservas();
+      },
+      error: (err) => console.error('Error cargando calendario:', err)
+    });
   }
 
   private updateCalendar() {
@@ -66,6 +87,7 @@ export class Tab3Page implements OnInit {
         }
       }
       weeks.push(week);
+      if (day > daysInMonth) break;
     }
     this.weeks = weeks;
   }
@@ -130,25 +152,22 @@ export class Tab3Page implements OnInit {
     return v === 'pendiente';
   }
 
-  private populateSampleEvents() {
-    // kept for backward compatibility but not used
-    this.events = {};
-  }
-
   private loadEventsFromReservas() {
     this.events = {};
+    const role = this.auth.getRole();
+
     for (const r of this.reservas) {
-      // Marcar en el calendario según estado y rol
-      // El rol 'restaurante' solo debe ver reservas con alergias (como antes)
-      if (this.auth.getRole() === 'restaurante' && !r.hasAllergies) continue;
+      if (role === 'restaurante' && !r.hasAllergies) continue;
 
-      const markAsPendingForJefe = r.status === 'Pendiente' && this.auth.getRole() === 'jefe';
       const isConfirmed = r.status === 'Confirmada';
+      const markAsPendingForJefe = r.status === 'Pendiente' && role === 'jefe';
 
-      // marcar fecha de entrada
+      // --- Fecha Entrada ---
       const di = new Date(r.fechaEntrada);
       if (!isNaN(di.getTime())) {
+        // Formateamos la clave asegurándonos de usar UTC o Local según convenga (usamos local aquí)
         const keyI = `${di.getFullYear()}-${(di.getMonth() + 1).toString().padStart(2, '0')}-${di.getDate().toString().padStart(2, '0')}`;
+        
         if (isConfirmed) {
           if (this.events[keyI] === 'salida') this.events[keyI] = 'ambas';
           else this.events[keyI] = 'entrada';
@@ -161,7 +180,7 @@ export class Tab3Page implements OnInit {
         }
       }
 
-      // marcar fecha de salida (solo para reservas confirmadas)
+      // --- Fecha Salida (solo confirmadas) ---
       const ds = new Date(r.fechaSalida);
       if (!isNaN(ds.getTime())) {
         const keyS = `${ds.getFullYear()}-${(ds.getMonth() + 1).toString().padStart(2, '0')}-${ds.getDate().toString().padStart(2, '0')}`;
@@ -169,41 +188,39 @@ export class Tab3Page implements OnInit {
           if (this.events[keyS] === 'entrada') this.events[keyS] = 'ambas';
           else this.events[keyS] = 'salida';
         }
-        // Nota: no marcamos la fecha de salida para reservas pendientes —
-        // los pendientes deben mostrarse únicamente en la fecha de entrada.
       }
     }
   }
 
-  private loadReservas() {
-    this.reservas = this.reservaService.getReservas();
-  }
-
-  get visibleReservas(): Reserva[] {
-    // Prepare pool; recepcion should only see confirmed reservations
+  get visibleReservas(): any[] {
     let pool = this.reservas;
-    // Recepción, Limpieza y Mantenimiento solo ven reservas confirmadas
-    if (
-      this.auth.getRole() === 'recepcion' ||
-      this.auth.getRole() === 'limpieza' ||
-      this.auth.getRole() === 'mantenimiento'
-    ) {
+    const role = this.auth.getRole();
+
+    if (role === 'recepcion' || role === 'limpieza' || role === 'mantenimiento') {
       pool = pool.filter(r => r.status === 'Confirmada');
     }
 
-    // Restaurante solo puede ver reservas confirmadas que tengan alergias
-    if (this.auth.getRole() === 'restaurante') {
+    if (role === 'restaurante') {
       pool = pool.filter(r => r.status === 'Confirmada' && !!r.hasAllergies);
     }
 
-    // Si hay día seleccionado, mostrar solo reservas con esa fecha de entrada
+    // Filtrar por selección de día
     if (this.selected) {
       const key = `${this.selected.getFullYear()}-${(this.selected.getMonth()+1).toString().padStart(2,'0')}-${this.selected.getDate().toString().padStart(2,'0')}`;
-      // Incluir reservas cuya fecha de entrada O de salida coincida con la selección
-      return pool.filter(r => r.fechaEntrada === key || r.fechaSalida === key);
+      
+      // Ajuste: convertimos las fechas de la reserva al mismo formato 'YYYY-MM-DD' para comparar string con string
+      return pool.filter(r => {
+         const dIn = new Date(r.fechaEntrada);
+         const keyIn = `${dIn.getFullYear()}-${(dIn.getMonth()+1).toString().padStart(2,'0')}-${dIn.getDate().toString().padStart(2,'0')}`;
+         
+         const dOut = new Date(r.fechaSalida);
+         const keyOut = `${dOut.getFullYear()}-${(dOut.getMonth()+1).toString().padStart(2,'0')}-${dOut.getDate().toString().padStart(2,'0')}`;
+         
+         return keyIn === key || keyOut === key;
+      });
     }
 
-    // Si no hay día seleccionado, mostrar reservas del mes mostrado
+    // Si no hay selección, mostrar reservas del mes mostrado
     const y = this.displayDate.getFullYear();
     const m = this.displayDate.getMonth();
     return pool.filter(r => {
@@ -223,28 +240,22 @@ export class Tab3Page implements OnInit {
     return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(v);
   }
 
-  getInitials(r: Reserva): string {
+  getInitials(r: any): string {
     const name = (r?.titular || '').trim();
     if (!name) return '';
-    const parts = name.split(/\s+/).filter(p => p.length > 0);
-    const initials = parts.map(p => p.charAt(0).toUpperCase()).slice(0, 2).join('');
+    const parts = name.split(/\s+/).filter((p: string) => p.length > 0);
+    const initials = parts.map((p: string) => p.charAt(0).toUpperCase()).slice(0, 2).join('');
     return initials;
   }
 
   showMonth() {
-    // Quitar selección de día para mostrar todas las reservas del mes actual
     this.selected = null;
-    // Forzar recálculo (no necesario pero explícito)
     this.updateCalendar();
-    // Hacer scroll suave hasta la lista de reservas si existe
     try {
       const el = document.querySelector('.reservas-list') as HTMLElement | null;
       if (el) {
-        // use any to avoid TS signature mismatch across lib definitions
         (el as any).scrollIntoView?.({ behavior: 'smooth', block: 'start' });
       }
-    } catch (e) {
-      // noop
-    }
+    } catch (e) { }
   }
 }
