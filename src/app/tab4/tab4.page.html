@@ -109,7 +109,7 @@
 
           <div class="price-row" *ngIf="auth.getRole() !== 'limpieza' && auth.getRole() !== 'mantenimiento'">
             <div class="old-price">{{ room.oldPrice }}</div>
-            <div class="price">{{ room.price }}</div>
+            <div class="price">{{ room.displayPrice }}</div>
           </div>
 
           <div class="note" *ngIf="auth.getRole() !== 'limpieza' && auth.getRole() !== 'mantenimiento'">{{ room.note }}</div>

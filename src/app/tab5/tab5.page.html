@@ -1,45 +1,76 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>Equipo</ion-title>
+    <ion-title>Equipo y Gestión</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true" (ionScroll)="onContentScroll($event)" [scrollEvents]="true">
+<ion-content [fullscreen]="true" (ionScroll)="onContentScroll($event)" [scrollEvents]="true" class="finance-content">
   <ion-header collapse="condense">
     <ion-toolbar>
-      <ion-title size="large">Equipo</ion-title>
+      <ion-title size="large">Gerencia</ion-title>
     </ion-toolbar>
   </ion-header>
-  <div class="search-wrapper">
+
+  <div class="finance-grid">
+    <ion-card class="finance-card ingresos">
+      <ion-card-header>
+        <ion-card-subtitle>Ingresos (Reservas)</ion-card-subtitle>
+        <ion-card-title>{{ formatCurrency(totalIngresos) }}</ion-card-title>
+      </ion-card-header>
+      <ion-icon name="trending-up-outline"></ion-icon>
+    </ion-card>
+
+    <ion-card class="finance-card gastos">
+      <ion-card-header>
+        <ion-card-subtitle>Gastos (Nóminas)</ion-card-subtitle>
+        <ion-card-title>{{ formatCurrency(totalGastos) }}</ion-card-title>
+      </ion-card-header>
+      <ion-icon name="wallet-outline"></ion-icon>
+    </ion-card>
+  </div>
+
+  <ion-card class="finance-card beneficio" [class.negative]="beneficioNeto < 0">
+    <ion-card-header>
+      <ion-card-subtitle>Beneficio Neto Estimado</ion-card-subtitle>
+      <ion-card-title>{{ formatCurrency(beneficioNeto) }}</ion-card-title>
+    </ion-card-header>
+  </ion-card>
+
+  <div class="search-wrapper" style="margin-top: 20px;">
     <ion-searchbar placeholder="Buscar por número o nombre" showCancelButton="false" debounce="200" (ionInput)="onSearch($event)" searchIcon="search"></ion-searchbar>
   </div>
+
   <ion-list>
     <ion-item class="employee-row" lines="none" *ngFor="let e of employeesToShow; let i = index">
-      <ion-avatar slot="start" class="photo clickable" (click)="onAvatarClick(i, e.photo)" title="Seleccionar foto">
-          <img *ngIf="e.photo" [src]="e.photo" alt="Foto {{ e.nombre }} {{ e.apellidos }}">
+      <ion-avatar slot="start" class="photo clickable" (click)="onAvatarClick(e, e.photo)" title="Seleccionar foto">
+          <img *ngIf="e.photo" [src]="e.photo" alt="Foto">
           <div class="initials" *ngIf="!e.photo">{{ (e.nombre?.charAt(0) || '') + (e.apellidos?.charAt(0) || '') }}</div>
-          <input id="file-{{i}}" type="file" accept="image/*" style="display:none" (change)="fileChanged($event, i)">
+          <input id="file-{{i}}" type="file" accept="image/*" style="display:none" (change)="fileChanged($event, e)">
         </ion-avatar>
 
       <ion-label>
         <div class="line main">
-          <span class="name">{{ e.numero }} - {{ e.nombre }} {{ e.apellidos }}</span>
+          <span class="name">{{ e.numero || '---' }} - {{ e.nombre }} {{ e.apellidos }}</span>
           <span class="status" [ngClass]="{ 'activo': e.status === 'Activo', 'baja': e.status === 'Baja', 'licencia': e.status === 'En licencia' }">{{ e.status }}</span>
         </div>
-          <div class="line sub">
-            <span class="meta">{{ e.puesto }} · {{ e.contrato }} · DNI: {{ e.dni }}</span>
-            <span class="contact">{{ e.telefono }} · {{ e.email }}</span>
-          </div>
+        <div class="line sub">
+          <span class="meta">{{ e.puesto }} · {{ e.contrato }}</span>
+          <span class="salary-badge">{{ formatCurrency(e.salario) }}</span>
+        </div>
+        <div class="line sub">
+           <span class="meta">DNI: {{ e.dni }}</span>
+           <span class="contact">{{ e.telefono }}</span>
+        </div>
       </ion-label>
 
         <ion-buttons slot="end" class="action-buttons">
-          <ion-button fill="clear" color="medium" (click)="changeStatus(i)" title="Cambiar estado">
+          <ion-button fill="clear" color="medium" (click)="changeStatus(e)" title="Cambiar estado">
             <ion-icon slot="icon-only" name="ellipsis-vertical-outline"></ion-icon>
           </ion-button>
-          <ion-button fill="clear" color="primary" (click)="editEmployee(i)" title="Editar">
+          <ion-button fill="clear" color="primary" (click)="editEmployee(e)" title="Editar">
             <ion-icon slot="icon-only" name="create-outline"></ion-icon>
           </ion-button>
-          <ion-button fill="clear" color="danger" (click)="confirmDelete(i)" title="Eliminar">
+          <ion-button fill="clear" color="danger" (click)="confirmDelete(e)" title="Eliminar">
             <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -52,24 +83,20 @@
     </ion-fab-button>
   </ion-fab>
 
-  <!-- Espacio al final para que el último elemento no quede oculto tras el FAB -->
   <div class="bottom-space" aria-hidden="true"></div>
-
 </ion-content>
 
 <button class="scroll-top" [class.visible]="showScrollTop" (click)="scrollToTop()" aria-label="Ir arriba">
   <ion-icon name="chevron-up-outline"></ion-icon>
 </button>
 
-<!-- Hidden global file input used by add/edit alerts -->
 <input id="file-modal" type="file" accept="image/*" style="display:none" (change)="fileChangedModal($event)">
 
-<!-- Image preview overlay -->
 <div class="image-preview-overlay" *ngIf="previewVisible" (click)="closePreview()">
   <div class="image-preview-content" (click)="$event.stopPropagation()">
     <img [src]="previewImage" alt="Vista previa" />
     <div class="preview-actions">
-      <button class="btn-edit" (click)="triggerModalFileInput(previewIndex)">Editar</button>
+      <button class="btn-edit" (click)="triggerModalFileInput()">Editar</button>
       <button class="btn-close" (click)="closePreview()">Cerrar</button>
     </div>
   </div>

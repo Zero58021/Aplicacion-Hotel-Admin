@@ -54,7 +54,7 @@ export class Tab1Page implements OnInit {
       { label: 'Reservas', icon: 'book', permission: 'reservas.view', path: '/tabs/tab2' },
       { label: 'Calendario', icon: 'calendar', permission: 'calendario.view', path: '/tabs/tab3' },
       { label: 'Habitaciones', icon: 'bed', permission: 'habitaciones.view', path: '/tabs/tab4' },
-      { label: 'Equipo', icon: 'people', permission: 'equipo.view', path: '/tabs/tab5' },
+      { label: 'Equipo y Gestión', icon: 'people', permission: 'equipo.view', path: '/tabs/tab5' },
       { label: 'Logout', icon: 'log-out', onClick: () => this.logout() }
     ];
 

@@ -1,143 +1,76 @@
-/* Styles for tab5: ensure headers match other tabs (green centered titles, full-bleed) */
 :host {
-	display: block;
+  display: block;
 }
 
-/* Make the top headers full-bleed (compensate host horizontal padding) */
-:host > ion-header,
-:host ion-content > ion-header {
-	margin-left: -12px;
-	margin-right: -12px;
-	width: calc(100% + 24px);
+/* CABECERAS (Tus estilos originales) */
+:host > ion-header, :host ion-content > ion-header {
+  margin-left: -12px; margin-right: -12px; width: calc(100% + 24px);
+}
+:host ion-header ion-title, :host ion-content ion-header ion-title {
+  color: var(--ion-color-success, #10b981) !important;
+  text-align: center; display: block; width: 100%;
+}
+:host ion-toolbar { --justify-content: center; }
+.nav-btn ion-icon, .edit-btn ion-icon { color: #fff !important; }
+
+/* ESTILOS FINANCIEROS (NUEVO) */
+.finance-content { --background: #fdfdfd; }
+
+.finance-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 0 4px;
 }
 
-/* Make header titles green and centered */
-:host ion-header ion-title,
-:host ion-content ion-header ion-title {
-	color: var(--ion-color-success, #10b981) !important;
-	text-align: center;
-	width: 100%;
-	display: block;
+.finance-card {
+  margin: 0; position: relative; overflow: hidden;
+  border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  
+  ion-card-header { padding: 16px; position: relative; z-index: 2; }
+  ion-card-subtitle { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; opacity: 0.8; margin-bottom: 4px; }
+  ion-card-title { font-size: 1.2rem; font-weight: 800; }
+  
+  ion-icon {
+    position: absolute; right: -10px; bottom: -15px; font-size: 80px;
+    opacity: 0.12; transform: rotate(-15deg); z-index: 1; pointer-events: none;
+  }
+
+  &.ingresos { 
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    color: #064e3b; ion-card-subtitle { color: #065f46; }
+  }
+  &.gastos { 
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    color: #7f1d1d; ion-card-subtitle { color: #991b1b; }
+  }
+  &.beneficio { 
+    margin: 0 4px 12px 4px; background: #ffffff; border: 1px solid #e5e7eb; color: #0f172a; text-align: center;
+    ion-card-title { font-size: 1.8rem; color: var(--ion-color-success, #10b981); font-weight: 900; }
+    &.negative ion-card-title { color: #ef4444; }
+  }
 }
 
-/* Center toolbar contents to keep titles visually centered */
-:host ion-toolbar {
-	--justify-content: center;
+/* LISTA DE EMPLEADOS (Tus estilos originales con mejoras mínimas) */
+.search-wrapper { margin-bottom: 10px; }
+.salary-badge {
+  background: #f3f4f6; color: #374151; font-weight: 700; font-size: 11px;
+  padding: 2px 6px; border-radius: 4px; margin-left: 8px; border: 1px solid #e5e7eb;
 }
 
-/* Ensure ion-icon inside nav/edit buttons is white */
-.nav-btn ion-icon,
-.edit-btn ion-icon {
-	color: #fff !important;
-}
-/* Scroll-to-top button (shared style) */
-.scroll-top {
-	position: fixed;
-	/* place just to the left of the FAB: FAB right (16px) + FAB width (44px) + gap (8px) = 68px */
-	right: 68px;
-	bottom: 8px;
-	width: 44px;
-	height: 44px;
-	border-radius: 22px;
-	padding: 0;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	background: var(--ion-color-primary, #3880ff);
-	box-shadow: 0 6px 14px rgba(0,0,0,0.18);
-	color: #fff;
-	border: none;
-	box-sizing: border-box;
-	line-height: 1;
-	appearance: none;
-	-webkit-appearance: none;
-	opacity: 0;
-	transform: translateY(12px) scale(.96);
-	transition: opacity 240ms cubic-bezier(.2,.8,.2,1), transform 240ms cubic-bezier(.2,.8,.2,1);
-}
-.scroll-top ion-icon { font-size: 20px; color: #fff !important; }
-.scroll-top.visible { opacity: 1; transform: translateY(0) scale(1); }
-
-@media (max-width: 480px) {
-	.scroll-top { right: 68px; bottom: 12px; }
-}
-
-/* Alinear el FAB de "Agregar empleado" con el botón de "subir" */
-:host ion-fab {
-	position: fixed;
-	right: 16px; /* margen desde la derecha */
-	bottom: 8px; /* misma altura que .scroll-top */
-	z-index: 9998;
-}
-
-/* Alinear y igualar tamaño del FAB con el botón subir */
-:host ion-fab-button {
-	width: 44px;
-	height: 44px;
-	border-radius: 22px;
-	padding: 0;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	background: var(--ion-color-primary, #3880ff);
-	box-shadow: 0 6px 14px rgba(0,0,0,0.18);
-	color: #fff;
-	border: none;
-	box-sizing: border-box;
-	line-height: 1;
-	appearance: none;
-}
-
-:host ion-fab-button ion-icon {
-	font-size: 20px;
-	color: #fff !important;
-	vertical-align: middle;
-}
-
-@media (max-width: 480px) {
-	:host ion-fab-button { width: 44px; height: 44px; border-radius: 22px; }
-	:host ion-fab-button ion-icon { font-size: 20px; }
-	.scroll-top { right: 68px; bottom: 12px; }
-}
-
-/* Spacer at the end of the page to avoid last item being hidden by fixed FAB */
-.bottom-space {
-	height: 88px;
-	width: 100%;
-}
-
-/* Simple, limpio y compacto con soporte de foto */
 .employee-row {
-	padding: 8px 12px;
-	display: flex;
-	align-items: center;
-	gap: 12px;
-	border-bottom: 1px solid rgba(0,0,0,0.04);
+  padding: 8px 12px; display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
 }
-
 .employee-row .photo {
-	width: 44px;
-	height: 44px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	overflow: hidden;
-	border-radius: 8px;
-	background: linear-gradient(135deg, rgba(56,128,255,0.12), rgba(61,194,255,0.06));
+  width: 44px; height: 44px; border-radius: 50%; overflow: hidden;
+  background: linear-gradient(135deg, rgba(56,128,255,0.12), rgba(61,194,255,0.06));
+  display: flex; align-items: center; justify-content: center;
 }
-/* show pointer when avatar is clickable */
 .employee-row .photo.clickable { cursor: pointer; }
-.employee-row .photo img {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-	display: block;
-}
-.employee-row .initials {
-	font-weight: 700;
-	color: var(--ion-color-primary, #3880ff);
-	font-size: 14px;
-}
+.employee-row .photo img { width: 100%; height: 100%; object-fit: cover; }
+.employee-row .initials { font-weight: 700; color: var(--ion-color-primary); font-size: 14px; }
 
 .employee-row ion-label { width: calc(100% - 140px); }
 .employee-row .line { display: flex; justify-content: space-between; align-items: center; }
@@ -148,90 +81,32 @@
 .employee-row .status.baja { background: rgba(220,38,38,0.08); color: #dc2626; }
 .employee-row .status.licencia { background: rgba(250,204,21,0.12); color: #a16207; }
 
-.employee-row ion-buttons { margin-left: 8px; }
-
-/* Compact action buttons on the right */
 .employee-row ion-buttons.action-buttons {
-	margin-left: auto; /* push to the far right */
-	margin-right: 6px;
-	display: flex;
-	gap: 6px;
-	align-items: center;
+  margin-left: auto; display: flex; gap: 6px; align-items: center;
 }
-
 .employee-row ion-buttons.action-buttons ion-button {
-	--padding-start: 8px;
-	--padding-end: 8px;
-	--min-width: 36px; /* slightly larger for better touch targets */
-	height: 36px;
-	width: 36px;
-	--border-radius: 6px;
-	padding: 0;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
+  height: 36px; width: 36px; --border-radius: 6px; padding: 0;
 }
 
-.employee-row ion-buttons.action-buttons ion-button ion-icon {
-	font-size: 18px; /* slightly larger icon */
-}
+/* COMPONENTES COMPARTIDOS */
+:host ion-fab { position: fixed; right: 16px; bottom: 8px; z-index: 9998; }
+:host ion-fab-button { width: 44px; height: 44px; border-radius: 22px; }
+/* Icono del FAB de añadir: forzar color blanco */
+:host ion-fab ion-fab-button ion-icon { color: #fff !important; }
+.scroll-top { position: fixed; right: 68px; bottom: 8px; width: 44px; height: 44px; border-radius: 22px; background: var(--ion-color-primary); color: #fff; border: none; opacity: 0; transform: translateY(12px) scale(.96); transition: all 0.2s; z-index: 9990; display: flex; align-items: center; justify-content: center; }
+.scroll-top.visible { opacity: 1; transform: translateY(0) scale(1); }
+.bottom-space { height: 88px; width: 100%; }
 
-@media (max-width: 420px) {
-	.employee-row ion-buttons.action-buttons ion-button {
-		--min-width: 32px;
-		height: 32px;
-		width: 32px;
-	}
-	.employee-row ion-buttons.action-buttons ion-button ion-icon { font-size: 16px; }
-}
+/* Forzar color blanco en el icono de "ir arriba" */
+.scroll-top ion-icon { color: #fff !important; }
 
-@media (max-width: 420px) {
-	.employee-row { padding: 6px 10px; gap: 8px; }
-	.employee-row .photo { width: 36px; height: 36px; }
-	.employee-row .name { font-size: 13px; }
-}
+/* PREVIEW MODAL */
+.image-preview-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 10000; }
+.image-preview-content { max-width: 95vw; max-height: 90vh; }
+.image-preview-content img { max-width: 95vw; max-height: 80vh; border-radius: 8px; object-fit: contain; }
+.preview-actions { display: flex; gap: 10px; margin-top: 10px; justify-content: center; }
+.preview-actions button { padding: 8px 16px; border-radius: 20px; border: none; font-weight: bold; cursor: pointer; }
+.btn-edit { background: #fff; color: #333; }
+.btn-close { background: #ff4444; color: #fff; }
 
-/* Fullscreen image preview overlay */
-.image-preview-overlay {
-	position: fixed;
-	inset: 0;
-	background: rgba(0,0,0,0.65);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	z-index: 10000;
-}
-.image-preview-content {
-	max-width: 95vw;
-	max-height: 90vh;
-	background: transparent;
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-}
-.image-preview-content img {
-	max-width: 95vw;
-	max-height: 80vh;
-	object-fit: contain;
-	border-radius: 8px;
-	box-shadow: 0 8px 30px rgba(0,0,0,0.5);
-}
-.preview-actions {
-	display: flex;
-	gap: 8px;
-	justify-content: center;
-}
-.preview-actions .btn-edit,
-.preview-actions .btn-close {
-	--background: rgba(255,255,255,0.9);
-	padding: 6px 12px;
-	border-radius: 6px;
-	color: #111;
-	border: none;
-}
-
-/* Ocultar el botón de volver (flecha) que Ionic puede teleportar al header */
-:host ion-back-button {
-	display: none !important;
-}
-
+:host ion-back-button { display: none !important; }

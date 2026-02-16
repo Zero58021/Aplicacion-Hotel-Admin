@@ -1,4 +1,4 @@
-<ion-header>
+<ion-header shadow="none">
   <ion-toolbar>
     <ion-title>Opiniones</ion-title>
     <ion-buttons slot="end">
@@ -12,13 +12,26 @@
     <ion-item *ngFor="let r of reviews">
       <ion-label>
         <div class="stars">
-          <ion-icon *ngFor="let s of getStars(); let i = index" [name]="i < (r.rating || 0) ? 'star' : 'star-outline'"></ion-icon>
+          <ion-icon *ngFor="let s of getStars(); let i = index" 
+                    [name]="i < (r.rating || 0) ? 'star' : 'star-outline'">
+          </ion-icon>
         </div>
-        <h3>{{ r.author || 'Anónimo' }}</h3>
-        <p>{{ r.text }}</p>
+        
+        <h3 style="font-weight: bold; color: var(--ion-color-primary);">
+          {{ r.usuario || r.author || 'Anónimo' }}
+        </h3>
+        
+        <p style="white-space: normal; color: #444; margin-top: 4px;">
+          {{ r.texto || r.text }}
+        </p>
+
+        <ion-note *ngIf="r.fecha || r.date" style="font-size: 0.8rem;">
+          {{ (r.fecha || r.date) | date:'dd/MM/yyyy HH:mm' }}
+        </ion-note>
       </ion-label>
     </ion-item>
   </div>
+
   <ng-template #noReviews>
     <div class="no-reviews">No hay opiniones para esta habitación.</div>
   </ng-template>

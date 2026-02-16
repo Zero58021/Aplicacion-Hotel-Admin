@@ -134,32 +134,27 @@ export class Tab2Page implements OnInit {
   // --- HELPERS VISUALES (Tu código original) ---
 
   showCustomConfirm(r: any) {
-    if (document.getElementById('custom-delete-overlay')) return;
-    const overlay = document.createElement('div');
-    overlay.id = 'custom-delete-overlay';
-    overlay.setAttribute('style', 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:99999;backdrop-filter:blur(6px);background:rgba(0,0,0,0.12);');
-    
-    const card = document.createElement('div');
-    card.setAttribute('style', 'width:min(92%,480px);background:#fff;border-radius:10px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,0.25);color:#0b3d2e;');
-    card.innerHTML = `<h3 style="margin:0 0 10px 0;color:#0b3d2e">Confirmar borrado</h3><p style="margin:0 0 18px 0;color:rgba(11,61,46,0.9)">¿Borrar reserva ${r.numero}? Esta acción no se puede deshacer.</p>`;
-    
-    const actions = document.createElement('div');
-    actions.setAttribute('style', 'display:flex;gap:10px;justify-content:flex-end;');
-    
-    const btnCancel = document.createElement('button');
-    btnCancel.textContent = 'Cancelar';
-    btnCancel.setAttribute('style', 'background:#fff;border:1px solid rgba(16,185,129,0.12);color:#10b981;padding:8px 14px;border-radius:8px;cursor:pointer;');
-    
-    const btnConfirm = document.createElement('button');
-    btnConfirm.textContent = 'Borrar';
-    btnConfirm.setAttribute('style', 'background:#fff;border:1px solid rgba(231,76,60,0.12);color:#e53935;padding:8px 14px;border-radius:8px;cursor:pointer;');
-
-    actions.append(btnCancel, btnConfirm);
-    card.appendChild(actions);
-    document.body.appendChild(overlay);
-
-    btnCancel.onclick = () => document.body.removeChild(overlay);
-    btnConfirm.onclick = () => { this.deleteReservation(r); document.body.removeChild(overlay); };
+    // Usar el AlertController de Ionic para mostrar una confirmación fiable
+    (async () => {
+      const alert = await this.alertCtrl.create({
+        header: 'Confirmar borrado',
+        message: `¿Borrar reserva ${r.numero}? Esta acción no se puede deshacer.`,
+        cssClass: 'custom-delete-alert',
+        buttons: [
+          {
+            text: 'Cancelar',
+            role: 'cancel',
+            cssClass: 'btn-cancel-green'
+          },
+          {
+            text: 'Borrar',
+            cssClass: 'btn-confirm-green',
+            handler: () => { this.deleteReservation(r); }
+          }
+        ]
+      });
+      await alert.present();
+    })();
   }
 
   // --- MODALES ---

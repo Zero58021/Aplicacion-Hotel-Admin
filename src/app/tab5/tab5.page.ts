@@ -1,9 +1,29 @@
-  import { Component, OnInit, ViewChild } from '@angular/core';
-  import { IonicModule, IonContent, AlertController } from '@ionic/angular';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { IonicModule, IonContent, AlertController } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ExploreContainerComponentModule } from '../explore-container/explore-container.module';
-import { Employee } from '../models/employee.model';
+import { ApiService } from '../services/api';
+import { AuthService } from '../services/auth.service';
+
+// Definimos la interfaz aquí para evitar errores si no tienes el modelo creado
+export interface Employee {
+  id?: any;
+  numero: string;
+  nombre: string;
+  apellidos: string;
+  dni: string;
+  telefono: string;
+  email: string;
+  photo?: string;
+  puesto: string;
+  status: string;
+  contrato: string;
+  salario?: number; // Nuevo campo
+  usuario?: string; // Para login
+  password?: string; // Para login
+  rol?: string; // Para login
+}
 
 @Component({
   selector: 'app-tab5',
@@ -17,148 +37,58 @@ export class Tab5Page implements OnInit {
   @ViewChild(IonContent, { static: false }) content: IonContent | undefined;
   showScrollTop: boolean = false;
 
-  constructor(private alertController: AlertController) { }
+  // Datos Financieros
+  totalIngresos: number = 0;
+  totalGastos: number = 0;
+  beneficioNeto: number = 0;
 
-  // store original back-button icons/handlers to restore on leave
-  private _backButtonOriginals = new Map<HTMLElement, { icon: string | null, clickHandler?: any }>();
+  // Datos Empleados
+  employees: Employee[] = [];
+  searchText: string = '';
 
-  // used by add/edit dialogs to hold a photo selected while the alert is open
-  modalEditingIndex: number | 'new' | null = null;
+  // Variables para gestión de fotos
+  modalEditingId: any = null;
   pendingModalPhotoData: string | null = null;
-  // preview state
+  
+  // Variables para Preview
   previewVisible: boolean = false;
   previewImage: string | null = null;
-  previewIndex: number | null = null;
+  currentPreviewEmployee: Employee | null = null;
+
+  constructor(
+    private alertController: AlertController,
+    private api: ApiService,
+    public auth: AuthService
+  ) { }
 
   ngOnInit() {
+    this.loadData();
   }
 
   ionViewWillEnter() {
-    this.replaceBackButtonWithSearch();
+    this.loadData();
   }
 
-  ionViewWillLeave() {
-    this.restoreBackButton();
-  }
+  loadData() {
+    // 1. Cargar Empleados (y calcular gastos)
+    this.api.getEmpleados().subscribe(data => {
+      this.employees = data;
+      this.calculateFinancials();
+    });
 
-  private replaceBackButtonWithSearch() {
-    const buttons = Array.from(document.querySelectorAll('ion-back-button')) as HTMLElement[];
-    buttons.forEach(btn => {
-      try {
-        const origIcon = btn.getAttribute('icon');
-        const origClick = (btn as any).__searchFocusHandler;
-        this._backButtonOriginals.set(btn, { icon: origIcon, clickHandler: origClick });
-        btn.setAttribute('icon', 'search');
-        // replace click to focus the page searchbar
-        const handler = (e: Event) => {
-          e.preventDefault();
-          e.stopPropagation();
-          const sb = document.querySelector('ion-searchbar');
-          if (sb && (sb as any).setFocus) (sb as any).setFocus();
-        };
-        // save and attach
-        (btn as any).__searchFocusHandler = handler;
-        btn.addEventListener('click', handler);
-      } catch (err) {
-        // ignore
-      }
+    // 2. Cargar Reservas (y calcular ingresos)
+    this.api.getReservas().subscribe(data => {
+      // Solo sumamos reservas confirmadas
+      const confirmadas = data.filter(r => r.estado === 'Confirmada' || r.status === 'Confirmada');
+      this.totalIngresos = confirmadas.reduce((acc, r) => acc + (Number(r.total) || Number(r.precioTotal) || 0), 0);
+      this.calculateFinancials();
     });
   }
 
-  private restoreBackButton() {
-    this._backButtonOriginals.forEach((orig, btn) => {
-      try {
-        if (orig.icon == null) btn.removeAttribute('icon'); else btn.setAttribute('icon', orig.icon);
-        const handler = (btn as any).__searchFocusHandler;
-        if (handler) {
-          btn.removeEventListener('click', handler);
-          delete (btn as any).__searchFocusHandler;
-        }
-      } catch (err) { }
-    });
-    this._backButtonOriginals.clear();
+  calculateFinancials() {
+    this.totalGastos = this.employees.reduce((acc, e) => acc + (Number(e.salario) || 0), 0);
+    this.beneficioNeto = this.totalIngresos - this.totalGastos;
   }
-
-  pickImage(index: number) {
-    if (index < 0 || index >= this.employees.length) return;
-    const input = document.getElementById(`file-${index}`) as HTMLInputElement | null;
-    input?.click();
-  }
-
-  onAvatarClick(index: number, photo?: string) {
-    if (photo) {
-      this.openPreview(index, photo);
-    } else {
-      this.pickImage(index);
-    }
-  }
-
-  openPreview(index: number, photo: string) {
-    this.previewIndex = index;
-    this.previewImage = photo;
-    this.previewVisible = true;
-  }
-
-  closePreview() {
-    this.previewVisible = false;
-    this.previewImage = null;
-    this.previewIndex = null;
-  }
-
-  fileChanged(ev: Event, index: number) {
-    const input = ev.target as HTMLInputElement;
-    const file = input.files && input.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string | null;
-      if (dataUrl) this.employees[index].photo = dataUrl;
-    };
-    reader.readAsDataURL(file);
-    // reset input so selecting same file later still triggers change
-    input.value = '';
-  }
-
-  fileChangedModal(ev: Event) {
-    const input = ev.target as HTMLInputElement;
-    const file = input.files && input.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string | null;
-      if (dataUrl) {
-        this.pendingModalPhotoData = dataUrl;
-      }
-    };
-    reader.readAsDataURL(file);
-    input.value = '';
-  }
-
-  triggerModalFileInput(index: number | null) {
-    if (index === null || index === undefined) return;
-    const id = `file-${index}`;
-    const input = document.getElementById(id) as HTMLInputElement | null;
-    input?.click();
-  }
-
-  employees: Employee[] = [
-    { numero: '001', nombre: 'Ana', apellidos: 'García', dni: '12345678A', telefono: '600111222', email: 'ana@example.com', photo: 'https://i.pravatar.cc/150?img=1', puesto: 'Limpieza', status: 'Activo', contrato: 'Indefinido' },
-    { numero: '002', nombre: 'Luis', apellidos: 'Martínez', dni: '87654321B', telefono: '600333444', email: 'luis@example.com', photo: 'https://i.pravatar.cc/150?img=2', puesto: 'Restaurante', status: 'Activo', contrato: 'Indefinido' },
-    { numero: '003', nombre: 'Marta', apellidos: 'Pérez', dni: '11223344C', telefono: '600555666', email: 'marta@example.com', photo: 'https://i.pravatar.cc/150?img=3', puesto: 'Mostrador', status: 'Activo', contrato: 'A tiempo completo' },
-    { numero: '004', nombre: 'Javier', apellidos: 'Ruiz', dni: '22113344D', telefono: '600777888', email: 'javier.ruiz@example.com', puesto: 'Limpieza', status: 'Activo', contrato: 'Temporal' },
-    { numero: '005', nombre: 'Carmen', apellidos: 'López', dni: '33445566E', telefono: '600888999', email: 'carmen.lopez@example.com', puesto: 'Restaurante', status: 'Activo', contrato: 'A tiempo parcial' },
-    { numero: '006', nombre: 'Pedro', apellidos: 'Sánchez', dni: '44556677F', telefono: '600123987', email: 'pedro.sanchez@example.com', puesto: 'Mostrador', status: 'Activo', contrato: 'Indefinido' },
-    { numero: '007', nombre: 'Laura', apellidos: 'Gómez', dni: '55667788G', telefono: '600222333', email: 'laura.gomez@example.com', puesto: 'Limpieza', status: 'Activo', contrato: 'Indefinido' },
-    { numero: '008', nombre: 'Sergio', apellidos: 'Díaz', dni: '66778899H', telefono: '600444555', email: 'sergio.diaz@example.com', puesto: 'Restaurante', status: 'Activo', contrato: 'Por obra o servicio' },
-    { numero: '009', nombre: 'Elena', apellidos: 'Torres', dni: '77889900J', telefono: '600666777', email: 'elena.torres@example.com', puesto: 'Mostrador', status: 'Activo', contrato: 'Indefinido' },
-    { numero: '010', nombre: 'Roberto', apellidos: 'Jiménez', dni: '88990011K', telefono: '600999000', email: 'roberto.jimenez@example.com', puesto: 'Limpieza', status: 'Activo', contrato: 'Temporal' },
-    { numero: '011', nombre: 'Silvia', apellidos: 'Morales', dni: '99001122L', telefono: '600101010', email: 'silvia.morales@example.com', puesto: 'Restaurante', status: 'Activo', contrato: 'A tiempo completo' },
-    { numero: '012', nombre: 'Andrés', apellidos: 'Herrera', dni: '10111213M', telefono: '600202020', email: 'andres.herrera@example.com', puesto: 'Mostrador', status: 'Activo', contrato: 'Indefinido' },
-    { numero: '013', nombre: 'Natalia', apellidos: 'Vega', dni: '12131415N', telefono: '600303030', email: 'natalia.vega@example.com', puesto: 'Restaurante', status: 'Activo', contrato: 'A tiempo completo' }
-  ];
-
-  // búsqueda
-  searchText: string = '';
 
   get employeesToShow(): Employee[] {
     const q = (this.searchText || '').toLowerCase().trim();
@@ -174,121 +104,112 @@ export class Tab5Page implements OnInit {
     this.searchText = ev?.detail?.value ?? ev?.target?.value ?? '';
   }
 
+  // --- CRUD EMPLEADOS CONECTADO A API ---
+
   async addEmployee() {
-    // prepare modal state for new employee
-    this.modalEditingIndex = 'new';
+    this.modalEditingId = 'new';
     this.pendingModalPhotoData = null;
 
     const alert = await this.alertController.create({
       header: 'Nuevo empleado',
+      cssClass: 'custom-alert',
       inputs: [
-        { name: 'numero', type: 'text', placeholder: 'Número de empleado' },
+        { name: 'numero', type: 'text', placeholder: 'Nº Empleado' },
         { name: 'nombre', type: 'text', placeholder: 'Nombre' },
         { name: 'apellidos', type: 'text', placeholder: 'Apellidos' },
         { name: 'dni', type: 'text', placeholder: 'DNI' },
+        { name: 'salario', type: 'number', placeholder: 'Salario Mensual (€)' }, // CAMPO NUEVO
         { name: 'telefono', type: 'tel', placeholder: 'Teléfono' },
-        { name: 'email', type: 'email', placeholder: 'Correo electrónico' },
-        { name: 'puesto', type: 'text', placeholder: 'Puesto (limpieza, restaurante, mostrador)' },
-        { name: 'contrato', type: 'text', placeholder: 'Contrato (Indefinido, Temporal, Por obra o servicio, A tiempo completo, A tiempo parcial)', value: 'Indefinido' }
+        { name: 'email', type: 'email', placeholder: 'Email' },
+        { name: 'puesto', type: 'text', placeholder: 'Puesto' },
+        { name: 'contrato', type: 'text', placeholder: 'Contrato', value: 'Indefinido' },
+        // Campos para login (opcionales)
+        { name: 'usuario', type: 'text', placeholder: 'Usuario App (ej: juan)' },
+        { name: 'password', type: 'password', placeholder: 'Contraseña App' }
       ],
       buttons: [
         { text: 'Cancelar', role: 'cancel' },
         {
           text: 'Elegir foto',
           handler: () => {
-            this.modalEditingIndex = 'new';
-            const input = document.getElementById('file-modal') as HTMLInputElement | null;
+            const input = document.getElementById('file-modal') as HTMLInputElement;
             input?.click();
-            return false; // keep the alert open
+            return false; 
           }
         },
         {
           text: 'Guardar',
           handler: (data) => {
-            if (!data || !data.nombre) return;
-            const emp: Employee = {
-              numero: data.numero || '',
-              nombre: data.nombre || '',
-              apellidos: data.apellidos || '',
-              dni: data.dni || '',
-              telefono: data.telefono || '',
-              email: data.email || '',
-              photo: this.pendingModalPhotoData || data.photo || undefined,
-              puesto: data.puesto || '',
-              status: data.status || 'Activo',
-              contrato: data.contrato || 'Indefinido'
+            if (!data.nombre) return;
+            const newEmp: any = {
+              ...data,
+              salario: Number(data.salario),
+              photo: this.pendingModalPhotoData || '',
+              status: 'Activo',
+              // Asignamos rol basado en puesto o por defecto 'empleado'
+              rol: data.puesto ? data.puesto.toLowerCase().split(' ')[0] : 'empleado' 
             };
-            this.employees.push(emp);
-            this.pendingModalPhotoData = null;
-            this.modalEditingIndex = null;
-            setTimeout(() => this.scrollToBottom(), 200);
+
+            this.api.guardarEmpleado(newEmp).subscribe(() => {
+              this.loadData();
+              setTimeout(() => this.scrollToBottom(), 200);
+            });
           }
         }
       ]
     });
-
     await alert.present();
+    this.attachPasswordToggleToAlert(alert as any);
   }
 
-  async editEmployee(index: number) {
-    if (index < 0 || index >= this.employees.length) return;
-    const emp = this.employees[index];
-    // prepare modal state for editing
-    this.modalEditingIndex = index;
+  async editEmployee(emp: Employee) {
+    this.modalEditingId = emp.id;
     this.pendingModalPhotoData = null;
+
     const alert = await this.alertController.create({
       header: 'Editar empleado',
       inputs: [
-        { name: 'numero', type: 'text', placeholder: 'Número de empleado', value: emp.numero },
-        { name: 'nombre', type: 'text', placeholder: 'Nombre', value: emp.nombre },
-        { name: 'apellidos', type: 'text', placeholder: 'Apellidos', value: emp.apellidos },
-        { name: 'dni', type: 'text', placeholder: 'DNI', value: emp.dni },
-        { name: 'telefono', type: 'tel', placeholder: 'Teléfono', value: emp.telefono },
-        { name: 'email', type: 'email', placeholder: 'Correo electrónico', value: emp.email },
-        { name: 'puesto', type: 'text', placeholder: 'Puesto (limpieza, restaurante, mostrador)', value: emp.puesto },
-        { name: 'contrato', type: 'text', placeholder: 'Contrato (Indefinido, Temporal, Por obra o servicio, A tiempo completo, A tiempo parcial)', value: emp.contrato }
+        { name: 'numero', type: 'text', value: emp.numero, placeholder: 'Nº Empleado' },
+        { name: 'nombre', type: 'text', value: emp.nombre, placeholder: 'Nombre' },
+        { name: 'apellidos', type: 'text', value: emp.apellidos, placeholder: 'Apellidos' },
+        { name: 'dni', type: 'text', value: emp.dni, placeholder: 'DNI' },
+        { name: 'salario', type: 'number', value: emp.salario, placeholder: 'Salario (€)' }, // CAMPO NUEVO
+        { name: 'telefono', type: 'tel', value: emp.telefono, placeholder: 'Teléfono' },
+        { name: 'email', type: 'email', value: emp.email, placeholder: 'Email' },
+        { name: 'puesto', type: 'text', value: emp.puesto, placeholder: 'Puesto' },
+        { name: 'contrato', type: 'text', value: emp.contrato, placeholder: 'Contrato' },
+        { name: 'usuario', type: 'text', value: emp.usuario, placeholder: 'Usuario App' },
+        { name: 'password', type: 'password', value: emp.password, placeholder: 'Contraseña App' }
       ],
       buttons: [
         { text: 'Cancelar', role: 'cancel' },
         {
           text: 'Elegir foto',
           handler: () => {
-            this.modalEditingIndex = index;
-            const input = document.getElementById('file-modal') as HTMLInputElement | null;
+            const input = document.getElementById('file-modal') as HTMLInputElement;
             input?.click();
-            return false; // keep the alert open
+            return false;
           }
         },
         {
           text: 'Guardar',
           handler: (data) => {
-            if (!data || !data.nombre) return;
-            const updated: Employee = {
-              numero: data.numero || '',
-              nombre: data.nombre || '',
-              apellidos: data.apellidos || '',
-              dni: data.dni || '',
-              telefono: data.telefono || '',
-              email: data.email || '',
-              photo: this.pendingModalPhotoData || data.photo || emp.photo,
-              puesto: data.puesto || '',
-              status: emp.status || 'Activo',
-              contrato: data.contrato || emp.contrato || 'Indefinido'
+            const updatedEmp = {
+              ...emp,
+              ...data,
+              salario: Number(data.salario),
+              photo: this.pendingModalPhotoData || emp.photo
             };
-            this.employees[index] = updated;
-            this.pendingModalPhotoData = null;
-            this.modalEditingIndex = null;
+            this.api.editarEmpleado(emp.id, updatedEmp).subscribe(() => this.loadData());
           }
         }
       ]
     });
-
     await alert.present();
+    this.attachPasswordToggleToAlert(alert as any);
   }
 
-  async changeStatus(index: number) {
-    if (index < 0 || index >= this.employees.length) return;
-    const emp = this.employees[index];
+  async changeStatus(emp: Employee) {
     const alert = await this.alertController.create({
       header: 'Cambiar estado',
       inputs: [
@@ -298,9 +219,12 @@ export class Tab5Page implements OnInit {
       ],
       buttons: [
         { text: 'Cancelar', role: 'cancel' },
-        { text: 'Guardar', handler: (data) => {
-            if (!data) return;
-            this.employees[index].status = data;
+        {
+          text: 'Guardar',
+          handler: (val) => {
+            if (val) {
+              this.api.editarEmpleado(emp.id, { ...emp, status: val }).subscribe(() => this.loadData());
+            }
           }
         }
       ]
@@ -308,35 +232,207 @@ export class Tab5Page implements OnInit {
     await alert.present();
   }
 
-  async confirmDelete(index: number) {
+  async confirmDelete(emp: Employee) {
     const alert = await this.alertController.create({
       header: 'Eliminar',
-      message: '¿Eliminar este empleado? Esta acción no se puede deshacer.',
+      message: `¿Eliminar a ${emp.nombre}?`,
       buttons: [
         { text: 'Cancelar', role: 'cancel' },
-        { text: 'Eliminar', handler: () => this.deleteEmployee(index) }
+        {
+          text: 'Eliminar',
+          handler: () => {
+            this.api.eliminarEmpleado(emp.id).subscribe(() => this.loadData());
+          }
+        }
       ]
     });
     await alert.present();
   }
 
-  deleteEmployee(index: number) {
-    if (index >= 0 && index < this.employees.length) {
-      this.employees.splice(index, 1);
+  // --- GESTIÓN DE FOTOS ---
+
+  onAvatarClick(emp: Employee, photo?: string) {
+    if (photo) {
+      this.currentPreviewEmployee = emp;
+      this.openPreview(photo);
+    } else {
+      // Buscar índice visual para disparar el input file
+      const idx = this.employeesToShow.indexOf(emp);
+      if (idx >= 0) {
+        const input = document.getElementById(`file-${idx}`) as HTMLInputElement;
+        input?.click();
+      }
     }
   }
 
-  private scrollToBottom() {
-    this.content?.scrollToBottom(300);
+  fileChanged(ev: Event, emp: any) {
+  const input = ev.target as HTMLInputElement;
+  const file = input.files && input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.src = reader.result as string;
+
+    img.onload = () => {
+      // --- PROCESO DE COMPRESIÓN ---
+      const canvas = document.createElement('canvas');
+      const MAX_WIDTH = 400; // La dejamos en un tamaño pequeño para perfil
+      const scaleSize = MAX_WIDTH / img.width;
+      canvas.width = MAX_WIDTH;
+      canvas.height = img.height * scaleSize;
+
+      const ctx = canvas.getContext('2d');
+      ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      // Convertimos a base64 con calidad baja (0.5) para que pese poquísimo
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+
+      // Ahora sí, enviamos la foto pequeña a la API
+      console.log('Enviando foto comprimida...');
+      this.api.editarEmpleado(emp.id, { ...emp, photo: dataUrl }).subscribe({
+        next: () => {
+          console.log('Foto actualizada con éxito');
+          this.loadData();
+        },
+        error: (err) => console.error('Error al subir foto:', err)
+      });
+    };
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+  fileChangedModal(ev: Event) {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files && input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.src = reader.result as string;
+
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 400;
+        const scaleSize = MAX_WIDTH / img.width;
+        canvas.width = MAX_WIDTH;
+        canvas.height = img.height * scaleSize;
+
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+
+        // Guardamos la foto comprimida para cuando el usuario guarde en el modal
+        this.pendingModalPhotoData = dataUrl;
+        input.value = '';
+      };
+    };
+    reader.readAsDataURL(file);
   }
 
-  onContentScroll(ev: any) {
-    const y = ev?.detail?.scrollTop ?? 0;
-    this.showScrollTop = y > 200;
+  // Inyecta un botón mostrar/ocultar en el input password del último alert abierto
+  private attachPasswordToggleToAlert(alertElParam?: any) {
+    try {
+      const alertEl = alertElParam || (Array.from(document.querySelectorAll('ion-alert')).pop() as any);
+      if (!alertEl) return;
+
+      // Delay corto para que el alert renderice sus inputs en el shadow DOM
+      setTimeout(() => {
+        try {
+          const root = (alertEl.shadowRoot || alertEl) as ShadowRoot | any;
+          if (!root) return;
+
+          // Intentamos localizar el input password dentro del shadowRoot
+          let pwInput: HTMLInputElement | null = null;
+          // 1) Buscar dentro de contenedores .alert-input
+          const inputContainers = Array.from(root.querySelectorAll && root.querySelectorAll('.alert-input') || [] ) as HTMLElement[];
+          if (inputContainers.length) {
+            for (const c of inputContainers) {
+              const inp = c.querySelector('input[type="password"]') as HTMLInputElement | null;
+              if (inp) { pwInput = inp; break; }
+            }
+          }
+
+          // 2) fallback: buscar cualquier input[type=password] en shadowRoot
+          if (!pwInput && root.querySelector) {
+            pwInput = root.querySelector('input[type="password"]') as HTMLInputElement | null;
+          }
+
+          if (!pwInput) return;
+
+          // Evitar duplicar el botón
+          if (root.querySelector && root.querySelector('.pw-toggle-btn')) return;
+
+          const wrapper = pwInput.parentElement as HTMLElement | null;
+          if (wrapper) wrapper.style.position = wrapper.style.position || 'relative';
+          pwInput.style.paddingRight = '56px';
+
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'pw-toggle-btn';
+          btn.textContent = 'Mostrar';
+          btn.style.position = 'absolute';
+          btn.style.right = '8px';
+          btn.style.top = '50%';
+          btn.style.transform = 'translateY(-50%)';
+          btn.style.background = 'transparent';
+          btn.style.border = 'none';
+          btn.style.color = 'var(--ion-color-primary, #3880ff)';
+          btn.style.cursor = 'pointer';
+          btn.style.padding = '4px 6px';
+          btn.style.fontSize = '0.9rem';
+
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (pwInput!.type === 'password') {
+              pwInput!.type = 'text';
+              btn.textContent = 'Ocultar';
+            } else {
+              pwInput!.type = 'password';
+              btn.textContent = 'Mostrar';
+            }
+            pwInput!.focus();
+          });
+
+          // Insertar el botón en el wrapper si existe, si no en el root
+          if (wrapper) wrapper.appendChild(btn);
+          else if (root.appendChild) root.appendChild(btn as any);
+        } catch (e) {
+          console.error('attachPasswordToggleToAlert error inner:', e);
+        }
+      }, 60);
+    } catch (e) {
+      console.error('attachPasswordToggleToAlert error:', e);
+    }
   }
 
-  scrollToTop() {
-    this.content?.scrollToTop(300);
+  // --- PREVIEW ---
+  openPreview(photo: string) {
+    this.previewImage = photo;
+    this.previewVisible = true;
+  }
+  closePreview() {
+    this.previewVisible = false;
+    this.previewImage = null;
+    this.currentPreviewEmployee = null;
+  }
+  triggerModalFileInput() {
+    this.closePreview();
+    if (this.currentPreviewEmployee) {
+      this.editEmployee(this.currentPreviewEmployee);
+    }
   }
 
+  // --- HELPERS ---
+  formatCurrency(value: number | undefined) {
+    return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value || 0);
+  }
+
+  scrollToBottom() { this.content?.scrollToBottom(300); }
+  onContentScroll(ev: any) { this.showScrollTop = (ev?.detail?.scrollTop ?? 0) > 200; }
+  scrollToTop() { this.content?.scrollToTop(300); }
 }

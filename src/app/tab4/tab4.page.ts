@@ -43,12 +43,27 @@ export class Tab4Page implements OnInit {
     document.addEventListener('ionAlertDidPresent', (ev: any) => {
       const alertEl = ev.target as HTMLElement;
       if (!alertEl) return;
-      if (alertEl.classList && (alertEl.classList.contains('extras-alert') || alertEl.classList.contains('reviews-alert'))) {
+      // Soportar varias alertas que queremos forzar a fondo blanco
+      if (alertEl.classList && (
+        alertEl.classList.contains('extras-alert') ||
+        alertEl.classList.contains('reviews-alert') ||
+        alertEl.classList.contains('white-alert')
+      )) {
         try {
+          // Force host CSS variables so shadow DOM parts render a white card
           alertEl.style.setProperty('--background', '#ffffff');
+          alertEl.style.setProperty('--backdrop-opacity', '0.4');
+          alertEl.style.setProperty('--ion-background-color', '#ffffff');
           alertEl.style.setProperty('color', '#000');
+          // Extra fallbacks for wrapper if accessible
           const wrapper = alertEl.shadowRoot?.querySelector('.alert-wrapper') as HTMLElement;
-          if (wrapper) { wrapper.style.background = '#ffffff'; wrapper.style.color = '#000'; }
+          if (wrapper) {
+            wrapper.style.background = '#ffffff';
+            wrapper.style.backgroundColor = '#ffffff';
+            wrapper.style.color = '#000';
+            wrapper.style.borderRadius = '8px';
+            wrapper.style.boxShadow = '0 6px 20px rgba(0,0,0,0.12)';
+          }
         } catch (e) {}
       }
     });
@@ -71,24 +86,31 @@ export class Tab4Page implements OnInit {
     this.api.getHabitaciones().subscribe({
       next: (data) => {
         // MAPEO DE DATOS: JSON -> HTML
-        this.rooms = data.map(r => ({
-          ...r,
-          // Prioridad: nombre en DB (español) || nombre en HTML (inglés)
-          roomNumber: r.numero || r.roomNumber, 
-          status: r.estado || r.status || 'Libre',
-          type: r.tipo || r.type || 'Estándar',
-          floor: r.planta || r.floor || 'Baja',
-          
-          title: r.title || `Habitación ${r.numero || ''}`,
-          price: r.price || r.precio || '0 €',
-          oldPrice: r.oldPrice || r.precioAnterior || '',
-          extras: r.extras || [],
-          
-          note: r.note || r.descripcion || '',
-          reviews: r.reviews || r.comentarios || [],
-          
-          images: r.images || r.imagenes || []
-        }));
+        this.rooms = data.map(r => {
+          const rawPrice = r.price ?? r.precio ?? '0';
+          const priceStr = String(rawPrice);
+          const displayPrice = priceStr;
+
+          return {
+            ...r,
+            // Prioridad: nombre en DB (español) || nombre en HTML (inglés)
+            roomNumber: r.numero || r.roomNumber,
+            status: r.estado || r.status || 'Libre',
+            type: r.tipo || r.type || 'Estándar',
+            floor: r.planta || r.floor || 'Baja',
+
+            title: r.title || `Habitación ${r.numero || ''}`,
+            price: rawPrice,
+            displayPrice,
+            oldPrice: r.oldPrice || r.precioAnterior || '',
+            extras: r.extras || [],
+
+            note: r.note || r.descripcion || '',
+            reviews: r.reviews || r.comentarios || [],
+
+            images: r.images || r.imagenes || []
+          };
+        });
 
         // Inicializar índices de imágenes
         if (this.imageIndex.length !== this.rooms.length) {
@@ -249,6 +271,7 @@ export class Tab4Page implements OnInit {
     const alert = await this.alertCtrl.create({
       header: 'Borrar habitación',
       message: '¿Estás seguro?',
+      cssClass: 'white-alert',
       buttons: [
         { text: 'Cancelar', role: 'cancel' },
         { text: 'Borrar', handler: () => this.deleteRoom(i) }

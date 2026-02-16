@@ -70,8 +70,7 @@ export class AddRoomModalComponent {
     if (val === null || val === undefined) return '';
     let s = val.toString().trim();
     if (!s) return '';
-    if (s.indexOf('€') >= 0) return s;
-    return s + ' €';
+    return s;
   }
 
   cancel() {
