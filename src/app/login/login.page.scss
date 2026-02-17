@@ -1,132 +1,204 @@
 /* Estilos para login más agradable */
 .login-page {
-	--ion-background-color: transparent;
-	min-height: 100%;
-	background: linear-gradient(135deg,#11998e 0%, #38ef7d 100%);
-	position: relative;
-	color: #fff;
+    --ion-background-color: transparent;
+    min-height: 100%;
+    background: linear-gradient(135deg,#11998e 0%, #38ef7d 100%);
+    position: relative;
+    color: #fff;
+    /* Evitar selección de texto al arrastrar */
+    user-select: none; 
 }
 
 .bg-overlay{
-	position: absolute;
-	inset: 0;
-	background: rgba(0,0,0,0.12);
-	/* overlay above clouds but below content */
-	z-index: 1;
-	pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.12);
+    z-index: 1;
+    pointer-events: none;
 }
 
-.clouds{
-	position: absolute;
-	inset: 0;
-	overflow: hidden;
-	pointer-events: none;
-	z-index: 0;
+/* NUBES INTERACTIVAS */
+.clouds {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  /* IMPORTANTE: Permitir clics */
+  pointer-events: auto; 
+  cursor: pointer;
+  z-index: 5;
 }
 
 .cloud{
-	position: absolute;
-	display: block;
-	pointer-events: none;
-	will-change: transform, opacity;
-	transform-origin: center;
+    position: absolute;
+    display: block;
+    /* Permitir arrastre de nubes individuales */
+    pointer-events: auto;
+    will-change: transform; /* Optimización */
 }
 
 .cloud svg, .cloud{ stroke-linejoin: round; stroke-linecap: round; }
 
+/* Animaciones originales de nubes (izquierda a derecha) */
 .cloud--1{ width: 420px; height: 120px; top: 6%; left: -40%; animation: cloud-move 38s linear infinite; opacity:0.95; }
 .cloud--2{ width: 300px; height: 90px; top: 20%; left: -50%; animation: cloud-move 62s linear infinite; opacity:0.95; transform: translateZ(0); }
 .cloud--3{ width: 520px; height: 150px; top: 38%; left: -60%; animation: cloud-move 82s linear infinite; opacity:0.9; }
 .cloud--4{ width: 220px; height: 70px; top: 62%; left: -30%; animation: cloud-move 48s linear infinite; opacity:0.85; }
 
 @keyframes cloud-move{
-	0% { transform: translateX(0%); }
-	100% { transform: translateX(180%); }
+    0% { transform: translateX(0%); }
+    100% { transform: translateX(180%); }
 }
 
 .cloud--5{ width: 160px; height: 80px; top: 12%; left: -60%; animation: cloud-move 44s linear infinite; opacity:0.9; transform: translateZ(0); }
 .cloud--6{ width: 260px; height: 100px; top: 50%; left: -70%; animation: cloud-move 70s linear infinite; opacity:0.92; }
 .cloud--7{ width: 380px; height: 120px; top: 74%; left: -80%; animation: cloud-move 96s linear infinite; opacity:0.88; }
 
-.login-wrapper{
-	display: flex;
-	flex-direction: column;
-	height: 100%;
-	align-items: center;
-	justify-content: center;
-	padding: 24px;
-	position: relative;
-	z-index: 2;
+
+/* WRAPPER PRINCIPAL */
+.login-wrapper {
+  z-index: 10;
+  pointer-events: none; /* Dejamos pasar clicks al fondo */
+  
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  position: relative;
+}
+
+/* Elementos interactivos */
+.login-card, ion-button, .float-item {
+  pointer-events: auto;
 }
 
 .login-card{
-	width: 100%;
-	max-width: 420px;
-	border-radius: 12px;
-	box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-	overflow: hidden;
+    width: 100%;
+    max-width: 420px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    overflow: hidden;
+    background: white; /* Asegurar fondo */
 }
 
 .login-card ion-card-content{
-	background: rgba(255,255,255,0.02);
-	padding: 24px;
+    background: rgba(255,255,255,0.02);
+    padding: 24px;
 }
 
 .brand{
-	text-align: center;
-	margin-bottom: 12px;
-	color: #000000;
+    text-align: center;
+    margin-bottom: 12px;
+    color: #000000;
 }
 .brand h1{
-	margin: 0;
-	font-size: 1.6rem;
-	letter-spacing: 1px;
-	font-weight: 700;
+    margin: 0;
+    font-size: 1.6rem;
+    letter-spacing: 1px;
+    font-weight: 700;
 }
 .brand p{
-	margin: 6px 0 0;
-	font-size: 0.9rem;
-	opacity: 0.95;
+    margin: 6px 0 0;
+    font-size: 0.9rem;
+    opacity: 0.95;
 }
 
 .password-item{
-	--background: rgba(255,255,255,0.04);
-	border-radius: 8px;
-	margin-bottom: 16px;
-	--padding-start: 12px;
+    --background: rgba(255,255,255,0.04);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    --padding-start: 12px;
 
-	.toggle-password{
-		background: transparent !important;
-		box-shadow: none !important;
-		--background: transparent !important;
-		padding: 0 6px;
-		min-width: 36px;
-	}
+    .toggle-password{
+        background: transparent !important;
+        box-shadow: none !important;
+        --background: transparent !important;
+        padding: 0 6px;
+        min-width: 36px;
+    }
 
-	.toggle-password ion-icon{
-		color: #333333 !important;
-		font-size: 1.05rem;
-		vertical-align: middle;
-	}
+    .toggle-password ion-icon{
+        color: #333333 !important;
+        font-size: 1.05rem;
+        vertical-align: middle;
+    }
 }
 
 .roles-grid{
-	display: grid;
-	grid-template-columns: repeat(2, 1fr);
-	gap: 10px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
 }
 .roles-grid ion-button{
-	border-radius: 8px;
+    border-radius: 8px;
 }
 
 .footer-note{
-	margin-top: 12px;
-	color: rgba(255,255,255,0.9);
-	font-size: 0.85rem;
-	text-align: center;
+    margin-top: 12px;
+    color: rgba(255,255,255,0.9);
+    font-size: 0.85rem;
+    text-align: center;
 }
 
 @media (max-width: 420px){
-	.roles-grid{ grid-template-columns: 1fr; }
+    .roles-grid{ grid-template-columns: 1fr; }
 }
 
+
+/* --- ESTILOS GRAVEDAD CERO & ARRASTRE --- */
+
+/* Clase crítica: se añade vía TS al tocar un elemento */
+.is-dragging {
+  cursor: grabbing;
+  z-index: 9999 !important;
+  /* Pausar/Eliminar animaciones para control manual */
+  animation: none !important; 
+  transition: none !important;
+  opacity: 0.8;
+}
+
+.zero-gravity {
+
+  /* Animación general suave */
+  .float-item {
+    transition: transform 0.5s ease-out;
+  }
+
+  /* Animaciones flotantes */
+  .login-card { animation: space-float-card 12s ease-in-out infinite alternate; }
+  .brand { animation: space-float-title 8s ease-in-out infinite alternate; }
+  .footer-note { animation: space-float-text 10s ease-in-out infinite alternate; }
+
+  /* NUBES FLOTANDO (Sobreescribe movimiento lateral) */
+  .cloud-float {
+    animation: space-float-cloud 10s ease-in-out infinite alternate !important; 
+  }
+}
+
+/* Keyframes */
+@keyframes space-float-card {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(30px, -40px) rotate(3deg); }
+  50% { transform: translate(-20px, -60px) rotate(-3deg); }
+  75% { transform: translate(15px, -30px) rotate(2deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+@keyframes space-float-text {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-60px, 50px) scale(1.1) rotate(-8deg); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes space-float-title {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-50px) scale(1.2); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes space-float-cloud {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(40px, 80px) scale(1.1) rotate(10deg); }
+  100% { transform: translate(-40px, -40px) scale(0.9) rotate(-5deg); }
+}
