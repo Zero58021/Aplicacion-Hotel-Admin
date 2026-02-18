@@ -1,6 +1,6 @@
 import { Component, ViewChild, OnInit } from '@angular/core';
 import { AlertController, IonContent, ModalController, ToastController } from '@ionic/angular';
-import { ApiService } from '../services/api'; // Usamos ApiService (Servidor Real)
+import { ApiService } from '../services/api'; 
 import { AuthService } from '../services/auth.service';
 
 @Component({
@@ -13,7 +13,6 @@ export class Tab2Page implements OnInit {
 
   reservas: any[] = [];
   searchTerm: string = '';
-  // Ajuste: Tu HTML usa 'Todos' en el segment, así que iniciamos con eso
   statusFilter: string = 'Todos'; 
 
   @ViewChild(IonContent, { static: false }) content!: IonContent;
@@ -36,31 +35,54 @@ export class Tab2Page implements OnInit {
   }
 
   cargarDatos() {
+    const userRole = this.auth.getRole(); 
+    
     this.api.getReservas().subscribe({
       next: (list) => {
-        // --- TRADUCTOR DE DATOS ---
-        // Convertimos lo que viene del JSON a lo que espera tu HTML
-        this.reservas = list.map(r => ({
-          ...r,
-          // Mapeo básico
-          numero: r.id, 
-          status: r.estado, 
-          titular: r.nombreCliente,
-          habitacion: r.selectedRoom?.name || 'Sin asignar',
-          
-          // Mapeo de datos que te faltaban en la vista
-          ninos: r.children,                // JSON: children -> HTML: {{r.ninos}}
-          adultos: r.adults,                // JSON: adults -> HTML: {{r.adultos}}
-          precioTotal: r.total,             // JSON: total -> HTML: {{r.precioTotal}}
-          pension: r.selectedPension?.name, // JSON: objeto -> HTML: {{r.pension}}
-          numeroHabitaciones: r.habitaciones,
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
 
-          // Lógica de alergias
-          hasAllergies: (r.notas && r.notas !== '') || r.passengers?.some((p:any) => p.allergies && p.allergies !== ''),
-          alergias: r.notas || (r.passengers?.find((p:any) => p.allergies)?.allergies) || 'No',
-          
-          expanded: false
-        }));
+        let filteredList = list;
+
+        // 1. FILTRO DE SEGURIDAD (Solo el Jefe ve el historial)
+        if (userRole !== 'jefe') {
+          filteredList = list.filter(r => {
+            if (!r.fechaSalida) return false;
+            const salida = new Date(r.fechaSalida);
+            return salida >= hoy; // Solo activas o futuras
+          });
+        }
+
+        // 2. MAPEO Y ETIQUETA "COMPLETADA"
+        this.reservas = filteredList.map(r => {
+          const salida = new Date(r.fechaSalida);
+          const esAntigua = salida < hoy;
+
+          // Si estaba confirmada y ya pasó la fecha -> "Completada"
+          let estadoVisual = r.estado;
+          if (r.estado === 'Confirmada' && esAntigua) {
+            estadoVisual = 'Completada';
+          }
+
+          return {
+            ...r,
+            numero: r.id, 
+            status: estadoVisual,
+            titular: r.nombreCliente,
+            habitacion: r.selectedRoom?.name || 'Sin asignar',
+            ninos: r.children,
+            adultos: r.adults,
+            precioTotal: r.total,
+            pension: r.selectedPension?.name,
+            numeroHabitaciones: r.habitaciones,
+            hasAllergies: (r.notas && r.notas !== '') || r.passengers?.some((p:any) => p.allergies && p.allergies !== ''),
+            alergias: r.notas || (r.passengers?.find((p:any) => p.allergies)?.allergies) || 'No',
+            expanded: false
+          };
+        });
+
+        // 3. ORDENAR: Las más recientes (o próximas entradas) primero
+        this.reservas.sort((a, b) => new Date(a.fechaEntrada).getTime() - new Date(b.fechaEntrada).getTime());
       },
       error: (err) => console.error('Error cargando reservas:', err)
     });
@@ -71,33 +93,34 @@ export class Tab2Page implements OnInit {
     let pool = this.reservas;
     const role = this.auth.getRole();
 
-    // Filtros de Seguridad por Rol
-    if (role === 'recepcion') {
-      // Opcional: Si Recepción solo debe ver confirmadas
-      // pool = pool.filter(r => r.status === 'Confirmada');
-    }
+    // Filtros por Rol
     if (role === 'restaurante') {
-      pool = pool.filter(r => r.status === 'Confirmada' && r.hasAllergies);
+      pool = pool.filter(r => (r.status === 'Confirmada' || r.status === 'Completada') && r.hasAllergies);
     }
 
     const results = pool.filter(r => {
-      // Filtro visual (Segment)
-      if (this.statusFilter !== 'Todos' && this.statusFilter !== 'Todas') {
+      // --- LÓGICA DE FILTRADO EXCLUSIVO ---
+      
+      if (this.statusFilter === 'Todos') {
+        // En "Todos", excluimos explícitamente las Completadas
+        if (r.status === 'Completada') return false;
+      } else {
+        // En cualquier otra pestaña (Pendiente, Confirmada, Denegada, Completada)
+        // debe coincidir exactamente el estado.
         if (r.status !== this.statusFilter) return false;
       }
       
-      // Buscador
+      // Buscador de texto
       if (!term) return true;
       const inTitular = r.titular?.toLowerCase().includes(term);
       const inNumero = r.numero?.toLowerCase().includes(term);
       return inTitular || inNumero;
     });
 
-    // Ordenar: Las más recientes primero
-    return results.reverse();
+    return results;
   }
 
-  // --- ACCIONES (Conectadas a la API) ---
+  // --- ACCIONES ---
 
   confirmReservation(r: any) {
     this.api.updateReserva(r.id, { estado: 'Confirmada' }).subscribe(() => {
@@ -131,44 +154,28 @@ export class Tab2Page implements OnInit {
     });
   }
 
-  // --- HELPERS VISUALES (Tu código original) ---
-
   showCustomConfirm(r: any) {
-    // Usar el AlertController de Ionic para mostrar una confirmación fiable
     (async () => {
       const alert = await this.alertCtrl.create({
         header: 'Confirmar borrado',
         message: `¿Borrar reserva ${r.numero}? Esta acción no se puede deshacer.`,
         cssClass: 'custom-delete-alert',
         buttons: [
-          {
-            text: 'Cancelar',
-            role: 'cancel',
-            cssClass: 'btn-cancel-green'
-          },
-          {
-            text: 'Borrar',
-            cssClass: 'btn-confirm-green',
-            handler: () => { this.deleteReservation(r); }
-          }
+          { text: 'Cancelar', role: 'cancel', cssClass: 'btn-cancel-green' },
+          { text: 'Borrar', cssClass: 'btn-confirm-green', handler: () => { this.deleteReservation(r); } }
         ]
       });
       await alert.present();
     })();
   }
 
-  // --- MODALES ---
-
   async openNewReservation() {
-    if (this.auth.getRole() === 'restaurante') return; // Seguridad extra
-    
+    if (this.auth.getRole() === 'restaurante') return; 
     const modal = await this.modalCtrl.create({
       component: (await import('../reserva-modal/reserva-modal.component')).ReservaModalComponent
     });
-    
     modal.onDidDismiss().then((res) => {
       if (res.data?.reserva) {
-        // Guardar en servidor
         this.api.guardarReserva(res.data.reserva).subscribe(() => this.cargarDatos());
       }
     });
@@ -180,17 +187,14 @@ export class Tab2Page implements OnInit {
       component: (await import('../reserva-modal/reserva-modal.component')).ReservaModalComponent,
       componentProps: { initial: { ...r } }
     });
-    
     modal.onDidDismiss().then((res) => {
       if (res.data?.reserva) {
-        // Actualizar en servidor
         this.api.editarReserva(r.id, res.data.reserva).subscribe(() => this.cargarDatos());
       }
     });
     return await modal.present();
   }
 
-  // --- UTILS ---
   toggleExpand(r: any) {
     this.reservas.forEach(x => { if (x !== r) x.expanded = false; });
     r.expanded = !r.expanded;

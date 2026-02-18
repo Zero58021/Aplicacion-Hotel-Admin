@@ -1,8 +1,6 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>
-      Calendario
-    </ion-title>
+    <ion-title>Calendario</ion-title>
   </ion-toolbar>
 </ion-header>
 
@@ -25,7 +23,7 @@
         </ion-button>
       </div>
 
-        <div class="calendar-grid">
+      <div class="calendar-grid">
         <div class="weekday" *ngFor="let wd of weekdays">{{ wd }}</div>
         <ng-container *ngFor="let week of weeks">
           <div class="week-row">
@@ -36,13 +34,22 @@
               (click)="select(day)">
               <div class="day-inner" *ngIf="day">
                 <span class="day-number">{{ day }}</span>
-                <div class="event-dot" *ngIf="hasEvent(day)" [class.salida]="isSalida(day)" [class.pendiente]="isPendiente(day)"></div>
+                
+                <div class="event-dot" *ngIf="hasEvent(day)" 
+                     [class.entrada]="isEntrada(day)" 
+                     [class.salida]="isSalida(day)"
+                     [class.ambas]="isAmbas(day)"
+                     [class.completada]="isCompletada(day)" 
+                     [class.pendiente]="isPendiente(day)">
+                </div>
+
               </div>
             </div>
           </div>
         </ng-container>
       </div>
     </div>
+
     <div class="reservas-list">
       <h3 class="reservas-title"><span class="reservas-label">Reservas ({{ visibleReservas.length }})</span></h3>
       <div *ngIf="visibleReservas.length === 0" class="empty">No hay reservas para la selección.</div>
@@ -72,7 +79,7 @@
             <div class="reserva-main">
               <div class="reserva-top">
                 <div class="reserva-title">{{ r.numero }} — {{ r.titular }}</div>
-                <ion-badge class="status-badge" [color]="r.status === 'Confirmada' ? 'success' : (r.status === 'Denegada' ? 'danger' : 'medium')">{{ r.status }}</ion-badge>
+                <ion-badge class="status-badge" [color]="r.status === 'Confirmada' ? 'success' : (r.status === 'Completada' ? 'medium' : (r.status === 'Denegada' ? 'danger' : 'warning'))">{{ r.status }}</ion-badge>
               </div>
               <div class="reserva-sub">{{ r.habitacion }}</div>
               <div class="reserva-meta">

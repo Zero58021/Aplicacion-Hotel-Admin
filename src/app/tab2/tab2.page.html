@@ -14,13 +14,19 @@
   <div class="filters">
     <ion-searchbar placeholder="Buscar por titular o número" (ionInput)="onSearch($event)" showClearButton="focus"></ion-searchbar>
 
-    <ion-segment *ngIf="auth.getRole() !== 'recepcion' && auth.getRole() !== 'restaurante'" value="Todos" (ionChange)="onFilter($event)" mode="md">
+    <ion-segment *ngIf="auth.getRole() !== 'recepcion' && auth.getRole() !== 'restaurante'" 
+                 value="Todos" 
+                 (ionChange)="onFilter($event)" 
+                 mode="md"
+                 scrollable="true">
       <ion-segment-button value="Todos">Todos</ion-segment-button>
       <ion-segment-button value="Pendiente">Pendiente</ion-segment-button>
       <ion-segment-button value="Confirmada">Confirmada</ion-segment-button>
       <ion-segment-button value="Denegada">Denegada</ion-segment-button>
+      <ion-segment-button value="Completada">Completada</ion-segment-button>
     </ion-segment>
   </div>
+  
   <div class="content-wrapper">
     <ion-list *ngIf="filteredReservas?.length; else empty">
     <ng-container *ngFor="let r of filteredReservas">
@@ -56,7 +62,7 @@
           <ion-button *ngIf="auth.hasPermission('reservas.confirm')" size="small" color="success" (click)="confirmReservation(r); $event.stopPropagation()">Confirmar</ion-button>
           <ion-button *ngIf="auth.hasPermission('reservas.confirm')" size="small" color="danger" (click)="denyReservation(r); $event.stopPropagation()">Denegar</ion-button>
           <ion-button *ngIf="auth.getRole() === 'recepcion'" size="small" color="warning" (click)="cancelByClient(r); $event.stopPropagation()">Cancelar (cliente)</ion-button>
-          <ion-button size="small" color="medium" *ngIf="r.status === 'Denegada'" (click)="confirmDeleteReservation(r); $event.stopPropagation()">Borrar</ion-button>
+          <ion-button size="small" color="medium" *ngIf="r.status === 'Denegada' || r.status === 'Completada'" (click)="confirmDeleteReservation(r); $event.stopPropagation()">Borrar</ion-button>
         </div>
       </div>
     </ng-container>
@@ -65,7 +71,7 @@
 
   <ng-template #empty>
     <div class="empty-state">
-      <p>No hay reservas para mostrar.</p>
+      <p>No hay reservas para mostrar en esta categoría.</p>
     </div>
   </ng-template>
 
