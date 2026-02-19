@@ -480,3 +480,103 @@ color: #fff !important;
 	.scroll-top.bottom-right { right: 12px; bottom: 12px; }
 }
 
+/* =========================================
+   ESTILOS PREMIUM MODO EDICIÓN (INTEGRADO)
+   ========================================= */
+
+.edit-form.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+  padding: 8px 0;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.form-card.compact {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  border: 1px solid rgba(0,0,0,0.04);
+}
+
+.card-header { 
+  display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-weight: 700; color: #2c3e50; font-size: 1rem; 
+  ion-icon { color: var(--ion-color-primary); font-size: 1.2rem; } 
+}
+
+/* Inputs y Selects */
+.input-group { 
+  margin-bottom: 12px; 
+  label { display: block; font-size: 0.75rem; font-weight: 700; color: #7f8fa6; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; } 
+}
+.custom-input { 
+  display: flex; align-items: center; background: #f8fafc; border-radius: 12px; padding: 10px 14px; gap: 10px; border: 1.5px solid #e2e8f0; transition: all 0.2s; 
+  &:focus-within { border-color: var(--ion-color-primary); background: white; box-shadow: 0 0 0 3px rgba(var(--ion-color-primary-rgb), 0.1); } 
+  ion-icon { color: #a0aec0; font-size: 1.1rem; } 
+  input, select, textarea { border: none; background: transparent; width: 100%; outline: none; font-size: 0.95rem; color: #2d3748; font-weight: 600; padding: 0;} 
+}
+.price-input .unit { font-weight: 700; color: #a0aec0; }
+.textarea-input { padding: 8px 14px; align-items: flex-start; textarea { resize: vertical; min-height: 60px; } }
+.native-select { appearance: none; -webkit-appearance: none; cursor: pointer; }
+.form-row { display: flex; gap: 10px; }
+.half { flex: 1; }
+.mt-2 { margin-top: 12px; }
+
+/* Chips y Grids */
+.chip-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-item { 
+  display: flex; align-items: center; gap: 4px; padding: 8px 12px; background: #f1f5f9; border-radius: 10px; font-size: 0.8rem; font-weight: 600; color: #64748b; cursor: pointer; border: 1px solid transparent; transition: all 0.2s;
+  ion-icon { font-size: 1rem; color: #94a3b8; }
+}
+.chip-item.active { 
+  /* Forzamos el fondo al color primario (o azul por defecto si falla) */
+  background: var(--ion-color-primary, #3880ff) !important; 
+  color: #ffffff !important; 
+  box-shadow: 0 4px 10px rgba(0,0,0, 0.2) !important; 
+  transform: translateY(-1px); 
+  
+  /* Forzamos que tanto el icono como el texto sean blancos sí o sí */
+  ion-icon { color: #ffffff !important; } 
+  span { color: #ffffff !important; }
+}
+
+.extras-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.extra-chip { padding: 6px 12px; background: #f1f5f9; border-radius: 10px; font-size: 0.8rem; font-weight: 600; color: #64748b; cursor: pointer; transition: all 0.2s; }
+.extra-chip.active { 
+  background: var(--ion-color-primary, #3880ff) !important; 
+  color: #ffffff !important; 
+  box-shadow: 0 3px 8px rgba(0,0,0, 0.2) !important; 
+  transform: translateY(-1px); 
+  
+  span { color: #ffffff !important; }
+}
+
+/* Galería de Fotos Edición */
+.photo-gallery { display: flex; flex-wrap: wrap; gap: 10px; }
+.photo-item { position: relative; width: 80px; height: 80px; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.photo-item img { width: 100%; height: 100%; object-fit: cover; }
+.photo-delete { position: absolute; top: 4px; right: 4px; background: rgba(239, 68, 68, 0.9) !important; color: white !important; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; ion-icon { font-size: 14px;} }
+.photo-replace-btn { position: absolute; bottom: 4px; left: 4px; background: rgba(255,255,255,0.9); color: #333; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; input { display: none; } ion-icon { font-size: 14px; } }
+.photo-add-btn { width: 80px; height: 80px; border-radius: 12px; background: #f8fafc; border: 2px dashed #cbd5e1; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #94a3b8; transition: all 0.2s; &:hover { border-color: var(--ion-color-primary); color: var(--ion-color-primary); background: #f1f5f9; } ion-icon { font-size: 28px; } input { display: none; } }
+
+/* Botones de acción finales */
+.edit-actions-premium {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  
+  ion-button { margin: 0; font-weight: 600; --border-radius: 8px;}
+  .main-save-btn { --box-shadow: 0 4px 12px rgba(var(--ion-color-primary-rgb), 0.3); --padding-start: 24px; --padding-end: 24px; }
+}
+
+/* Modificar el comportamiento de la tarjeta principal al editar */
+.room-card.editing {
+  background: #f8fafc !important; /* Fondo sutil para distinguir el modo edición */
+  border: 1px solid var(--ion-color-primary);
+  box-shadow: 0 8px 24px rgba(var(--ion-color-primary-rgb), 0.15);
+}

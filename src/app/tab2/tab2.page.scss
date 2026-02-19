@@ -1,250 +1,266 @@
 :host {
-	--tab2-accent: #27ae60;
-	--tab2-accent-600: #1e8449;
-	--tab2-muted: #f1fbf6;
+    --tab2-accent: #27ae60;
+    --tab2-accent-600: #1e8449;
+    --tab2-muted: #f4fbf7;
 }
 
-/* Make the top headers full-bleed (compensate host horizontal padding) */
 :host > ion-header,
 :host ion-content > ion-header {
-	margin-left: -12px;
-	margin-right: -12px;
-	width: calc(100% + 24px);
+    margin-left: -12px;
+    margin-right: -12px;
+    width: calc(100% + 24px);
 }
 
-/* Make header titles green and centered (override local toolbar color if needed) */
 :host ion-header ion-title,
 :host ion-content ion-header ion-title {
-	color: var(--ion-color-success, #10b981) !important;
-	text-align: center;
-	width: 100%;
-	display: block;
+    color: var(--ion-color-success, #10b981) !important;
+    text-align: center;
+    width: 100%;
+    display: block;
 }
 
-/* Center toolbar contents to keep titles visually centered */
-:host ion-toolbar {
-	--justify-content: center;
-}
-
-/* Ensure ion-icon inside nav/edit buttons is white */
-.nav-btn ion-icon,
-.edit-btn ion-icon {
-	color: #fff !important;
-}
+:host ion-toolbar { --justify-content: center; }
 
 ion-header ion-toolbar {
-	background: linear-gradient(90deg, var(--tab2-accent-600), var(--tab2-accent));
-	color: #fff;
-	box-shadow: 0 2px 8px rgba(16, 97, 54, 0.12);
+    background: linear-gradient(90deg, var(--tab2-accent-600), var(--tab2-accent));
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(16, 97, 54, 0.12);
 }
 
-/* Match tab4: use normal weight for header titles */
-ion-title {
-	font-weight: 400 !important;
-}
+ion-title { font-weight: 600 !important; }
 
-.toolbar-sub {
-	font-size: 0.85rem;
-	opacity: 0.95;
-}
-
-ion-item {
-	--inner-padding-start: 16px;
-	--inner-padding-end: 16px;
-	margin: 10px 12px;
-	border-radius: 12px;
-	background: #fff;
-	box-shadow: 0 6px 18px rgba(12, 42, 28, 0.04);
-	transition: transform 160ms ease, box-shadow 160ms ease;
-}
-
-ion-item:hover {
-	transform: translateY(-4px);
-	box-shadow: 0 10px 26px rgba(12, 42, 28, 0.08);
-}
-
-.empty-state {
-	display: flex;
-	height: 100%;
-	align-items: center;
-	justify-content: center;
-	color: var(--ion-color-medium);
-	padding: 24px;
-}
-
-ion-label h2 {
-	margin: 0 0 6px 0;
-	font-size: 1.05rem;
-	color: #0b3d2e;
-}
-
-ion-label p {
-	margin: 0;
-	font-size: 0.92rem;
-	color: var(--ion-color-medium);
-}
-
+/* FILTROS: Buscador y Carrusel de Chips */
 .filters {
-	padding: 10px 12px 6px 12px;
+    padding: 10px 12px 16px;
+    background: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
 }
 
 ion-searchbar {
-	margin-bottom: 10px;
-	--background: #ffffff;
-	--border-radius: 10px;
-	box-shadow: 0 6px 18px rgba(39, 174, 96, 0.06);
+    padding: 0 4px;
+    margin-bottom: 12px;
+    --background: #f4f5f8;
+    --border-radius: 12px;
+    --box-shadow: none;
 }
 
+.chip-carousel {
+    display: flex;
+    flex-wrap: wrap; 
+    padding-bottom: 4px;
+    gap: 8px;
+    
+    ion-chip {
+        margin: 0;
+        border-radius: 20px;
+        background: #f0f0f0;
+        color: #666;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+        
+        &.active {
+            background: var(--tab2-accent);
+            color: white;
+            box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3);
+        }
+
+        &.chip-pendiente.active { background: #f39c12; box-shadow: 0 4px 10px rgba(243, 156, 18, 0.3); }
+        &.chip-denegada.active { background: #e74c3c; box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3); }
+        &.chip-cancelada.active { background: #95a5a6; box-shadow: 0 4px 10px rgba(149, 165, 166, 0.3); }
+        &.chip-completada.active { background: #34495e; box-shadow: 0 4px 10px rgba(52, 73, 94, 0.3); }
+    }
+}
+
+/* TARJETAS DE RESERVA */
+ion-item {
+    --inner-padding-start: 16px;
+    --inner-padding-end: 16px;
+    margin: 10px 12px;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transition: transform 0.2s, box-shadow 0.2s, border-radius 0.2s;
+    border: 1px solid #f0f0f0;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+
+    &.expanded {
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        margin-bottom: 0;
+        border-bottom: none;
+    }
+}
+
+ion-item ion-icon.room-icon { flex: 0 0 auto; }
+
+ion-label {
+    flex: 1 1 auto;
+    min-width: 0; /* importante para truncado y flexbox */
+    word-break: break-word;
+}
+
+ion-label h2 { margin: 0 0 6px 0; font-size: 1.05rem; font-weight: 700; color: #222; }
+ion-label p { margin: 0; font-size: 0.9rem; color: #666; }
+.date-row { display: flex; gap: 12px; margin-top: 4px !important; font-size: 0.85rem; color: #888; flex-wrap: wrap; }
+.date-row span { flex: 1 1 auto; min-width: 0; }
+
+.room-icon {
+    font-size: 26px;
+    color: var(--tab2-accent);
+    background: var(--tab2-muted);
+    padding: 8px;
+    border-radius: 10px;
+}
+.expand-icon { color: #ccc; }
+
+/* ESTADOS Y BADGES */
+.status-badge {
+    align-self: center;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    
+    &.pendiente { background: #fff3cd; color: #856404; }
+    &.confirmada { background: #d4edda; color: #155724; }
+    &.denegada { background: #f8d7da; color: #721c24; }
+    &.cancelada { background: #e2e3e5; color: #383d41; text-decoration: line-through; }
+    &.completada { background: #d1ecf1; color: #0c5460; }
+}
+
+/* DETALLES DESPLEGABLES */
 .details {
-	padding: 12px 16px;
-	background: var(--tab2-muted);
-	border-left: 4px solid var(--tab2-accent);
-	border-radius: 0 12px 12px 0;
+    margin: 0 12px 12px 12px;
+    padding: 16px;
+    background: #fafafa;
+    border: 1px solid #f0f0f0;
+    border-top: 1px dashed #ddd;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    animation: slideDown 0.3s ease-out forwards;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .detail-row {
-	padding: 6px 0;
-	font-size: 0.95rem;
-	color: var(--ion-color-medium);
+    padding: 6px 0;
+    font-size: 0.95rem;
+    color: #555;
+    strong { color: #333; display: inline-block; width: 92px; }
+    
+    &.highlight { font-size: 1.05rem; color: var(--tab2-accent-600); margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee; }
 }
 
-.status-badge {
-	display: inline-block;
-	padding: 4px 10px;
-	border-radius: 999px;
-	font-size: 0.85rem;
-	color: #08301b;
-	margin-right: 8px;
-	font-weight: 600;
+@media (max-width: 420px) {
+    .detail-row strong { width: 72px; }
+    ion-label h2 { font-size: 1rem; }
 }
-.status-badge.pendiente { background: linear-gradient(180deg,#d4f5e0,#a8e6bf); }
-.status-badge.confirmada { background: linear-gradient(180deg,#66bb6a,#2e7d32); color: #fff; }
-.status-badge.denegada { background: linear-gradient(180deg,#ffc9c9,#ff7b7b); color: #581212; }
+.status-badge[slot="end"] { margin-right: 6px; margin-left: 6px; }
+.expand-icon { margin-left: 4px; flex: 0 0 auto; color: #888; }
+/* Alineamos el icono de expandir verticalmente con el badge */
+.expand-icon { align-self: center; }
+.text-danger { color: #e74c3c; font-weight: bold; }
 
+/* BOTONES DE ACCIÓN */
 .actions {
-	margin-top: 8px;
-	display: flex;
-	gap: 8px;
+    margin-top: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px; /* reducir espacio entre botones */
+    
+    ion-button {
+        --border-radius: 8px;
+        margin: 0;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        display: inline-flex; /* evitar que los botones se expandan a todo el ancho */
+        align-items: center;
+        width: auto;
+    }
 }
 
-.actions ion-button {
-	--border-radius: 8px;
-	--padding-start: 12px;
-	--padding-end: 12px;
+/* Botón Reactivar: icono fijo a la izquierda, texto centrado horizontalmente (no centrado vertical) */
+ion-button.btn-reactivar {
+    position: relative;
+    /* espacio para el icono a la izquierda */
+    padding-left: 12px; /* aún más reducido para acercar al botón anterior */
+    padding-right: 8px;
 }
 
-.actions ion-button[color="success"] {
-	--background: var(--tab2-accent);
-	--background-focused: var(--tab2-accent-600);
-	color: #fff;
+.btn-inner-content {
+    display: block;
+    width: 100%; /* ocupar todo el ancho del botón para centrar el texto correctamente */
+    text-align: center;
+    position: relative;
 }
 
-.room-icon {
-	font-size: 28px;
-	color: var(--tab2-accent-600);
-	line-height: 1;
-	align-self: center;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	height: 36px;
-	width: 36px;
+.btn-inner-content ion-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
 }
 
-/* scroll-top button and related styles removed */
+.btn-inner-content span {
+    display: inline-block;
+    text-align: center; /* centra horizontalmente dentro del contenido del botón */
+}
 
-/* Scroll-to-top button (shared style) */
+/* ESTADOS VACÍOS */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    height: 60vh;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    text-align: center;
+    
+    ion-icon { font-size: 64px; color: #ddd; margin-bottom: 16px; }
+    h3 { margin: 0 0 8px; color: #555; font-weight: 700; }
+    p { margin: 0; font-size: 0.95rem; }
+}
+
+/* SCROLL TOP & FAB */
 .scroll-top {
-	position: fixed;
-	right: 76px; /* beside the add FAB position */
-	bottom: 16px;
-	width: 44px;
-	height: 44px;
-	border-radius: 22px;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	background: var(--ion-color-primary, #3880ff);
-	color: #fff;
-	box-shadow: 0 6px 14px rgba(0,0,0,0.18);
-	border: none;
-	z-index: 9999;
-	opacity: 0;
-	transform: translateY(12px) scale(.96);
-	transition: opacity 240ms cubic-bezier(.2,.8,.2,1), transform 240ms cubic-bezier(.2,.8,.2,1);
-}
-.scroll-top ion-icon { font-size: 20px; color: #fff !important; }
-.scroll-top.visible { opacity: 1; transform: translateY(0) scale(1); }
+    position: fixed; 
+    right: 76px; 
+    bottom: 16px; 
+    width: 44px; 
+    height: 44px;
+    border-radius: 22px; 
+    background: var(--tab2-accent); 
+    box-shadow: 0 6px 14px rgba(0,0,0,0.18); 
+    border: none; 
+    z-index: 9999;
+    opacity: 0; 
+    transform: translateY(12px) scale(.96);
+    transition: all 0.3s ease;
+    
+    /* Centrado del icono con Flexbox */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-@media (max-width: 480px) {
-	.scroll-top { right: 68px; bottom: 12px; }
-}
+    &.visible { opacity: 1; transform: translateY(0) scale(1); }
 
-
-/* Estilos para alertas/dialogs (asegurar visibilidad desde este componente) */
-:host ::ng-deep .alert-wrapper {
-	color: #08301b;
+    /* Forzar que el icono sea blanco siempre */
+    ion-icon { 
+        color: #ffffff !important; 
+        font-size: 24px; 
+    }
 }
-
-:host ::ng-deep .alert-title {
-	color: #0b3d2e;
-	font-weight: 700;
-}
-
-:host ::ng-deep .alert-message {
-	color: var(--ion-color-medium);
-}
-
-:host ::ng-deep .alert-button {
-	padding: 8px 12px;
-	border-radius: 8px;
-	min-width: 88px;
-	font-weight: 600;
-	border: none;
-	box-shadow: 0 4px 10px rgba(2,8,6,0.06);
-}
-
-/* Botón cancelar normalmente tiene role="cancel" en Ionic */
-:host ::ng-deep .alert-button[role="cancel"] {
-	background: transparent !important;
-	border: 1px solid rgba(16, 185, 129, 0.10) !important;
-	color: #10b981 !important; /* texto verde */
-}
-
-/* Botón confirmar/eliminar: apuntar a role="destructive" o clase destructiva */
-:host ::ng-deep .alert-button[role="destructive"],
-:host ::ng-deep .alert-button.alert-button-role-destructive {
-	background: transparent !important;
-	border: 1px solid rgba(231, 76, 60, 0.10) !important;
-	color: #e53935 !important; /* texto rojo */
-}
-
-/* Garantizar contraste cuando los botones están en bloque */
-:host ::ng-deep .alert-button.alert-button {
-	color: inherit;
-}
-
-/* Reglas más específicas para sobreescribir `global.scss` si existe `.custom-delete-alert` */
-:host ::ng-deep .custom-delete-alert .alert-button[role="cancel"],
-:host ::ng-deep .custom-delete-alert .alert-button.btn-cancel-green {
-	background: #2ecc71 !important;
-	color: #fff !important;
-}
-
-:host ::ng-deep .custom-delete-alert .alert-button[role="destructive"],
-:host ::ng-deep .custom-delete-alert .alert-button.btn-confirm-green,
-:host ::ng-deep .custom-delete-alert .alert-button.alert-button-role-destructive {
-	background: #e74c3c !important;
-	color: #fff !important;
-}
-
-/* Asegurar que el texto interno también reciba el color */
-:host ::ng-deep .alert-button .alert-button-inner {
-	color: inherit !important;
-	opacity: 1 !important;
-}
-
-.status-badge.completada { 
-    background: #e0e0e0; 
-    color: #616161; 
-}
+@media (max-width: 480px) { .scroll-top { right: 68px; bottom: 12px; } }

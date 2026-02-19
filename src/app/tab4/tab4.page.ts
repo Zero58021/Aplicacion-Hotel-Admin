@@ -336,4 +336,20 @@ export class Tab4Page implements OnInit {
     const t = await this.toastCtrl.create({ message: msg, duration: 2000, color: 'dark' });
     t.present();
   }
+
+  // --- MODO EDICIÓN EXTRAS (CHIPS) ---
+  hasExtraEdit(opt: string): boolean {
+    return this.editModel.extras && this.editModel.extras.includes(opt);
+  }
+
+  toggleExtraEdit(opt: string) {
+    if (!Array.isArray(this.editModel.extras)) this.editModel.extras = [];
+    const idx = this.editModel.extras.indexOf(opt);
+    if (idx >= 0) {
+      this.editModel.extras.splice(idx, 1);
+    } else {
+      this.editModel.extras.push(opt);
+    }
+  }
 }
+

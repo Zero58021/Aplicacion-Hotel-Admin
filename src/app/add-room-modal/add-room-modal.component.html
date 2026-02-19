@@ -1,88 +1,159 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>Añadir habitación</ion-title>
+<ion-header class="ion-no-border">
+  <ion-toolbar color="primary">
+    <ion-title>Añadir Habitación</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="cancel()">Cerrar</ion-button>
+      <ion-button (click)="cancel()">
+        <ion-icon name="close-outline"></ion-icon>
+      </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding">
-  <ion-item>
-    <ion-label position="stacked">Nombre</ion-label>
-    <ion-input [(ngModel)]="newRoom.title"></ion-input>
-  </ion-item>
+<ion-content class="bg-light ion-padding">
+  <div class="form-container fade-in">
+    
+    <div class="form-card">
+      <div class="card-header">
+        <ion-icon name="bed-outline"></ion-icon>
+        <span>Información Principal</span>
+      </div>
 
-  <ion-item>
-    <ion-label position="stacked">Número de habitación</ion-label>
-    <ion-input [(ngModel)]="newRoom.roomNumber"></ion-input>
-  </ion-item>
+      <div class="form-row">
+        <div class="input-group half">
+          <label>Nº Habitación</label>
+          <div class="custom-input">
+            <ion-icon name="key-outline"></ion-icon>
+            <input type="text" placeholder="Ej: 101" [(ngModel)]="newRoom.roomNumber">
+          </div>
+        </div>
+        <div class="input-group half">
+          <label>Nombre</label>
+          <div class="custom-input">
+            <input type="text" placeholder="Ej: Suite del Mar" [(ngModel)]="newRoom.title">
+          </div>
+        </div>
+      </div>
 
-  <ion-item>
-    <ion-label position="stacked">Precio anterior</ion-label>
-    <ion-input [(ngModel)]="newRoom.oldPrice"></ion-input>
-  </ion-item>
+      <div class="input-group">
+        <label>Tipo de Habitación</label>
+        <div class="custom-input">
+          <ion-icon name="layers-outline"></ion-icon>
+          <select [(ngModel)]="newRoom.type" class="native-select">
+            <option *ngFor="let t of roomTypes" [value]="t">{{ t }}</option>
+          </select>
+        </div>
+      </div>
 
-  <ion-item>
-    <ion-label position="stacked">Precio</ion-label>
-    <ion-input [(ngModel)]="newRoom.price"></ion-input>
-  </ion-item>
-
-  <ion-item>
-    <ion-label position="stacked">Descripción</ion-label>
-    <ion-textarea [(ngModel)]="newRoom.note"></ion-textarea>
-  </ion-item>
-
-  <ion-item>
-    <ion-label position="stacked">Extras</ion-label>
-    <ion-select interface="alert" [interfaceOptions]="{ cssClass: 'extras-alert' }" multiple [(ngModel)]="newRoom.extras">
-      <ion-select-option *ngFor="let ex of extrasOptions" [value]="ex">{{ ex }}</ion-select-option>
-    </ion-select>
-  </ion-item>
-
-  <ion-item>
-    <ion-label position="stacked">Tipo</ion-label>
-    <ion-select interface="alert" [interfaceOptions]="{ cssClass: 'extras-alert' }" [(ngModel)]="newRoom.type">
-      <ion-select-option *ngFor="let t of roomTypes" [value]="t">{{ t }}</ion-select-option>
-    </ion-select>
-  </ion-item>
-
-  <ion-item>
-    <ion-label position="stacked">Planta</ion-label>
-    <ion-select interface="alert" [interfaceOptions]="{ cssClass: 'extras-alert' }" [(ngModel)]="newRoom.floor">
-      <ion-select-option *ngFor="let f of floors" [value]="f">{{ f }}</ion-select-option>
-    </ion-select>
-  </ion-item>
-
-  <ion-item>
-    <ion-label position="stacked">Estado</ion-label>
-    <ion-select interface="alert" [interfaceOptions]="{ cssClass: 'extras-alert' }" [(ngModel)]="newRoom.status">
-      <ion-select-option value="Limpieza">Limpieza</ion-select-option>
-      <ion-select-option value="Mantenimiento">Mantenimiento</ion-select-option>
-      <ion-select-option value="Reservada">Reservada</ion-select-option>
-      <ion-select-option value="Ocupada">Ocupada</ion-select-option>
-      <ion-select-option value="Libre">Libre</ion-select-option>
-    </ion-select>
-  </ion-item>
-
-  <div class="image-edit" style="margin-top:12px;">
-    <div class="images-list">
-      <div class="thumb" *ngFor="let p of newRoom.images; let idx = index">
-        <img [src]="p" alt="foto {{idx + 1}}">
-        <div class="thumb-actions">
-          <ion-button size="small" color="danger" fill="clear" (click)="removePhoto(idx)">Borrar</ion-button>
+      <div class="input-group">
+        <label>Estado Actual</label>
+        <div class="chip-grid">
+          <div class="chip-item" [class.active]="newRoom.status === 'Libre'" (click)="newRoom.status = 'Libre'">
+            <ion-icon name="checkmark-circle-outline"></ion-icon>
+            <span>Libre</span>
+          </div>
+          <div class="chip-item" [class.active]="newRoom.status === 'Ocupada'" (click)="newRoom.status = 'Ocupada'">
+            <ion-icon name="person-outline"></ion-icon>
+            <span>Ocupada</span>
+          </div>
+          <div class="chip-item" [class.active]="newRoom.status === 'Reservada'" (click)="newRoom.status = 'Reservada'">
+            <ion-icon name="calendar-outline"></ion-icon>
+            <span>Reservada</span>
+          </div>
+          <div class="chip-item" [class.active]="newRoom.status === 'Limpieza'" (click)="newRoom.status = 'Limpieza'">
+            <ion-icon name="sparkles-outline"></ion-icon>
+            <span>Limpieza</span>
+          </div>
+          <div class="chip-item" [class.active]="newRoom.status === 'Mantenimiento'" (click)="newRoom.status = 'Mantenimiento'">
+            <ion-icon name="hammer-outline"></ion-icon>
+            <span>Mantenimiento</span>
+          </div>
         </div>
       </div>
     </div>
 
-    <label class="file-label add-photo">
-      Añadir foto
-      <input type="file" accept="image/*" (change)="addPhotoFile($event)">
-    </label>
-  </div>
+    <div class="form-card">
+      <div class="card-header">
+        <ion-icon name="wallet-outline"></ion-icon>
+        <span>Detalles y Precio</span>
+      </div>
 
-  <div class="modal-actions" style="display:flex; gap:8px; justify-content:flex-end; margin-top:14px;">
-    <ion-button color="medium" fill="clear" (click)="cancel()">Cancelar</ion-button>
-    <ion-button color="primary" (click)="save()">Guardar</ion-button>
+      <div class="input-group">
+        <label>Ubicación (Planta)</label>
+        <div class="chip-grid">
+          <div class="chip-item" *ngFor="let f of floors" [class.active]="newRoom.floor === f" (click)="newRoom.floor = f">
+            <ion-icon name="business-outline"></ion-icon>
+            <span>{{ f }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="input-group half">
+          <label>Precio Anterior</label>
+          <div class="custom-input price-input">
+            <input type="number" placeholder="0.00" [(ngModel)]="newRoom.oldPrice">
+            <span class="unit">€</span>
+          </div>
+        </div>
+        <div class="input-group half">
+          <label>Precio Noche</label>
+          <div class="custom-input price-input">
+            <input type="number" placeholder="0.00" [(ngModel)]="newRoom.price">
+            <span class="unit" style="color:var(--ion-color-success)">€</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>Descripción / Notas</label>
+        <div class="custom-input textarea-input">
+          <textarea rows="3" placeholder="Añade detalles sobre las vistas, camas..." [(ngModel)]="newRoom.note"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="card-header">
+        <ion-icon name="sparkles-outline"></ion-icon>
+        <span>Extras de la Habitación</span>
+      </div>
+      <div class="extras-grid">
+        <div class="extra-chip" *ngFor="let ex of extrasOptions" 
+             [class.active]="hasExtra(ex)" (click)="toggleExtra(ex)">
+          <span>{{ ex }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="card-header">
+        <ion-icon name="images-outline"></ion-icon>
+        <span>Fotografías</span>
+      </div>
+      
+      <div class="photo-gallery">
+        <div class="photo-item" *ngFor="let p of newRoom.images; let idx = index">
+          <img [src]="p" alt="foto {{idx + 1}}">
+          <div class="photo-delete" (click)="removePhoto(idx)">
+            <ion-icon name="trash"></ion-icon>
+          </div>
+        </div>
+        
+        <label class="photo-add-btn">
+          <ion-icon name="add"></ion-icon>
+          <input type="file" accept="image/*" (change)="addPhotoFile($event)">
+        </label>
+      </div>
+    </div>
+
+    <div class="action-buttons-bottom">
+      <ion-button expand="block" fill="clear" color="medium" class="cancel-btn" (click)="cancel()">
+        CANCELAR
+      </ion-button>
+      <ion-button expand="block" color="primary" class="main-btn" (click)="save()">
+        GUARDAR
+      </ion-button>
+    </div>
+
   </div>
 </ion-content>

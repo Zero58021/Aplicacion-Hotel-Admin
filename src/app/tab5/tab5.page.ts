@@ -1,12 +1,12 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { IonicModule, IonContent, AlertController } from '@ionic/angular';
+import { IonicModule, IonContent, AlertController, ToastController } from '@ionic/angular'; // <-- AÑADIDO ToastController
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ExploreContainerComponentModule } from '../explore-container/explore-container.module';
 import { ApiService } from '../services/api';
 import { AuthService } from '../services/auth.service';
 
-// Definimos la interfaz aquí para evitar errores si no tienes el modelo creado
+
 export interface Employee {
   id?: any;
   numero: string;
@@ -19,10 +19,10 @@ export interface Employee {
   puesto: string;
   status: string;
   contrato: string;
-  salario?: number; // Nuevo campo
-  usuario?: string; // Para login
-  password?: string; // Para login
-  rol?: string; // Para login
+  salario?: number; 
+  usuario?: string; 
+  password?: string; 
+  rol?: string; 
 }
 
 @Component({
@@ -37,48 +37,46 @@ export class Tab5Page implements OnInit {
   @ViewChild(IonContent, { static: false }) content: IonContent | undefined;
   showScrollTop: boolean = false;
 
-  // Datos Financieros
+  // Datos Financieros Reales
   totalIngresos: number = 0;
   totalGastos: number = 0;
   beneficioNeto: number = 0;
 
-  // Datos Empleados
+  // Variables para la animación visual (AÑADE ESTAS 3)
+  displayIngresos: number = 0;
+  displayGastos: number = 0;
+  displayBeneficio: number = 0;
+
   employees: Employee[] = [];
   searchText: string = '';
 
-  // Variables para gestión de fotos
-  modalEditingId: any = null;
-  pendingModalPhotoData: string | null = null;
-  
   // Variables para Preview
   previewVisible: boolean = false;
   previewImage: string | null = null;
   currentPreviewEmployee: Employee | null = null;
 
+  // NUEVO: Variables para el Modal Premium
+  isModalOpen: boolean = false;
+  isEditMode: boolean = false;
+  editingEmployee: Partial<Employee> = {};
+
   constructor(
     private alertController: AlertController,
     private api: ApiService,
-    public auth: AuthService
+    public auth: AuthService,
+    private toastCtrl: ToastController // <-- AÑADIDO ToastController (named toastCtrl to match usages)
   ) { }
 
-  ngOnInit() {
-    this.loadData();
-  }
-
-  ionViewWillEnter() {
-    this.loadData();
-  }
+  ngOnInit() { this.loadData(); }
+  ionViewWillEnter() { this.loadData(); }
 
   loadData() {
-    // 1. Cargar Empleados (y calcular gastos)
     this.api.getEmpleados().subscribe(data => {
       this.employees = data;
       this.calculateFinancials();
     });
 
-    // 2. Cargar Reservas (y calcular ingresos)
     this.api.getReservas().subscribe(data => {
-      // Solo sumamos reservas confirmadas
       const confirmadas = data.filter(r => r.estado === 'Confirmada' || r.status === 'Confirmada');
       this.totalIngresos = confirmadas.reduce((acc, r) => acc + (Number(r.total) || Number(r.precioTotal) || 0), 0);
       this.calculateFinancials();
@@ -88,6 +86,33 @@ export class Tab5Page implements OnInit {
   calculateFinancials() {
     this.totalGastos = this.employees.reduce((acc, e) => acc + (Number(e.salario) || 0), 0);
     this.beneficioNeto = this.totalIngresos - this.totalGastos;
+
+    // Lanzar la animación (1500 milisegundos = 1.5 segundos)
+    this.animateValue(this.totalIngresos, 'displayIngresos', 1500);
+    this.animateValue(this.totalGastos, 'displayGastos', 1500);
+    this.animateValue(this.beneficioNeto, 'displayBeneficio', 1500);
+  }
+
+  // --- FUNCIÓN DE ANIMACIÓN "DE LOKOS" ---
+  animateValue(target: number, prop: 'displayIngresos' | 'displayGastos' | 'displayBeneficio', duration: number) {
+    const start = 0;
+    const startTime = performance.now();
+
+    const step = (currentTime: number) => {
+      const progress = Math.min((currentTime - startTime) / duration, 1);
+      
+      // Efecto de frenado suave al llegar al final (ease-out)
+      const easeProgress = 1 - Math.pow(1 - progress, 4); 
+      
+      this[prop] = start + (target - start) * easeProgress;
+
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        this[prop] = target; // Clava el número exacto al final
+      }
+    };
+    requestAnimationFrame(step);
   }
 
   get employeesToShow(): Employee[] {
@@ -100,114 +125,175 @@ export class Tab5Page implements OnInit {
     });
   }
 
-  onSearch(ev: any) {
-    this.searchText = ev?.detail?.value ?? ev?.target?.value ?? '';
+  onSearch(ev: any) { this.searchText = ev?.detail?.value ?? ev?.target?.value ?? ''; }
+
+  // --- NUEVO CRUD CON MODAL ---
+
+  addEmployee() {
+    this.isEditMode = false;
+
+    // --- LÓGICA DE AUTO-NUMERACIÓN ---
+    let nextNum = 1;
+    if (this.employees.length > 0) {
+      // Extraemos los números de todos los empleados (ej: "EMP-005" -> 5)
+      const numeros = this.employees.map(e => {
+        const parts = (e.numero || '').split('-');
+        return parts.length > 1 ? parseInt(parts[1]) || 0 : 0;
+      });
+      // Buscamos el mayor y le sumamos 1
+      nextNum = Math.max(...numeros) + 1;
+    }
+    // Formateamos para que siempre tenga 3 cifras (EMP-001, EMP-015...)
+    const autoNum = `${nextNum.toString()}`;
+
+    this.editingEmployee = {
+      numero: autoNum,
+      status: 'Activo',
+      puesto: 'Recepción',
+      contrato: 'Indefinido'
+    };
+    this.isModalOpen = true;
   }
 
-  // --- CRUD EMPLEADOS CONECTADO A API ---
+  editEmployee(emp: Employee) {
+    this.isEditMode = true;
+    this.editingEmployee = { ...emp };
+    this.isModalOpen = true;
+  }
 
-  async addEmployee() {
-    this.modalEditingId = 'new';
-    this.pendingModalPhotoData = null;
+  closeModal() {
+    this.isModalOpen = false;
+  }
 
-    const alert = await this.alertController.create({
-      header: 'Nuevo empleado',
-      cssClass: 'custom-alert',
-      inputs: [
-        { name: 'numero', type: 'text', placeholder: 'Nº Empleado' },
-        { name: 'nombre', type: 'text', placeholder: 'Nombre' },
-        { name: 'apellidos', type: 'text', placeholder: 'Apellidos' },
-        { name: 'dni', type: 'text', placeholder: 'DNI' },
-        { name: 'salario', type: 'number', placeholder: 'Salario Mensual (€)' }, // CAMPO NUEVO
-        { name: 'telefono', type: 'tel', placeholder: 'Teléfono' },
-        { name: 'email', type: 'email', placeholder: 'Email' },
-        { name: 'puesto', type: 'text', placeholder: 'Puesto' },
-        { name: 'contrato', type: 'text', placeholder: 'Contrato', value: 'Indefinido' },
-        // Campos para login (opcionales)
-        { name: 'usuario', type: 'text', placeholder: 'Usuario App (ej: juan)' },
-        { name: 'password', type: 'password', placeholder: 'Contraseña App' }
-      ],
-      buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        {
-          text: 'Elegir foto',
-          handler: () => {
-            const input = document.getElementById('file-modal') as HTMLInputElement;
-            input?.click();
-            return false; 
-          }
-        },
-        {
-          text: 'Guardar',
-          handler: (data) => {
-            if (!data.nombre) return;
-            const newEmp: any = {
-              ...data,
-              salario: Number(data.salario),
-              photo: this.pendingModalPhotoData || '',
-              status: 'Activo',
-              // Asignamos rol basado en puesto o por defecto 'empleado'
-              rol: data.puesto ? data.puesto.toLowerCase().split(' ')[0] : 'empleado' 
-            };
+  saveEmployee() {
+    const emp = this.editingEmployee as any;
 
-            this.api.guardarEmpleado(newEmp).subscribe(() => {
-              this.loadData();
-              setTimeout(() => this.scrollToBottom(), 200);
-            });
-          }
-        }
-      ]
+    // 1. Recopilar qué campos exactos faltan
+    const camposFaltantes = [];
+    if (!emp.nombre) camposFaltantes.push('Nombre');
+    if (!emp.apellidos) camposFaltantes.push('Apellidos');
+    if (!emp.dni) camposFaltantes.push('DNI');
+    if (!emp.telefono) camposFaltantes.push('Teléfono');
+    if (!emp.email) camposFaltantes.push('Email');
+    if (emp.salario === undefined || emp.salario === null || emp.salario === '') camposFaltantes.push('Salario');
+    if (!emp.contrato) camposFaltantes.push('Contrato');
+    if (!emp.password) camposFaltantes.push('Contraseña');
+
+    if (camposFaltantes.length > 0) {
+      const mensaje = camposFaltantes.length === 1 
+        ? `Te falta rellenar: ${camposFaltantes[0]}` 
+        : `Te faltan estos campos: ${camposFaltantes.join(', ')}`;
+      this.showError(mensaje);
+      return;
+    }
+
+    // 2. VALIDAR DUPLICADOS (¡La nueva magia!)
+    // Buscamos si en la lista actual de empleados ya hay alguien con esos datos
+    // y nos aseguramos de que no sea la misma persona que estamos editando (e.id !== emp.id)
+    const duplicadoDNI = this.employees.find(e => e.dni?.toUpperCase() === emp.dni.toUpperCase() && e.id !== emp.id);
+    const duplicadoEmail = this.employees.find(e => e.email?.toLowerCase() === emp.email.toLowerCase() && e.id !== emp.id);
+    const duplicadoTelefono = this.employees.find(e => e.telefono === emp.telefono && e.id !== emp.id);
+    const duplicadoNumero = this.employees.find(e => e.numero === emp.numero && e.id !== emp.id);
+
+    if (duplicadoDNI) {
+      this.showError('Ya existe un empleado registrado con este DNI.');
+      return;
+    }
+    if (duplicadoEmail) {
+      this.showError('Ya existe un empleado registrado con este Email.');
+      return;
+    }
+    if (duplicadoTelefono) {
+      this.showError('Ya existe un empleado con este número de Teléfono.');
+      return;
+    }
+    if (duplicadoNumero) {
+      this.showError('Ya existe un empleado con este Nº de Empleado.');
+      return;
+    }
+
+    // 3. Validar formato de Email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emp.email)) {
+      this.showError('El formato del correo electrónico no es válido.');
+      return;
+    }
+
+    // 4. Validar Teléfono (Acepta 9 dígitos, ignorando espacios)
+    const phoneRegex = /^[0-9]{9}$/;
+    const telefonoLimpio = emp.telefono.toString().replace(/\s/g, ''); 
+    if (!phoneRegex.test(telefonoLimpio)) {
+      this.showError('El teléfono debe tener exactamente 9 dígitos.');
+      return;
+    }
+
+    // 5. Validar DNI / NIE (Formato visual)
+    if (!this.validarDNI(emp.dni)) {
+      this.showError('El DNI debe tener 8 números y 1 letra (ej: 12345678A).');
+      return;
+    }
+
+    // Asignar el rol lógico para la API
+    emp.rol = emp.puesto?.toLowerCase().split(' ')[0] || 'recepción';
+
+    // Guardar
+    if (this.isEditMode && emp.id) {
+      this.api.editarEmpleado(emp.id, emp).subscribe(() => {
+        this.loadData();
+        this.closeModal();
+        this.showSuccess('Empleado actualizado con éxito');
+      });
+    } else {
+      this.api.guardarEmpleado(emp).subscribe(() => {
+        this.loadData();
+        this.closeModal();
+        setTimeout(() => this.scrollToBottom(), 200);
+        this.showSuccess('Empleado creado con éxito');
+      });
+    }
+  }
+
+  // --- FUNCIONES DE VALIDACIÓN Y AVISOS ---
+
+  // Validador matemático de DNI y NIE Español
+  // Validador de formato DNI/NIE (Permite inventados, ignora la matemática)
+  validarDNI(dni: string): boolean {
+    const str = dni.toString().toUpperCase().trim();
+    
+    // Solo comprobamos que tenga el formato visual: 
+    // 8 números + 1 letra (NIF) o X/Y/Z + 7 números + 1 letra (NIE)
+    const nifRexp = /^[0-9]{8}[A-Z]$/i;
+    const nieRexp = /^[XYZ][0-9]{7}[A-Z]$/i;
+
+    // Si cumple la "apariencia", lo damos por bueno sin calcular la letra
+    return nifRexp.test(str) || nieRexp.test(str);
+  }
+
+  // Notificación de error visual
+  async showError(msg: string) {
+    const toast = await this.toastCtrl.create({
+      message: msg,
+      duration: 3500,
+      color: 'danger',
+      position: 'top',
+      icon: 'warning-outline'
     });
-    await alert.present();
-    this.attachPasswordToggleToAlert(alert as any);
+    toast.present();
   }
 
-  async editEmployee(emp: Employee) {
-    this.modalEditingId = emp.id;
-    this.pendingModalPhotoData = null;
-
-    const alert = await this.alertController.create({
-      header: 'Editar empleado',
-      inputs: [
-        { name: 'numero', type: 'text', value: emp.numero, placeholder: 'Nº Empleado' },
-        { name: 'nombre', type: 'text', value: emp.nombre, placeholder: 'Nombre' },
-        { name: 'apellidos', type: 'text', value: emp.apellidos, placeholder: 'Apellidos' },
-        { name: 'dni', type: 'text', value: emp.dni, placeholder: 'DNI' },
-        { name: 'salario', type: 'number', value: emp.salario, placeholder: 'Salario (€)' }, // CAMPO NUEVO
-        { name: 'telefono', type: 'tel', value: emp.telefono, placeholder: 'Teléfono' },
-        { name: 'email', type: 'email', value: emp.email, placeholder: 'Email' },
-        { name: 'puesto', type: 'text', value: emp.puesto, placeholder: 'Puesto' },
-        { name: 'contrato', type: 'text', value: emp.contrato, placeholder: 'Contrato' },
-        { name: 'usuario', type: 'text', value: emp.usuario, placeholder: 'Usuario App' },
-        { name: 'password', type: 'password', value: emp.password, placeholder: 'Contraseña App' }
-      ],
-      buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        {
-          text: 'Elegir foto',
-          handler: () => {
-            const input = document.getElementById('file-modal') as HTMLInputElement;
-            input?.click();
-            return false;
-          }
-        },
-        {
-          text: 'Guardar',
-          handler: (data) => {
-            const updatedEmp = {
-              ...emp,
-              ...data,
-              salario: Number(data.salario),
-              photo: this.pendingModalPhotoData || emp.photo
-            };
-            this.api.editarEmpleado(emp.id, updatedEmp).subscribe(() => this.loadData());
-          }
-        }
-      ]
+  // Notificación de éxito visual
+  async showSuccess(msg: string) {
+    const toast = await this.toastCtrl.create({
+      message: msg,
+      duration: 2500,
+      color: 'success',
+      position: 'top',
+      icon: 'checkmark-circle-outline'
     });
-    await alert.present();
-    this.attachPasswordToggleToAlert(alert as any);
+    toast.present();
   }
+
+  // --- RESTO DE FUNCIONES (Estado, Eliminar, Fotos) ---
 
   async changeStatus(emp: Employee) {
     const alert = await this.alertController.create({
@@ -222,9 +308,7 @@ export class Tab5Page implements OnInit {
         {
           text: 'Guardar',
           handler: (val) => {
-            if (val) {
-              this.api.editarEmpleado(emp.id, { ...emp, status: val }).subscribe(() => this.loadData());
-            }
+            if (val) this.api.editarEmpleado(emp.id, { ...emp, status: val }).subscribe(() => this.loadData());
           }
         }
       ]
@@ -238,25 +322,17 @@ export class Tab5Page implements OnInit {
       message: `¿Eliminar a ${emp.nombre}?`,
       buttons: [
         { text: 'Cancelar', role: 'cancel' },
-        {
-          text: 'Eliminar',
-          handler: () => {
-            this.api.eliminarEmpleado(emp.id).subscribe(() => this.loadData());
-          }
-        }
+        { text: 'Eliminar', handler: () => { this.api.eliminarEmpleado(emp.id).subscribe(() => this.loadData()); } }
       ]
     });
     await alert.present();
   }
-
-  // --- GESTIÓN DE FOTOS ---
 
   onAvatarClick(emp: Employee, photo?: string) {
     if (photo) {
       this.currentPreviewEmployee = emp;
       this.openPreview(photo);
     } else {
-      // Buscar índice visual para disparar el input file
       const idx = this.employeesToShow.indexOf(emp);
       if (idx >= 0) {
         const input = document.getElementById(`file-${idx}`) as HTMLInputElement;
@@ -266,44 +342,32 @@ export class Tab5Page implements OnInit {
   }
 
   fileChanged(ev: Event, emp: any) {
-  const input = ev.target as HTMLInputElement;
-  const file = input.files && input.files[0];
-  if (!file) return;
+    const input = ev.target as HTMLInputElement;
+    const file = input.files && input.files[0];
+    if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = () => {
-    const img = new Image();
-    img.src = reader.result as string;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.src = reader.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 400; 
+        const scaleSize = MAX_WIDTH / img.width;
+        canvas.width = MAX_WIDTH;
+        canvas.height = img.height * scaleSize;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
 
-    img.onload = () => {
-      // --- PROCESO DE COMPRESIÓN ---
-      const canvas = document.createElement('canvas');
-      const MAX_WIDTH = 400; // La dejamos en un tamaño pequeño para perfil
-      const scaleSize = MAX_WIDTH / img.width;
-      canvas.width = MAX_WIDTH;
-      canvas.height = img.height * scaleSize;
-
-      const ctx = canvas.getContext('2d');
-      ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      // Convertimos a base64 con calidad baja (0.5) para que pese poquísimo
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
-
-      // Ahora sí, enviamos la foto pequeña a la API
-      console.log('Enviando foto comprimida...');
-      this.api.editarEmpleado(emp.id, { ...emp, photo: dataUrl }).subscribe({
-        next: () => {
-          console.log('Foto actualizada con éxito');
-          this.loadData();
-        },
-        error: (err) => console.error('Error al subir foto:', err)
-      });
+        this.api.editarEmpleado(emp.id, { ...emp, photo: dataUrl }).subscribe(() => this.loadData());
+      };
     };
-  };
-  reader.readAsDataURL(file);
-  input.value = '';
-}
+    reader.readAsDataURL(file);
+    input.value = '';
+  }
 
+  // Adaptado para el nuevo Modal
   fileChangedModal(ev: Event) {
     const input = ev.target as HTMLInputElement;
     const file = input.files && input.files[0];
@@ -313,104 +377,29 @@ export class Tab5Page implements OnInit {
     reader.onload = () => {
       const img = new Image();
       img.src = reader.result as string;
-
       img.onload = () => {
         const canvas = document.createElement('canvas');
         const MAX_WIDTH = 400;
         const scaleSize = MAX_WIDTH / img.width;
         canvas.width = MAX_WIDTH;
         canvas.height = img.height * scaleSize;
-
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-
         const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
 
-        // Guardamos la foto comprimida para cuando el usuario guarde en el modal
-        this.pendingModalPhotoData = dataUrl;
+        this.editingEmployee.photo = dataUrl; // Se actualiza directo en el objeto temporal
         input.value = '';
       };
     };
     reader.readAsDataURL(file);
   }
 
-  // Inyecta un botón mostrar/ocultar en el input password del último alert abierto
-  private attachPasswordToggleToAlert(alertElParam?: any) {
-    try {
-      const alertEl = alertElParam || (Array.from(document.querySelectorAll('ion-alert')).pop() as any);
-      if (!alertEl) return;
-
-      // Delay corto para que el alert renderice sus inputs en el shadow DOM
-      setTimeout(() => {
-        try {
-          const root = (alertEl.shadowRoot || alertEl) as ShadowRoot | any;
-          if (!root) return;
-
-          // Intentamos localizar el input password dentro del shadowRoot
-          let pwInput: HTMLInputElement | null = null;
-          // 1) Buscar dentro de contenedores .alert-input
-          const inputContainers = Array.from(root.querySelectorAll && root.querySelectorAll('.alert-input') || [] ) as HTMLElement[];
-          if (inputContainers.length) {
-            for (const c of inputContainers) {
-              const inp = c.querySelector('input[type="password"]') as HTMLInputElement | null;
-              if (inp) { pwInput = inp; break; }
-            }
-          }
-
-          // 2) fallback: buscar cualquier input[type=password] en shadowRoot
-          if (!pwInput && root.querySelector) {
-            pwInput = root.querySelector('input[type="password"]') as HTMLInputElement | null;
-          }
-
-          if (!pwInput) return;
-
-          // Evitar duplicar el botón
-          if (root.querySelector && root.querySelector('.pw-toggle-btn')) return;
-
-          const wrapper = pwInput.parentElement as HTMLElement | null;
-          if (wrapper) wrapper.style.position = wrapper.style.position || 'relative';
-          pwInput.style.paddingRight = '56px';
-
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'pw-toggle-btn';
-          btn.textContent = 'Mostrar';
-          btn.style.position = 'absolute';
-          btn.style.right = '8px';
-          btn.style.top = '50%';
-          btn.style.transform = 'translateY(-50%)';
-          btn.style.background = 'transparent';
-          btn.style.border = 'none';
-          btn.style.color = 'var(--ion-color-primary, #3880ff)';
-          btn.style.cursor = 'pointer';
-          btn.style.padding = '4px 6px';
-          btn.style.fontSize = '0.9rem';
-
-          btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (pwInput!.type === 'password') {
-              pwInput!.type = 'text';
-              btn.textContent = 'Ocultar';
-            } else {
-              pwInput!.type = 'password';
-              btn.textContent = 'Mostrar';
-            }
-            pwInput!.focus();
-          });
-
-          // Insertar el botón en el wrapper si existe, si no en el root
-          if (wrapper) wrapper.appendChild(btn);
-          else if (root.appendChild) root.appendChild(btn as any);
-        } catch (e) {
-          console.error('attachPasswordToggleToAlert error inner:', e);
-        }
-      }, 60);
-    } catch (e) {
-      console.error('attachPasswordToggleToAlert error:', e);
-    }
+  triggerModalFileInput() {
+    this.closePreview();
+    const input = document.getElementById('file-modal') as HTMLInputElement;
+    input?.click();
   }
 
-  // --- PREVIEW ---
   openPreview(photo: string) {
     this.previewImage = photo;
     this.previewVisible = true;
@@ -420,14 +409,7 @@ export class Tab5Page implements OnInit {
     this.previewImage = null;
     this.currentPreviewEmployee = null;
   }
-  triggerModalFileInput() {
-    this.closePreview();
-    if (this.currentPreviewEmployee) {
-      this.editEmployee(this.currentPreviewEmployee);
-    }
-  }
 
-  // --- HELPERS ---
   formatCurrency(value: number | undefined) {
     return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value || 0);
   }

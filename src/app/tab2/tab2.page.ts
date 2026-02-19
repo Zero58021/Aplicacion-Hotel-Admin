@@ -44,48 +44,49 @@ export class Tab2Page implements OnInit {
 
         let filteredList = list;
 
-        // 1. FILTRO DE SEGURIDAD (Solo el Jefe ve el historial)
         if (userRole !== 'jefe') {
           filteredList = list.filter(r => {
             if (!r.fechaSalida) return false;
             const salida = new Date(r.fechaSalida);
-            return salida >= hoy; // Solo activas o futuras
+            return salida >= hoy; 
           });
         }
 
-        // 2. MAPEO Y ETIQUETA "COMPLETADA"
         this.reservas = filteredList.map(r => {
           const salida = new Date(r.fechaSalida);
           const esAntigua = salida < hoy;
 
-          // Si estaba confirmada y ya pasó la fecha -> "Completada"
-          let estadoVisual = r.estado;
-          if (r.estado === 'Confirmada' && esAntigua) {
+          let estadoVisual = r.estado || r.status || 'Pendiente';
+          if (estadoVisual === 'Confirmada' && esAntigua) {
             estadoVisual = 'Completada';
           }
 
           return {
             ...r,
-            numero: r.id, 
+            numero: String(r.id ?? r.numero ?? ''),
             status: estadoVisual,
-            titular: r.nombreCliente,
-            habitacion: r.selectedRoom?.name || 'Sin asignar',
-            ninos: r.children,
-            adultos: r.adults,
-            precioTotal: r.total,
-            pension: r.selectedPension?.name,
-            numeroHabitaciones: r.habitaciones,
-            hasAllergies: (r.notas && r.notas !== '') || r.passengers?.some((p:any) => p.allergies && p.allergies !== ''),
+            titular: r.nombreCliente ?? r.titular ?? '-',
+            habitacion: r.selectedRoom?.name ?? r.habitacion ?? 'Sin asignar',
+            ninos: r.children ?? r.ninos ?? '-',
+            adultos: r.adults ?? r.adultos ?? '-',
+            precioTotal: r.total ?? r.precioTotal ?? 0,
+            pension: r.selectedPension?.name ?? r.pension ?? '-',
+            numeroHabitaciones: r.habitaciones ?? r.numeroHabitaciones ?? '-',
+            hasAllergies: !!((r.notas && r.notas !== '') || r.passengers?.some((p:any) => p.allergies && p.allergies !== '')),
             alergias: r.notas || (r.passengers?.find((p:any) => p.allergies)?.allergies) || 'No',
             expanded: false
           };
         });
 
-        // 3. ORDENAR: Las más recientes (o próximas entradas) primero
         this.reservas.sort((a, b) => new Date(a.fechaEntrada).getTime() - new Date(b.fechaEntrada).getTime());
       },
       error: (err) => console.error('Error cargando reservas:', err)
     });
+  }
+
+  setFilter(filter: string) {
+    this.statusFilter = filter;
+    this.reservas.forEach(x => x.expanded = false);
   }
 
   get filteredReservas(): any[] {
@@ -93,27 +94,20 @@ export class Tab2Page implements OnInit {
     let pool = this.reservas;
     const role = this.auth.getRole();
 
-    // Filtros por Rol
     if (role === 'restaurante') {
       pool = pool.filter(r => (r.status === 'Confirmada' || r.status === 'Completada') && r.hasAllergies);
     }
 
     const results = pool.filter(r => {
-      // --- LÓGICA DE FILTRADO EXCLUSIVO ---
-      
       if (this.statusFilter === 'Todos') {
-        // En "Todos", excluimos explícitamente las Completadas
-        if (r.status === 'Completada') return false;
+        if (r.status === 'Completada' || r.status === 'Cancelada') return false;
       } else {
-        // En cualquier otra pestaña (Pendiente, Confirmada, Denegada, Completada)
-        // debe coincidir exactamente el estado.
         if (r.status !== this.statusFilter) return false;
       }
       
-      // Buscador de texto
       if (!term) return true;
-      const inTitular = r.titular?.toLowerCase().includes(term);
-      const inNumero = r.numero?.toLowerCase().includes(term);
+      const inTitular = String(r.titular ?? '').toLowerCase().includes(term);
+      const inNumero = String(r.numero ?? '').toLowerCase().includes(term);
       return inTitular || inNumero;
     });
 
@@ -138,7 +132,15 @@ export class Tab2Page implements OnInit {
 
   cancelByClient(r: any) {
     this.api.updateReserva(r.id, { estado: 'Cancelada' }).subscribe(() => {
-      this.showToast('Cancelada por cliente');
+      this.showToast('Reserva cancelada');
+      this.cargarDatos();
+    });
+  }
+
+  // NUEVO: Función para devolver a la vida una reserva cancelada
+  reactivateReservation(r: any) {
+    this.api.updateReserva(r.id, { estado: 'Confirmada' }).subscribe(() => {
+      this.showToast('Reserva reactivada con éxito');
       this.cargarDatos();
     });
   }
@@ -149,7 +151,7 @@ export class Tab2Page implements OnInit {
 
   deleteReservation(r: any) {
     this.api.eliminarReserva(r.id).subscribe(() => {
-      this.showToast('Reserva eliminada');
+      this.showToast('Registro eliminado');
       this.cargarDatos();
     });
   }
@@ -158,7 +160,7 @@ export class Tab2Page implements OnInit {
     (async () => {
       const alert = await this.alertCtrl.create({
         header: 'Confirmar borrado',
-        message: `¿Borrar reserva ${r.numero}? Esta acción no se puede deshacer.`,
+        message: `¿Borrar registro de la reserva ${r.numero}? Esta acción no se puede deshacer.`,
         cssClass: 'custom-delete-alert',
         buttons: [
           { text: 'Cancelar', role: 'cancel', cssClass: 'btn-cancel-green' },
@@ -211,11 +213,6 @@ export class Tab2Page implements OnInit {
   }
 
   onSearch(ev: any) { this.searchTerm = ev?.detail?.value ?? ''; }
-  
-  onFilter(ev: any) { 
-    this.statusFilter = ev?.detail?.value ?? 'Todos';
-    this.reservas.forEach(x => x.expanded = false);
-  }
 
   onContentScroll(ev: any) { this.showScrollTop = (ev?.detail?.scrollTop ?? 0) > 200; }
   scrollToTop() { this.content.scrollToTop(400); }

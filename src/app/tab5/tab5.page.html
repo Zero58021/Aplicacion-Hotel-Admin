@@ -15,16 +15,14 @@
     <ion-card class="finance-card ingresos">
       <ion-card-header>
         <ion-card-subtitle>Ingresos (Reservas)</ion-card-subtitle>
-        <ion-card-title>{{ formatCurrency(totalIngresos) }}</ion-card-title>
-      </ion-card-header>
+        <ion-card-title>{{ formatCurrency(displayIngresos) }}</ion-card-title> </ion-card-header>
       <ion-icon name="trending-up-outline"></ion-icon>
     </ion-card>
 
     <ion-card class="finance-card gastos">
       <ion-card-header>
         <ion-card-subtitle>Gastos (Nóminas)</ion-card-subtitle>
-        <ion-card-title>{{ formatCurrency(totalGastos) }}</ion-card-title>
-      </ion-card-header>
+        <ion-card-title>{{ formatCurrency(displayGastos) }}</ion-card-title> </ion-card-header>
       <ion-icon name="wallet-outline"></ion-icon>
     </ion-card>
   </div>
@@ -32,8 +30,7 @@
   <ion-card class="finance-card beneficio" [class.negative]="beneficioNeto < 0">
     <ion-card-header>
       <ion-card-subtitle>Beneficio Neto Estimado</ion-card-subtitle>
-      <ion-card-title>{{ formatCurrency(beneficioNeto) }}</ion-card-title>
-    </ion-card-header>
+      <ion-card-title>{{ formatCurrency(displayBeneficio) }}</ion-card-title> </ion-card-header>
   </ion-card>
 
   <div class="search-wrapper" style="margin-top: 20px;">
@@ -101,3 +98,160 @@
     </div>
   </div>
 </div>
+
+<ion-modal [isOpen]="isModalOpen" (didDismiss)="closeModal()">
+  <ng-template>
+    <ion-header class="ion-no-border">
+      <ion-toolbar color="primary">
+        <ion-title>{{ isEditMode ? 'Editar' : 'Añadir' }} Empleado</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="closeModal()">
+            <ion-icon name="close-outline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="bg-light ion-padding">
+      <div class="form-container fade-in">
+        
+        <div class="avatar-picker-container" (click)="triggerModalFileInput()">
+          <div class="avatar-picker">
+            <img *ngIf="editingEmployee.photo" [src]="editingEmployee.photo">
+            <ion-icon *ngIf="!editingEmployee.photo" name="camera-outline"></ion-icon>
+          </div>
+          <span class="change-photo-text">Tocar para cambiar foto</span>
+        </div>
+
+        <div class="form-card">
+          <div class="card-header">
+            <ion-icon name="person-circle-outline"></ion-icon>
+            <span>Información Personal</span>
+          </div>
+
+          <div class="form-row">
+            <div class="input-group half">
+              <label>Nombre</label>
+              <div class="custom-input">
+                <input type="text" placeholder="Ej: Juan" [(ngModel)]="editingEmployee.nombre">
+              </div>
+            </div>
+            <div class="input-group half">
+              <label>Apellidos</label>
+              <div class="custom-input">
+                <input type="text" placeholder="Ej: Pérez" [(ngModel)]="editingEmployee.apellidos">
+              </div>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label>DNI / Pasaporte</label>
+            <div class="custom-input">
+              <ion-icon name="id-card-outline"></ion-icon>
+              <input type="text" placeholder="12345678A" [(ngModel)]="editingEmployee.dni">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="input-group half">
+              <label>Teléfono</label>
+              <div class="custom-input">
+                <ion-icon name="call-outline"></ion-icon>
+                <input type="tel" placeholder="600000000" [(ngModel)]="editingEmployee.telefono">
+              </div>
+            </div>
+            <div class="input-group half">
+              <label>Nº Empleado</label>
+              <div class="custom-input">
+                <ion-icon name="barcode-outline"></ion-icon>
+                <input type="text" placeholder="EMP-001" [(ngModel)]="editingEmployee.numero">
+              </div>
+            </div>
+          </div>
+          
+          <div class="input-group">
+            <label>Email</label>
+            <div class="custom-input">
+              <ion-icon name="mail-outline"></ion-icon>
+              <input type="email" placeholder="correo@hotel.com" [(ngModel)]="editingEmployee.email">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <div class="card-header">
+            <ion-icon name="briefcase-outline"></ion-icon>
+            <span>Datos Laborales</span>
+          </div>
+
+          <div class="input-group">
+            <label>Puesto / Rol</label>
+            <div class="role-grid">
+              <div class="role-chip" [class.active]="editingEmployee.puesto === 'Recepción'" (click)="editingEmployee.puesto = 'Recepción'">
+                <ion-icon name="desktop-outline"></ion-icon>
+                <span>Recepción</span>
+              </div>
+              <div class="role-chip" [class.active]="editingEmployee.puesto === 'Limpieza'" (click)="editingEmployee.puesto = 'Limpieza'">
+                <ion-icon name="sparkles-outline"></ion-icon>
+                <span>Limpieza</span>
+              </div>
+              <div class="role-chip" [class.active]="editingEmployee.puesto === 'Mantenimiento'" (click)="editingEmployee.puesto = 'Mantenimiento'">
+                <ion-icon name="hammer-outline"></ion-icon>
+                <span>Mantenimiento</span>
+              </div>
+              <div class="role-chip" [class.active]="editingEmployee.puesto === 'Restaurante'" (click)="editingEmployee.puesto = 'Restaurante'">
+                <ion-icon name="restaurant-outline"></ion-icon>
+                <span>Restaurante</span>
+              </div>
+              <div class="role-chip jefe" [class.active]="editingEmployee.puesto === 'Jefe'" (click)="editingEmployee.puesto = 'Jefe'">
+                <ion-icon name="star-outline"></ion-icon>
+                <span>Jefe</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="input-group half">
+              <label>Salario Mensual</label>
+              <div class="custom-input price-input">
+                <input type="number" placeholder="0" [(ngModel)]="editingEmployee.salario">
+                <span class="unit">€</span>
+              </div>
+            </div>
+            <div class="input-group half">
+              <label>Contrato</label>
+              <div class="custom-input">
+                <input type="text" placeholder="Ej: Indefinido" [(ngModel)]="editingEmployee.contrato">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <div class="card-header">
+            <ion-icon name="phone-portrait-outline"></ion-icon>
+            <span>Acceso a la App</span>
+          </div>
+
+          <div class="input-group">
+            <label>Contraseña</label>
+            <div class="custom-input">
+              <ion-icon name="lock-closed-outline"></ion-icon>
+              <input type="text" placeholder="Asignar contraseña" [(ngModel)]="editingEmployee.password">
+            </div>
+          </div>
+        </div>
+
+        <div class="action-buttons-bottom">
+          <ion-button expand="block" fill="clear" color="medium" class="cancel-btn" (click)="closeModal()">
+            CANCELAR
+          </ion-button>
+          <ion-button expand="block" color="primary" class="main-btn" (click)="saveEmployee()">
+            {{ isEditMode ? 'GUARDAR' : 'CREAR' }}
+          </ion-button>
+        </div>
+
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>

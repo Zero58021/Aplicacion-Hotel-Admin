@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ModalController, AlertController, IonicModule } from '@ionic/angular';
+import { ModalController, ToastController, IonicModule } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../services/auth.service';
@@ -34,8 +34,8 @@ export class ReservaModalComponent implements OnInit {
   reserva: ReservaInput = {
     habitacion: '',
     titular: '',
-    fechaEntrada: '',
-    fechaSalida: '',
+    fechaEntrada: new Date().toISOString(), // Inicia con hoy
+    fechaSalida: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString(), // Mañana
     numeroHabitaciones: 1,
     adultos: 1,
     ninos: 0,
@@ -54,13 +54,15 @@ export class ReservaModalComponent implements OnInit {
     'Pensión Completa'
   ];
 
-  statusOptions: Array<ReservaInput['status']> = ['Pendiente', 'Confirmada', 'Denegada'];
   isRecepcion: boolean = false;
 
-  constructor(private modalCtrl: ModalController, private alertCtrl: AlertController, private auth: AuthService) {}
+  constructor(
+    private modalCtrl: ModalController, 
+    private toastCtrl: ToastController, 
+    private auth: AuthService
+  ) {}
 
   ngOnInit(): void {
-    // si se pasa una reserva inicial (modo editar), mezclar los valores sin mutar el objeto original
     if (this.initial) {
       this.reserva = { ...this.reserva, ...this.initial } as ReservaInput;
     }
@@ -72,21 +74,16 @@ export class ReservaModalComponent implements OnInit {
   }
 
   async save() {
-    // validaciones básicas
+    // Validaciones básicas con Toast
     if (!this.reserva.habitacion || !this.reserva.titular || !this.reserva.fechaEntrada || !this.reserva.fechaSalida) {
-      const alert = await this.alertCtrl.create({
-        header: 'Campos requeridos',
-        message: 'Por favor rellena habitación, titular y las fechas de entrada/salida.',
-        cssClass: 'missing-alert',
-        buttons: [
-          {
-            text: 'OK',
-            role: 'cancel',
-            cssClass: 'btn-ok-missing'
-          }
-        ]
+      const toast = await this.toastCtrl.create({
+        message: 'Faltan campos obligatorios (Habitación, Titular o Fechas).',
+        duration: 3500,
+        color: 'danger',
+        position: 'top',
+        icon: 'warning-outline'
       });
-      await alert.present();
+      toast.present();
       return;
     }
 
@@ -95,18 +92,7 @@ export class ReservaModalComponent implements OnInit {
 
   // Acción específica para recepcion: cancelar reserva como "Cancelada por cliente"
   async cancelAsClient() {
-    const alert = await this.alertCtrl.create({
-      cssClass: 'cancel-alert',
-      header: 'Cancelar reserva',
-      message: '¿Confirmas que quieres marcar esta reserva como "Cancelada por cliente"?',
-      buttons: [
-        { text: 'No', role: 'cancel' },
-        { text: 'Sí', handler: () => {
-          this.reserva.status = 'Cancelada por cliente';
-          this.modalCtrl.dismiss({ reserva: this.reserva });
-        } }
-      ]
-    });
-    await alert.present();
+    this.reserva.status = 'Cancelada por cliente';
+    this.modalCtrl.dismiss({ reserva: this.reserva });
   }
 }

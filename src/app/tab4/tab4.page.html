@@ -116,88 +116,134 @@
         </ng-container>
 
         <ng-template #editForm>
-          <div class="edit-form">
-              <div class="image-edit">
-                <div class="images-list">
-                  <div class="thumb" *ngFor="let p of editModel.images; let idx = index">
-                    <img [src]="p" alt="foto {{idx + 1}}">
-                    <div class="thumb-actions">
-                      <label class="file-label small">
-                        Reemplazar
-                        <input type="file" accept="image/*" (change)="replacePhotoFile(idx, $event)">
-                      </label>
-                      <ion-button size="small" color="danger" fill="clear" (click)="removePhoto(idx)">Borrar</ion-button>
-                    </div>
+          <div class="edit-form fade-in">
+            
+            <div class="form-card compact">
+              <div class="card-header">
+                <ion-icon name="images-outline"></ion-icon>
+                <span>Fotografías</span>
+              </div>
+              <div class="photo-gallery">
+                <div class="photo-item" *ngFor="let p of editModel.images; let idx = index">
+                  <img [src]="p" alt="foto {{idx + 1}}">
+                  <div class="photo-delete" (click)="removePhoto(idx)">
+                    <ion-icon name="trash"></ion-icon>
                   </div>
+                  <label class="photo-replace-btn">
+                    <ion-icon name="sync-outline"></ion-icon>
+                    <input type="file" accept="image/*" (change)="replacePhotoFile(idx, $event)">
+                  </label>
                 </div>
-
-                <label class="file-label add-photo">
-                  Añadir foto
+                
+                <label class="photo-add-btn">
+                  <ion-icon name="add"></ion-icon>
                   <input type="file" accept="image/*" (change)="addPhotoFile($event)">
                 </label>
               </div>
+            </div>
 
-            <ion-item>
-              <ion-label position="stacked">Nombre</ion-label>
-              <ion-input [(ngModel)]="editModel.title" [attr.name]="'title' + originalIndex(room)"></ion-input>
-            </ion-item>
+            <div class="form-card compact">
+              <div class="form-row">
+                <div class="input-group half">
+                  <label>Nº Hab.</label>
+                  <div class="custom-input">
+                    <ion-icon name="key-outline"></ion-icon>
+                    <input type="text" [(ngModel)]="editModel.roomNumber" [attr.name]="'roomNumber' + originalIndex(room)">
+                  </div>
+                </div>
+                <div class="input-group half">
+                  <label>Nombre</label>
+                  <div class="custom-input">
+                    <input type="text" [(ngModel)]="editModel.title" [attr.name]="'title' + originalIndex(room)">
+                  </div>
+                </div>
+              </div>
 
-            <ion-item>
-              <ion-label position="stacked">Número de habitación</ion-label>
-              <ion-input [(ngModel)]="editModel.roomNumber" [attr.name]="'roomNumber' + originalIndex(room)"></ion-input>
-            </ion-item>
+              <div class="input-group mt-2">
+                <label>Tipo de Habitación</label>
+                <div class="custom-input">
+                  <ion-icon name="layers-outline"></ion-icon>
+                  <select [(ngModel)]="editModel.type" class="native-select" [attr.name]="'type' + originalIndex(room)">
+                    <option *ngFor="let t of roomTypes" [value]="t">{{ t }}</option>
+                  </select>
+                </div>
+              </div>
 
-            <ion-item>
-              <ion-label position="stacked">Precio anterior</ion-label>
-              <ion-input [(ngModel)]="editModel.oldPrice" [attr.name]="'old' + i"></ion-input>
-            </ion-item>
+              <div class="input-group mt-2">
+                <label>Estado Actual</label>
+                <div class="chip-grid">
+                  <div class="chip-item" [class.active]="editModel.status === 'Libre'" (click)="editModel.status = 'Libre'">
+                    <ion-icon name="checkmark-circle-outline"></ion-icon> <span>Libre</span>
+                  </div>
+                  <div class="chip-item" [class.active]="editModel.status === 'Ocupada'" (click)="editModel.status = 'Ocupada'">
+                    <ion-icon name="person-outline"></ion-icon> <span>Ocupada</span>
+                  </div>
+                  <div class="chip-item" [class.active]="editModel.status === 'Reservada'" (click)="editModel.status = 'Reservada'">
+                    <ion-icon name="calendar-outline"></ion-icon> <span>Reservada</span>
+                  </div>
+                  <div class="chip-item" [class.active]="editModel.status === 'Limpieza'" (click)="editModel.status = 'Limpieza'">
+                    <ion-icon name="sparkles-outline"></ion-icon> <span>Limpieza</span>
+                  </div>
+                  <div class="chip-item" [class.active]="editModel.status === 'Mantenimiento'" (click)="editModel.status = 'Mantenimiento'">
+                    <ion-icon name="hammer-outline"></ion-icon> <span>Mant.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-            <ion-item>
-              <ion-label position="stacked">Precio</ion-label>
-              <ion-input [(ngModel)]="editModel.price" [attr.name]="'price' + i"></ion-input>
-            </ion-item>
+            <div class="form-card compact">
+              <div class="input-group">
+                <label>Planta</label>
+                <div class="chip-grid">
+                  <div class="chip-item" *ngFor="let f of floors" [class.active]="editModel.floor === f" (click)="editModel.floor = f">
+                    <ion-icon name="business-outline"></ion-icon> <span>{{ f }}</span>
+                  </div>
+                </div>
+              </div>
 
-            <ion-item>
-              <ion-label position="stacked">Descripción</ion-label>
-              <ion-textarea [(ngModel)]="editModel.note" [attr.name]="'note' + i"></ion-textarea>
-            </ion-item>
+              <div class="form-row mt-2">
+                <div class="input-group half">
+                  <label>Precio Anterior</label>
+                  <div class="custom-input price-input">
+                    <input type="number" [(ngModel)]="editModel.oldPrice" [attr.name]="'old' + originalIndex(room)">
+                    <span class="unit">€</span>
+                  </div>
+                </div>
+                <div class="input-group half">
+                  <label>Precio Actual</label>
+                  <div class="custom-input price-input">
+                    <input type="number" [(ngModel)]="editModel.price" [attr.name]="'price' + originalIndex(room)">
+                    <span class="unit" style="color:var(--ion-color-success)">€</span>
+                  </div>
+                </div>
+              </div>
 
-            <ion-item>
-              <ion-label position="stacked">Extras (selecciona varios)</ion-label>
-              <ion-select interface="alert" [interfaceOptions]="{ cssClass: 'extras-alert' }" multiple okText="OK" cancelText="CANCEL" [(ngModel)]="editModel.extras" [attr.name]="'extras' + i">
-                <ion-select-option *ngFor="let exOpt of extrasOptions" [value]="exOpt">{{ exOpt }}</ion-select-option>
-              </ion-select>
-            </ion-item>
+              <div class="input-group mt-2">
+                <label>Descripción / Notas</label>
+                <div class="custom-input textarea-input">
+                  <textarea rows="3" [(ngModel)]="editModel.note" [attr.name]="'note' + originalIndex(room)"></textarea>
+                </div>
+              </div>
+            </div>
 
-            <ion-item>
-              <ion-label position="stacked">Tipo de habitación</ion-label>
-              <ion-select interface="alert" [interfaceOptions]="{ cssClass: 'extras-alert' }" okText="OK" cancelText="CANCEL" [(ngModel)]="editModel.type" [attr.name]="'type' + i">
-                <ion-select-option *ngFor="let t of roomTypes" [value]="t">{{ t }}</ion-select-option>
-              </ion-select>
-            </ion-item>
+            <div class="form-card compact">
+              <div class="card-header" style="margin-bottom: 8px;">
+                <ion-icon name="sparkles-outline"></ion-icon>
+                <span>Extras</span>
+              </div>
+              <div class="extras-grid">
+                <div class="extra-chip" *ngFor="let ex of extrasOptions" 
+                     [class.active]="hasExtraEdit(ex)" (click)="toggleExtraEdit(ex)">
+                  <span>{{ ex }}</span>
+                </div>
+              </div>
+            </div>
 
-            <ion-item>
-              <ion-label position="stacked">Planta</ion-label>
-              <ion-select interface="alert" [interfaceOptions]="{ cssClass: 'extras-alert' }" okText="OK" cancelText="CANCEL" [(ngModel)]="editModel.floor" [attr.name]="'floor' + i">
-                <ion-select-option *ngFor="let f of floors" [value]="f">{{ f }}</ion-select-option>
-              </ion-select>
-            </ion-item>
-
-            <ion-item>
-              <ion-label position="stacked">Estado</ion-label>
-              <ion-select interface="alert" [interfaceOptions]="{ cssClass: 'extras-alert' }" okText="OK" cancelText="CANCEL" [(ngModel)]="editModel.status">
-                <ion-select-option value="Limpieza">Limpieza</ion-select-option>
-                <ion-select-option value="Mantenimiento">Mantenimiento</ion-select-option>
-                <ion-select-option value="Reservada">Reservada</ion-select-option>
-                <ion-select-option value="Ocupada">Ocupada</ion-select-option>
-                <ion-select-option value="Libre">Libre</ion-select-option>
-              </ion-select>
-            </ion-item>
-
-            <div class="edit-actions">
-              <ion-button *ngIf="auth.hasPermission('habitaciones.edit')" color="primary" (click)="saveEdit()">Guardar</ion-button>
+            <div class="edit-actions-premium">
               <ion-button color="medium" fill="clear" (click)="cancelEdit()">Cancelar</ion-button>
-              <ion-button *ngIf="auth.hasPermission('habitaciones.edit')" color="danger" fill="clear" (click)="confirmDelete(originalIndex(room))">Borrar</ion-button>
+              <div style="flex:1"></div>
+              <ion-button *ngIf="auth.hasPermission('habitaciones.edit')" color="danger" fill="outline" (click)="confirmDelete(originalIndex(room))">Borrar</ion-button>
+              <ion-button *ngIf="auth.hasPermission('habitaciones.edit')" color="primary" class="main-save-btn" (click)="saveEdit()">GUARDAR</ion-button>
             </div>
           </div>
         </ng-template>
@@ -213,6 +259,6 @@
   </ion-fab-button>
 </ion-fab>
 
-<button *ngIf="auth.getRole() === 'recepcion' || auth.getRole() === 'limpieza'" class="scroll-top bottom-right" [class.visible]="showScrollTop" (click)="scrollToTop()" aria-label="Ir arriba">
+<button class="scroll-top" [class.visible]="showScrollTop" (click)="scrollToTop()" aria-label="Ir arriba">
   <ion-icon name="chevron-up-outline"></ion-icon>
 </button>

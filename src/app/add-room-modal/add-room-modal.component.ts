@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { IonicModule, ModalController } from '@ionic/angular';
+import { IonicModule, ModalController, ToastController } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -29,11 +29,15 @@ export class AddRoomModalComponent {
   floors = ['Baja', 'Primera', 'Segunda', 'Tercera', 'Cuarta'];
   extrasOptions = ['Balcón', 'Bañera', 'Cuna', 'Ducha', 'Frigorífico', 'Televisión', 'Terraza', 'WiFi', 'Limpieza', 'Silla de ruedas', 'Toallas extras'];
 
-  constructor(private modalCtrl: ModalController) {
+  constructor(
+    private modalCtrl: ModalController,
+    private toastCtrl: ToastController
+  ) {
     this.newRoom.type = this.roomTypes[0];
     this.newRoom.floor = this.floors[0];
   }
 
+  // --- GESTIÓN DE FOTOS ---
   addPhotoFile(event: any) {
     const file = event?.target?.files && event.target.files[0];
     if (!file) return;
@@ -42,6 +46,9 @@ export class AddRoomModalComponent {
       if (!this.newRoom.images) this.newRoom.images = [];
       this.newRoom.images.push(reader.result as string);
       this.newRoom.images = [...this.newRoom.images];
+      
+      // Limpiar el input file para poder subir la misma foto 2 veces seguidas si se quiere
+      if (event.target) event.target.value = '';
     };
     reader.readAsDataURL(file);
   }
@@ -52,15 +59,37 @@ export class AddRoomModalComponent {
     this.newRoom.images = [...this.newRoom.images];
   }
 
+  // --- GESTIÓN DE EXTRAS (CHIPS) ---
+  hasExtra(opt: string): boolean {
+    return this.newRoom.extras && this.newRoom.extras.includes(opt);
+  }
+
   toggleExtra(opt: string) {
     if (!this.newRoom || !Array.isArray(this.newRoom.extras)) this.newRoom.extras = [];
     const idx = this.newRoom.extras.indexOf(opt);
-    if (idx >= 0) this.newRoom.extras.splice(idx, 1);
-    else this.newRoom.extras.push(opt);
+    if (idx >= 0) {
+      this.newRoom.extras.splice(idx, 1); // Quitar si ya está
+    } else {
+      this.newRoom.extras.push(opt); // Añadir si no está
+    }
     this.newRoom.extras = [...this.newRoom.extras];
   }
 
-  save() {
+  // --- ACCIONES PRINCIPALES ---
+  async save() {
+    // Pequeña validación básica
+    if (!this.newRoom.roomNumber || !this.newRoom.title || !this.newRoom.price) {
+      const toast = await this.toastCtrl.create({
+        message: 'Por favor, rellena al menos el Número, el Nombre y el Precio.',
+        duration: 3000,
+        color: 'danger',
+        position: 'top',
+        icon: 'warning-outline'
+      });
+      toast.present();
+      return;
+    }
+
     this.newRoom.price = this.formatPrice(this.newRoom.price);
     this.newRoom.oldPrice = this.formatPrice(this.newRoom.oldPrice);
     this.modalCtrl.dismiss(this.newRoom);

@@ -13,65 +13,34 @@
 :host ion-toolbar { --justify-content: center; }
 .nav-btn ion-icon, .edit-btn ion-icon { color: #fff !important; }
 
-/* ESTILOS FINANCIEROS (NUEVO) */
+/* ESTILOS FINANCIEROS */
 .finance-content { --background: #fdfdfd; }
-
 .finance-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 12px;
-  padding: 0 4px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; padding: 0 4px;
 }
-
 .finance-card {
   margin: 0; position: relative; overflow: hidden;
   border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  
   ion-card-header { padding: 16px; position: relative; z-index: 2; }
   ion-card-subtitle { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; opacity: 0.8; margin-bottom: 4px; }
   ion-card-title { font-size: 1.2rem; font-weight: 800; }
-  
-  ion-icon {
-    position: absolute; right: -10px; bottom: -15px; font-size: 80px;
-    opacity: 0.12; transform: rotate(-15deg); z-index: 1; pointer-events: none;
-  }
-
-  &.ingresos { 
-    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-    color: #064e3b; ion-card-subtitle { color: #065f46; }
-  }
-  &.gastos { 
-    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-    color: #7f1d1d; ion-card-subtitle { color: #991b1b; }
-  }
-  &.beneficio { 
-    margin: 0 4px 12px 4px; background: #ffffff; border: 1px solid #e5e7eb; color: #0f172a; text-align: center;
+  ion-icon { position: absolute; right: -10px; bottom: -15px; font-size: 80px; opacity: 0.12; transform: rotate(-15deg); z-index: 1; pointer-events: none; }
+  &.ingresos { background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); color: #064e3b; ion-card-subtitle { color: #065f46; } }
+  &.gastos { background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); color: #7f1d1d; ion-card-subtitle { color: #991b1b; } }
+  &.beneficio { margin: 0 4px 12px 4px; background: #ffffff; border: 1px solid #e5e7eb; color: #0f172a; text-align: center;
     ion-card-title { font-size: 1.8rem; color: var(--ion-color-success, #10b981); font-weight: 900; }
     &.negative ion-card-title { color: #ef4444; }
   }
 }
 
-/* LISTA DE EMPLEADOS (Tus estilos originales con mejoras mínimas) */
+/* LISTA DE EMPLEADOS */
 .search-wrapper { margin-bottom: 10px; }
-.salary-badge {
-  background: #f3f4f6; color: #374151; font-weight: 700; font-size: 11px;
-  padding: 2px 6px; border-radius: 4px; margin-left: 8px; border: 1px solid #e5e7eb;
-}
-
-.employee-row {
-  padding: 8px 12px; display: flex; align-items: center; gap: 12px;
-  border-bottom: 1px solid rgba(0,0,0,0.04);
-}
-.employee-row .photo {
-  width: 44px; height: 44px; border-radius: 50%; overflow: hidden;
-  background: linear-gradient(135deg, rgba(56,128,255,0.12), rgba(61,194,255,0.06));
-  display: flex; align-items: center; justify-content: center;
-}
+.salary-badge { background: #f3f4f6; color: #374151; font-weight: 700; font-size: 11px; padding: 2px 6px; border-radius: 4px; margin-left: 8px; border: 1px solid #e5e7eb; }
+.employee-row { padding: 8px 12px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(0,0,0,0.04); }
+.employee-row .photo { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; background: linear-gradient(135deg, rgba(56,128,255,0.12), rgba(61,194,255,0.06)); display: flex; align-items: center; justify-content: center; }
 .employee-row .photo.clickable { cursor: pointer; }
 .employee-row .photo img { width: 100%; height: 100%; object-fit: cover; }
 .employee-row .initials { font-weight: 700; color: var(--ion-color-primary); font-size: 14px; }
-
 .employee-row ion-label { width: calc(100% - 140px); }
 .employee-row .line { display: flex; justify-content: space-between; align-items: center; }
 .employee-row .line.sub { margin-top: 4px; font-size: 13px; color: rgba(0,0,0,0.6); }
@@ -80,25 +49,15 @@
 .employee-row .status.activo { background: rgba(16,185,129,0.12); color: #059669; }
 .employee-row .status.baja { background: rgba(220,38,38,0.08); color: #dc2626; }
 .employee-row .status.licencia { background: rgba(250,204,21,0.12); color: #a16207; }
-
-.employee-row ion-buttons.action-buttons {
-  margin-left: auto; display: flex; gap: 6px; align-items: center;
-}
-.employee-row ion-buttons.action-buttons ion-button {
-  height: 36px; width: 36px; --border-radius: 6px; padding: 0;
-}
+.employee-row ion-buttons.action-buttons { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+.employee-row ion-buttons.action-buttons ion-button { height: 36px; width: 36px; --border-radius: 6px; padding: 0; }
 
 /* COMPONENTES COMPARTIDOS */
-:host ion-fab { position: fixed; right: 16px; bottom: 8px; z-index: 9998; }
+:host ion-fab { position: fixed; right: 16px; bottom: 16px; z-index: 9998; }
 :host ion-fab-button { width: 44px; height: 44px; border-radius: 22px; }
-/* Icono del FAB de añadir: forzar color blanco */
 :host ion-fab ion-fab-button ion-icon { color: #fff !important; }
-.scroll-top { position: fixed; right: 68px; bottom: 8px; width: 44px; height: 44px; border-radius: 22px; background: var(--ion-color-primary); color: #fff; border: none; opacity: 0; transform: translateY(12px) scale(.96); transition: all 0.2s; z-index: 9990; display: flex; align-items: center; justify-content: center; }
-.scroll-top.visible { opacity: 1; transform: translateY(0) scale(1); }
+.scroll-top { position: fixed; right: 76px; bottom: 16px; width: 44px; height: 44px; border-radius: 22px; background: var(--tab2-accent, #27ae60); box-shadow: 0 6px 14px rgba(0,0,0,0.18); border: none; z-index: 9999; opacity: 0; transform: translateY(12px) scale(.96); transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; &.visible { opacity: 1; transform: translateY(0) scale(1); } ion-icon { color: #ffffff !important; font-size: 24px; } }
 .bottom-space { height: 88px; width: 100%; }
-
-/* Forzar color blanco en el icono de "ir arriba" */
-.scroll-top ion-icon { color: #fff !important; }
 
 /* PREVIEW MODAL */
 .image-preview-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 10000; }
@@ -110,3 +69,103 @@
 .btn-close { background: #ff4444; color: #fff; }
 
 :host ion-back-button { display: none !important; }
+
+/* ==================================================
+   ESTILOS PREMIUM PARA EL MODAL DE FORMULARIO
+   ================================================== */
+.bg-light { --background: #f4f6f8; }
+.form-container { padding: 10px; max-width: 500px; margin: 0 auto; padding-bottom: 40px; }
+
+/* Selector de Foto Circular */
+.avatar-picker-container { display: flex; flex-direction: column; align-items: center; margin-bottom: 24px; margin-top: 10px; cursor: pointer; }
+.avatar-picker { width: 90px; height: 90px; border-radius: 50%; background: #e0e5eb; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 3px solid white; position: relative; }
+.avatar-picker img { width: 100%; height: 100%; object-fit: cover; }
+.avatar-picker ion-icon { font-size: 32px; color: #8898aa; }
+.change-photo-text { margin-top: 8px; font-size: 13px; color: var(--ion-color-primary); font-weight: 600; }
+
+/* Tarjetas (Bloques de info) */
+.form-card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.03); border: 1px solid #f0f2f5; }
+.card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; font-weight: 700; color: #2c3e50; font-size: 1.05rem; ion-icon { color: var(--ion-color-primary); font-size: 1.3rem; } }
+
+/* Campos de texto */
+.input-group { margin-bottom: 16px; label { display: block; font-size: 0.8rem; font-weight: 600; color: #7f8fa6; margin-bottom: 6px; margin-left: 4px; text-transform: uppercase; letter-spacing: 0.5px; } }
+.custom-input { display: flex; align-items: center; background: #f4f6f8; border-radius: 12px; padding: 12px 16px; gap: 10px; border: 1.5px solid transparent; transition: all 0.2s; &:focus-within { border-color: var(--ion-color-primary); background: white; box-shadow: 0 0 0 4px rgba(var(--ion-color-primary-rgb), 0.1); } ion-icon { color: #a5b1c2; font-size: 1.2rem; } input { border: none; background: transparent; width: 100%; outline: none; font-size: 0.95rem; color: #2f3640; font-weight: 500; } }
+.price-input .unit { font-weight: 700; color: #a5b1c2; }
+.form-row { display: flex; gap: 12px; }
+.half { flex: 1; }
+
+/* Segmentos y Botones */
+/* Segmentos y Botones */
+/* Segmentos totalmente transparentes */
+/* --- Cuadrícula de Roles Intuitiva --- */
+.role-grid {
+  display: flex;
+  flex-wrap: wrap; /* Esto hace que bajen de línea si no caben */
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.role-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: #f4f6f8;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #7f8fa6;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 1px solid transparent;
+
+  ion-icon { 
+    font-size: 1.1rem; 
+    color: #a5b1c2;
+  }
+
+  /* Estado Seleccionado */
+  &.active {
+    background: var(--ion-color-primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(var(--ion-color-primary-rgb), 0.3);
+    transform: translateY(-2px); /* Pequeño efecto 3D al seleccionarlo */
+    
+    /* MAGIA AQUÍ: Forzamos el blanco en el icono */
+    ion-icon {
+      color: #ffffff !important; 
+    }
+  }
+
+  /* Toque especial para el Jefe */
+  &.jefe.active {
+    background: #f39c12; /* Color dorado/naranja para destacar la gerencia */
+    box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);
+    
+    /* Forzamos el blanco también para el jefe */
+    ion-icon {
+      color: #ffffff !important; 
+    }
+  }
+}
+
+/* Botones inferiores (Cancelar y Guardar) */
+.action-buttons-bottom {
+  display: flex;
+  gap: 12px;
+  margin-top: 30px;
+  
+  ion-button {
+    flex: 1; /* Para que ocupen la mitad cada uno */
+    margin: 0;
+    --border-radius: 14px;
+    height: 52px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  
+  .main-btn {
+    --box-shadow: 0 6px 16px rgba(var(--ion-color-primary-rgb), 0.3);
+  }
+}
+.main-btn { margin-top: 20px; --border-radius: 16px; font-weight: 700; height: 56px; letter-spacing: 0.5px; --box-shadow: 0 8px 20px rgba(var(--ion-color-primary-rgb), 0.3); }

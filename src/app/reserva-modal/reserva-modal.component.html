@@ -1,91 +1,175 @@
-<ion-header translucent>
-  <ion-toolbar>
-    <ion-title>{{ initial?.numero ? 'Editar reserva' : 'Nueva reserva' }}</ion-title>
+<ion-header class="ion-no-border">
+  <ion-toolbar color="primary">
+    <ion-title>{{ initial?.numero ? 'Editar Reserva' : 'Nueva Reserva' }}</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="cancel()">Cancelar</ion-button>
+      <ion-button (click)="cancel()">
+        <ion-icon name="close-outline"></ion-icon>
+      </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
-  <ion-list>
-    <ion-item>
-      <ion-label position="stacked">Habitación</ion-label>
-      <ion-input [(ngModel)]="reserva.habitacion" placeholder="Nombre de la habitación"></ion-input>
-    </ion-item>
+<ion-content class="bg-light ion-padding">
+  <div class="form-container fade-in">
+    
+    <div class="form-card">
+      <div class="card-header">
+        <ion-icon name="person-outline"></ion-icon>
+        <span>Datos del Cliente</span>
+      </div>
 
-    <ion-item>
-      <ion-label position="stacked">Titular</ion-label>
-      <ion-input [disabled]="isRecepcion && (!!initial?.numero)" [(ngModel)]="reserva.titular" placeholder="Nombre del titular"></ion-input>
-    </ion-item>
+      <div class="input-group">
+        <label>Titular de la reserva</label>
+        <div class="custom-input" [class.disabled]="isRecepcion && !!initial?.numero">
+          <ion-icon name="id-card-outline"></ion-icon>
+          <input type="text" placeholder="Nombre completo" [(ngModel)]="reserva.titular" [disabled]="isRecepcion && (!!initial?.numero)">
+        </div>
+      </div>
 
-    <ion-item>
-      <ion-label position="stacked">Fecha entrada</ion-label>
-      <ion-datetime presentation="date" display-format="DD/MM/YYYY" picker-format="DD/MM/YYYY" [(ngModel)]="reserva.fechaEntrada"></ion-datetime>
-    </ion-item>
+      <div class="input-group">
+        <label>Habitación asignada</label>
+        <div class="custom-input">
+          <ion-icon name="bed-outline"></ion-icon>
+          <input type="text" placeholder="Ej: Suite 101" [(ngModel)]="reserva.habitacion">
+        </div>
+      </div>
+    </div>
 
-    <ion-item>
-      <ion-label position="stacked">Fecha salida</ion-label>
-      <ion-datetime presentation="date" display-format="DD/MM/YYYY" picker-format="DD/MM/YYYY" [(ngModel)]="reserva.fechaSalida"></ion-datetime>
-    </ion-item>
+    <div class="form-card">
+      <div class="card-header">
+        <ion-icon name="calendar-outline"></ion-icon>
+        <span>Estancia y Huéspedes</span>
+      </div>
 
+      <div class="form-row">
+        <div class="input-group half">
+          <label>Entrada</label>
+          <div class="custom-input date-input-wrapper">
+            <ion-datetime-button datetime="entrada"></ion-datetime-button>
+            <ion-modal [keepContentsMounted]="true">
+              <ng-template>
+                <ion-datetime id="entrada" presentation="date" [(ngModel)]="reserva.fechaEntrada"></ion-datetime>
+              </ng-template>
+            </ion-modal>
+          </div>
+        </div>
 
-    <ion-item>
-      <ion-label position="stacked">Número de habitaciones</ion-label>
-      <ion-input type="number" [(ngModel)]="reserva.numeroHabitaciones"></ion-input>
-    </ion-item>
+        <div class="input-group half">
+          <label>Salida</label>
+          <div class="custom-input date-input-wrapper">
+            <ion-datetime-button datetime="salida"></ion-datetime-button>
+            <ion-modal [keepContentsMounted]="true">
+              <ng-template>
+                <ion-datetime id="salida" presentation="date" [(ngModel)]="reserva.fechaSalida"></ion-datetime>
+              </ng-template>
+            </ion-modal>
+          </div>
+        </div>
+      </div>
 
-    <ion-item>
-      <ion-label position="stacked">Adultos</ion-label>
-      <ion-input type="number" [(ngModel)]="reserva.adultos"></ion-input>
-    </ion-item>
+      <div class="form-row mt-2">
+        <div class="input-group third">
+          <label>Habitaciones</label>
+          <div class="custom-input number-input">
+            <input type="number" min="1" [(ngModel)]="reserva.numeroHabitaciones">
+          </div>
+        </div>
+        <div class="input-group third">
+          <label>Adultos</label>
+          <div class="custom-input number-input">
+            <input type="number" min="1" [(ngModel)]="reserva.adultos">
+          </div>
+        </div>
+        <div class="input-group third">
+          <label>Niños</label>
+          <div class="custom-input number-input">
+            <input type="number" min="0" [(ngModel)]="reserva.ninos">
+          </div>
+        </div>
+      </div>
+    </div>
 
-    <ion-item>
-      <ion-label position="stacked">Niños</ion-label>
-      <ion-input type="number" [(ngModel)]="reserva.ninos"></ion-input>
-    </ion-item>
+    <div class="form-card">
+      <div class="card-header">
+        <ion-icon name="restaurant-outline"></ion-icon>
+        <span>Régimen y Precio</span>
+      </div>
 
-    <ion-item *ngIf="!isRecepcion">
-      <ion-label position="stacked">Precio total</ion-label>
-      <ion-input type="number" [(ngModel)]="reserva.precioTotal" step="0.01"></ion-input>
-    </ion-item>
+      <div class="input-group">
+        <label>Tipo de Pensión</label>
+        <div class="chip-grid">
+          <div class="chip-item" *ngFor="let p of pensionOptions" [class.active]="reserva.pension === p" (click)="reserva.pension = p">
+            <span>{{ p }}</span>
+          </div>
+        </div>
+      </div>
 
-    <ion-item>
-      <ion-label position="stacked">Pensión</ion-label>
-      <ion-select [(ngModel)]="reserva.pension">
-        <ion-select-option *ngFor="let p of pensionOptions" [value]="p">{{ p }}</ion-select-option>
-      </ion-select>
-    </ion-item>
+      <div class="input-group mt-2" *ngIf="!isRecepcion">
+        <label>Precio Total</label>
+        <div class="custom-input price-input">
+          <input type="number" placeholder="0.00" [(ngModel)]="reserva.precioTotal">
+          <span class="unit" style="color:var(--ion-color-success)">€</span>
+        </div>
+      </div>
+    </div>
 
-    <ion-item>
-      <ion-label>Mascota</ion-label>
-      <ion-toggle slot="end" [(ngModel)]="reserva.mascota"></ion-toggle>
-    </ion-item>
+    <div class="form-card">
+      <div class="card-header">
+        <ion-icon name="information-circle-outline"></ion-icon>
+        <span>Requisitos y Estado</span>
+      </div>
 
-    <ion-item>
-      <ion-label>Tiene alergias</ion-label>
-      <ion-toggle slot="end" [(ngModel)]="reserva.hasAllergies"></ion-toggle>
-    </ion-item>
+      <div class="toggles-container">
+        <ion-item lines="none" class="custom-toggle">
+          <ion-icon name="paw-outline" slot="start"></ion-icon>
+          <ion-label>Viaja con Mascota</ion-label>
+          <ion-toggle slot="end" color="primary" [(ngModel)]="reserva.mascota"></ion-toggle>
+        </ion-item>
 
-    <ion-item *ngIf="reserva.hasAllergies">
-      <ion-label position="stacked">Alergias / Intolerancias (describa)</ion-label>
-      <ion-textarea rows="3" [(ngModel)]="reserva.alergias" placeholder="Ej: Mariscos, maní, lácteos..."></ion-textarea>
-    </ion-item>
+        <ion-item lines="none" class="custom-toggle">
+          <ion-icon name="medical-outline" slot="start"></ion-icon>
+          <ion-label>Tiene Alergias</ion-label>
+          <ion-toggle slot="end" color="danger" [(ngModel)]="reserva.hasAllergies"></ion-toggle>
+        </ion-item>
+      </div>
 
-    <ion-item>
-      <ion-label position="stacked">Estado</ion-label>
-      <ion-segment [disabled]="isRecepcion" [(ngModel)]="reserva.status">
-        <ion-segment-button *ngFor="let s of statusOptions" [value]="s">{{ s }}</ion-segment-button>
-      </ion-segment>
-    </ion-item>
-  </ion-list>
+      <div class="input-group mt-2 slide-down" *ngIf="reserva.hasAllergies">
+        <label style="color: var(--ion-color-danger)">Alergias / Intolerancias (Describir)</label>
+        <div class="custom-input textarea-input" style="border-color: rgba(var(--ion-color-danger-rgb), 0.3)">
+          <textarea rows="2" placeholder="Ej: Mariscos, celiaquía, frutos secos..." [(ngModel)]="reserva.alergias"></textarea>
+        </div>
+      </div>
+
+      <div class="input-group mt-3" *ngIf="!isRecepcion">
+        <label>Estado de la Reserva</label>
+        <div class="chip-grid">
+          <div class="chip-item" [class.active]="reserva.status === 'Pendiente'" (click)="reserva.status = 'Pendiente'">
+            <ion-icon name="time-outline"></ion-icon> <span>Pendiente</span>
+          </div>
+          <div class="chip-item confirmada" [class.active]="reserva.status === 'Confirmada'" (click)="reserva.status = 'Confirmada'">
+            <ion-icon name="checkmark-circle-outline"></ion-icon> <span>Confirmada</span>
+          </div>
+          <div class="chip-item denegada" [class.active]="reserva.status === 'Denegada'" (click)="reserva.status = 'Denegada'">
+            <ion-icon name="close-circle-outline"></ion-icon> <span>Denegada</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-buttons-bottom">
+      <ion-button expand="block" fill="clear" color="medium" class="cancel-btn" (click)="cancel()">
+        CERRAR
+      </ion-button>
+      
+      <ion-button *ngIf="isRecepcion && !!initial?.numero" expand="block" color="danger" fill="outline" class="client-cancel-btn" (click)="cancelAsClient()">
+        CANCELAR RESERVA
+      </ion-button>
+
+      <ion-button expand="block" color="primary" class="main-btn" (click)="save()">
+        GUARDAR
+      </ion-button>
+    </div>
+
+  </div>
+  <div class="modal-end-space" aria-hidden="true"></div>
 </ion-content>
-
-<ion-footer>
-  <ion-toolbar>
-    <ion-buttons slot="end">
-      <ion-button *ngIf="isRecepcion && !!initial?.numero" color="warning" (click)="cancelAsClient()">Cancelar reserva</ion-button>
-      <ion-button color="primary" (click)="save()">Guardar</ion-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-footer>

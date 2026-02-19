@@ -289,7 +289,7 @@ body.tab4-no-white-active ion-action-sheet .action-sheet-button {
 }
 .add-room-modal ion-content {
 	/* extra bottom padding so the "Guardar" button is reachable when scrolling */
-	--padding-bottom: 80px;
+	--padding-bottom: 120px;
 }
 
 /* Specific styling for extras-select alert dialog */
@@ -558,6 +558,7 @@ ion-alert.missing-alert::part(button-text) {
 	-webkit-text-fill-color: #ffffff !important;
 	opacity: 1 !important;
 	filter: none !important;
+	font-size: 24px !important;
 }
 
 /* Asegurar contraste si el icono recibe transformaciones de color internas */
@@ -578,10 +579,10 @@ ion-alert.missing-alert::part(button-text) {
 
 .add-reserva-fab ion-icon,
 .add-reserva-fab .ion-icon {
-	font-size: 20px !important;
-	width: 20px !important;
-	height: 20px !important;
-	line-height: 20px !important;
+	font-size: 24px !important;
+	width: 24px !important;
+	height: 24px !important;
+	line-height: 24px !important;
 }
 
 /* Posicionar el FAB de añadir de forma fija y alinearlo verticalmente con el botón scroll-top */
@@ -592,9 +593,76 @@ ion-alert.missing-alert::part(button-text) {
 	z-index: 9999 !important;
 }
 
+/* Alinear formato con el botón scroll-top: fondo, sombra y centrado del icono */
+.add-reserva-fab {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	--background: #27ae60 !important;
+	background: #27ae60 !important;
+	background-color: #27ae60 !important;
+	box-shadow: 0 6px 14px rgba(0,0,0,0.18) !important;
+	border: none !important;
+	transition: all 0.3s ease !important;
+}
+
+/* Hacer que el FAB de añadir habitación tenga el mismo estilo que añadir reserva */
+.small-fab,
+.small-fab.ion-fab-button {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	width: 44px !important;
+	height: 44px !important;
+	min-width: 44px !important;
+	min-height: 44px !important;
+	--size: 44px !important;
+	border-radius: 22px !important;
+	padding: 0 !important;
+	position: fixed !important;
+	right: 16px !important;
+	bottom: 16px !important;
+	z-index: 9999 !important;
+	--background: #27ae60 !important;
+	background: #27ae60 !important;
+	background-color: #27ae60 !important;
+	box-shadow: 0 6px 14px rgba(0,0,0,0.18) !important;
+	border: none !important;
+	transition: all 0.3s ease !important;
+}
+
+.small-fab ion-icon,
+.small-fab .ion-icon {
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff !important;
+	opacity: 1 !important;
+	filter: none !important;
+	font-size: 24px !important;
+	width: 24px !important;
+	height: 24px !important;
+	line-height: 24px !important;
+}
+
 @media (max-width: 480px) {
 	.add-reserva-fab { right: 12px !important; bottom: 12px !important; }
 	.scroll-top { right: 60px; bottom: 12px; }
+}
+
+/* Ensure FABs and scroll-top align at same vertical position and have a small gap */
+/* FABs sit at right:16px; scroll-top is placed to the left of FAB with a 12px gap */
+.add-reserva-fab, .small-fab, ion-fab {
+	bottom: 16px !important;
+	right: 16px !important;
+}
+
+.scroll-top {
+	bottom: 16px !important;
+	right: calc(16px + 44px + 12px) !important; /* 16px (screen edge) + 44px (FAB width) + 12px gap = 72px */
+}
+
+@media (max-width: 480px) {
+	.add-reserva-fab, .small-fab, ion-fab { right: 12px !important; bottom: 12px !important; }
+	.scroll-top { right: calc(12px + 44px + 8px) !important; bottom: 12px !important; }
 }
 
 body.tab4-no-white-active .extras-alert .alert-button .alert-button-text {
