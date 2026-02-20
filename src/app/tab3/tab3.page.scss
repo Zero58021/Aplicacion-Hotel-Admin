@@ -203,7 +203,6 @@
 	max-width: 92vw;
 	background: transparent;
 	/* Espacio adicional para separar la lista del final del contenido */
-	padding-bottom: 28px;
 	margin-bottom: 8px;
 }
 
@@ -268,6 +267,101 @@
 	.reserva-left { flex-basis: 40px; }
 }
 
-/* Espacio añadido debajo de la lista de reservas en tab3 */
-.tab3-spacer { height: 28px; width: 100%; }
+/* Espacio añadido debajo de la lista para que la barra de tabs no tape la última reserva */
+.tab3-spacer { 
+	height: 400px; /* Más espacio para asegurar que la última reserva no quede oculta */
+    width: 100%; 
+    display: block;
+    pointer-events: none; /* Para que el espacio no bloquee clics accidentales */
+}
 
+/* ==============================================
+   ESTILOS PREMIUM DE TURNOS DE TRABAJO
+   ============================================== */
+
+/* Colores de fondo para el calendario */
+.day.turno-manana:not(.selected) {
+    background-color: rgba(251, 146, 60, 0.15); /* Naranja suave */
+    border: 1px solid rgba(251, 146, 60, 0.2);
+}
+
+.day.turno-tarde:not(.selected) {
+    background-color: rgba(56, 189, 248, 0.15); /* Azul suave */
+    border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+/* Panel gestor inferior */
+.shift-manager {
+    width: 340px;
+    max-width: 92vw;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 10px 16px;
+    margin: 4px auto 8px auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    border-left: 4px solid var(--ion-color-primary, #10b981);
+}
+
+.shift-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.shift-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #94a3b8;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.color-manana { color: #ea580c; font-size: 15px; } /* Naranja texto */
+.color-tarde { color: #0284c7; font-size: 15px; } /* Azul texto */
+.color-libre { color: #64748b; font-size: 15px; } /* Gris texto */
+
+/* ESTO ES LO NUEVO (PEGAR) */
+.shift-edit-btn {
+    width: 42px;  /* Ancho fijo */
+    height: 42px; /* Alto igual al ancho para que sea un cuadrado perfecto */
+    margin: 0;
+    padding: 0;   /* Quitamos padding interno para centrar bien */
+    
+    /* Hacemos que sea un círculo perfecto */
+    border-radius: 50%;
+    --border-radius: 50%;
+
+    /* Colores premium: fondo sólido y icono blanco */
+    --background: var(--ion-color-primary, #10b981) !important; /* Fondo verde sólido */
+    color: #ffffff !important;
+    
+    /* Sombrita para darle volumen */
+    box-shadow: 0 4px 12px rgba(var(--ion-color-primary-rgb), 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    /* Efecto al pulsar */
+    &:active {
+       transform: scale(0.92);
+       box-shadow: 0 2px 6px rgba(var(--ion-color-primary-rgb), 0.3);
+    }
+
+    /* Aseguramos que el icono se vea grande y centrado */
+    ion-icon {
+        font-size: 20px;
+        pointer-events: none; /* Evita problemas de click en el icono */
+		color: #ffffff !important;
+		fill: #ffffff !important;
+    }
+}
+
+/* Animación de entrada suave */
+.fade-in {
+    animation: fadeIn 0.2s ease-out forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}

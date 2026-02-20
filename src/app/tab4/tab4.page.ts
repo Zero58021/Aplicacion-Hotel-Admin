@@ -144,6 +144,10 @@ export class Tab4Page implements OnInit {
     return r === 'recepcion' || r === 'limpieza';
   }
 
+  get isJefe(): boolean {
+    return this.auth.getRole() === 'jefe';
+  }
+
   onContentScroll(ev: any) {
     const y = ev?.detail?.scrollTop || 0;
     this.showScrollTop = y > 300;

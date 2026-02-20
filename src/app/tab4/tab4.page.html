@@ -259,6 +259,9 @@
   </ion-fab-button>
 </ion-fab>
 
-<button class="scroll-top" [class.visible]="showScrollTop" (click)="scrollToTop()" aria-label="Ir arriba">
+<button class="scroll-top" 
+        [class.visible]="showScrollTop" 
+        [class.shift-left]="isJefe" 
+        (click)="scrollToTop()" aria-label="Ir arriba">
   <ion-icon name="chevron-up-outline"></ion-icon>
 </button>

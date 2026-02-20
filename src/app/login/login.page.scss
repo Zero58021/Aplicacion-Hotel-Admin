@@ -73,107 +73,189 @@
   pointer-events: auto;
 }
 
-.login-card{
+/* --- TARJETA DE LOGIN PREMIUM --- */
+.login-card {
     width: 100%;
-    max-width: 420px;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    max-width: 380px;
+    border-radius: 28px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.25);
     overflow: hidden;
-    background: white; /* Asegurar fondo */
+    
+    /* Efecto Glassmorphism */
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
 .login-card ion-card-content{
-    background: rgba(255,255,255,0.02);
-    padding: 24px;
+    padding: 36px 28px 28px 28px;
 }
 
-.brand{
+/* Avatar Superior */
+.logo-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.logo-circle {
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #11998e, #38ef7d);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 20px rgba(17, 153, 142, 0.3);
+    border: 4px solid #ffffff;
+    
+    ion-icon {
+        font-size: 36px;
+        color: white;
+    }
+}
+
+/* Textos */
+.brand {
     text-align: center;
-    margin-bottom: 12px;
-    color: #000000;
-}
-.brand h1{
-    margin: 0;
-    font-size: 1.6rem;
-    letter-spacing: 1px;
-    font-weight: 700;
-}
-.brand p{
-    margin: 6px 0 0;
-    font-size: 0.9rem;
-    opacity: 0.95;
+    margin-bottom: 28px;
+    color: #1e293b;
+    
+    h1 {
+        margin: 0;
+        font-size: 1.8rem;
+        letter-spacing: -0.5px;
+        font-weight: 800;
+    }
+    
+    p {
+        margin: 6px 0 0;
+        font-size: 0.95rem;
+        color: #64748b;
+        font-weight: 500;
+    }
 }
 
-.password-item{
-    --background: rgba(255,255,255,0.04);
-    border-radius: 8px;
-    margin-bottom: 16px;
-    --padding-start: 12px;
+/* Inputs Premium Redondeados */
+.form-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
 
-    .toggle-password{
+.custom-input-group {
+    display: flex;
+    align-items: center;
+    background: #f1f5f9;
+    border-radius: 18px;
+    padding: 4px 16px;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    
+    &:focus-within {
+        border-color: #38ef7d;
+        background: #ffffff;
+        box-shadow: 0 4px 14px rgba(56, 239, 125, 0.15);
+        
+        ion-icon:first-child {
+            color: #11998e;
+        }
+    }
+    
+    ion-icon:first-child {
+        color: #94a3b8;
+        font-size: 24px;
+        margin-right: 12px;
+        transition: color 0.3s ease;
+    }
+    
+    input {
+        border: none;
+        background: transparent;
+        width: 100%;
+        height: 52px;
+        outline: none;
+        font-size: 1rem;
+        color: #334155;
+        font-weight: 600;
+        
+        &::placeholder {
+            color: #94a3b8;
+            font-weight: 500;
+        }
+    }
+    
+    .toggle-btn {
+        margin: 0;
+        --padding-start: 10px;
+        --padding-end: 10px;
+        height: 52px;
+        
+        /* MAGIA PARA FORZAR LA TRANSPARENCIA COMO ANTES */
         background: transparent !important;
-        box-shadow: none !important;
         --background: transparent !important;
-        padding: 0 6px;
-        min-width: 36px;
-    }
-
-    .toggle-password ion-icon{
-        color: #333333 !important;
-        font-size: 1.05rem;
-        vertical-align: middle;
+        --background-hover: transparent !important;
+        --background-activated: transparent !important;
+        --background-focused: transparent !important;
+        box-shadow: none !important;
+        
+        ion-icon {
+            margin: 0;
+            color: #94a3b8 !important; /* Gris suave que combina con el input */
+            font-size: 22px;
+            transition: color 0.3s ease;
+        }
+        
+        /* Efecto sutil al tocarlo */
+        &:active ion-icon {
+            color: #11998e !important;
+        }
     }
 }
 
-.roles-grid{
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-}
-.roles-grid ion-button{
-    border-radius: 8px;
+/* Botón de Entrar */
+.main-login-btn {
+    margin-top: 12px;
+    --border-radius: 18px;
+    height: 56px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    font-size: 1.05rem;
+    --box-shadow: 0 8px 24px rgba(17, 153, 142, 0.4);
+    --background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    transition: transform 0.2s ease;
+    
+    &:active {
+        transform: scale(0.97);
+    }
 }
 
 .footer-note{
-    margin-top: 12px;
+    margin-top: 24px;
     color: rgba(255,255,255,0.9);
     font-size: 0.85rem;
     text-align: center;
+    font-weight: 500;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
-
-@media (max-width: 420px){
-    .roles-grid{ grid-template-columns: 1fr; }
-}
-
 
 /* --- ESTILOS GRAVEDAD CERO & ARRASTRE --- */
 
-/* Clase crítica: se añade vía TS al tocar un elemento */
 .is-dragging {
   cursor: grabbing;
   z-index: 9999 !important;
-  /* Pausar/Eliminar animaciones para control manual */
   animation: none !important; 
   transition: none !important;
   opacity: 0.8;
 }
 
 .zero-gravity {
-
-  /* Animación general suave */
-  .float-item {
-    transition: transform 0.5s ease-out;
-  }
-
-  /* Animaciones flotantes */
+  .float-item { transition: transform 0.5s ease-out; }
   .login-card { animation: space-float-card 12s ease-in-out infinite alternate; }
-  .brand { animation: space-float-title 8s ease-in-out infinite alternate; }
+  .logo-container, .brand, .form-panel { animation: space-float-title 8s ease-in-out infinite alternate; }
   .footer-note { animation: space-float-text 10s ease-in-out infinite alternate; }
-
-  /* NUBES FLOTANDO (Sobreescribe movimiento lateral) */
-  .cloud-float {
-    animation: space-float-cloud 10s ease-in-out infinite alternate !important; 
-  }
+  .cloud-float { animation: space-float-cloud 10s ease-in-out infinite alternate !important; }
 }
 
 /* Keyframes */
@@ -193,7 +275,7 @@
 
 @keyframes space-float-title {
   0% { transform: translateY(0); }
-  50% { transform: translateY(-50px) scale(1.2); }
+  50% { transform: translateY(-30px) scale(1.05); }
   100% { transform: translateY(0); }
 }
 

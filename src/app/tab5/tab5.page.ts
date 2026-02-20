@@ -177,6 +177,7 @@ export class Tab5Page implements OnInit {
     if (!emp.email) camposFaltantes.push('Email');
     if (emp.salario === undefined || emp.salario === null || emp.salario === '') camposFaltantes.push('Salario');
     if (!emp.contrato) camposFaltantes.push('Contrato');
+    if (!emp.usuario) camposFaltantes.push('Usuario'); // <-- AÑADIDO
     if (!emp.password) camposFaltantes.push('Contraseña');
 
     if (camposFaltantes.length > 0) {
@@ -187,13 +188,12 @@ export class Tab5Page implements OnInit {
       return;
     }
 
-    // 2. VALIDAR DUPLICADOS (¡La nueva magia!)
-    // Buscamos si en la lista actual de empleados ya hay alguien con esos datos
-    // y nos aseguramos de que no sea la misma persona que estamos editando (e.id !== emp.id)
+    // 2. VALIDAR DUPLICADOS (Añadido el de usuario)
     const duplicadoDNI = this.employees.find(e => e.dni?.toUpperCase() === emp.dni.toUpperCase() && e.id !== emp.id);
     const duplicadoEmail = this.employees.find(e => e.email?.toLowerCase() === emp.email.toLowerCase() && e.id !== emp.id);
     const duplicadoTelefono = this.employees.find(e => e.telefono === emp.telefono && e.id !== emp.id);
     const duplicadoNumero = this.employees.find(e => e.numero === emp.numero && e.id !== emp.id);
+    const duplicadoUsuario = this.employees.find(e => e.usuario?.toLowerCase() === emp.usuario.toLowerCase() && e.id !== emp.id); // <-- AÑADIDO
 
     if (duplicadoDNI) {
       this.showError('Ya existe un empleado registrado con este DNI.');
@@ -211,6 +211,10 @@ export class Tab5Page implements OnInit {
       this.showError('Ya existe un empleado con este Nº de Empleado.');
       return;
     }
+    if (duplicadoUsuario) {
+      this.showError('Este nombre de usuario ya está en uso. Elige otro.'); // <-- AÑADIDO
+      return;
+    }
 
     // 3. Validar formato de Email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -219,7 +223,7 @@ export class Tab5Page implements OnInit {
       return;
     }
 
-    // 4. Validar Teléfono (Acepta 9 dígitos, ignorando espacios)
+    // 4. Validar Teléfono
     const phoneRegex = /^[0-9]{9}$/;
     const telefonoLimpio = emp.telefono.toString().replace(/\s/g, ''); 
     if (!phoneRegex.test(telefonoLimpio)) {
@@ -227,7 +231,7 @@ export class Tab5Page implements OnInit {
       return;
     }
 
-    // 5. Validar DNI / NIE (Formato visual)
+    // 5. Validar DNI / NIE
     if (!this.validarDNI(emp.dni)) {
       this.showError('El DNI debe tener 8 números y 1 letra (ej: 12345678A).');
       return;

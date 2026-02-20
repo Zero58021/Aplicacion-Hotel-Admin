@@ -1,28 +1,41 @@
-<ion-content>
-  <div class="center-text">
-    <span class="label">
-      BIENVENIDO/A <br>
-      <small style="font-size: 0.4em; opacity: 0.8;">{{ roleLabel }}</small><br>
-      {{ userName }}
-    </span>
+<ion-content class="dashboard-page" fullscreen>
+  <div class="header-banner">
+    <div class="greeting-container fade-in-up">
+      <div class="date-badge">
+        <ion-icon name="calendar-clear-outline"></ion-icon>
+        <span>{{ currentDate }}</span>
+      </div>
+      <h1>¡Hola, {{ userName || 'Equipo' }}! 👋</h1>
+      <p class="role-subtitle">Accediendo como: <strong>{{ roleLabel | titlecase }}</strong></p>
+    </div>
   </div>
 
-  <div class="actions" role="group" aria-label="Acciones rápidas">
-    <div 
-      class="action-item" 
-      *ngFor="let btn of buttons" 
-      [ngStyle]="{ 'transform': 'translateY(' + (btn.shift || 0) + 'px)' }"
-    >
-      <ion-button
-        fill="solid"
-        class="action-btn"
-        [attr.aria-label]="btn.label"
-        (click)="btn.path ? navigate(btn.path) : btn.onClick ? btn.onClick() : null"
-      >
-        <ion-icon [name]="btn.icon"></ion-icon>
-      </ion-button>
+  <div class="dashboard-container">
+    
+    <div class="section-title fade-in-up delay-1">
+      <h3>Panel de Control</h3>
+    </div>
 
-      <div class="action-label">{{ btn.label === 'Logout' ? 'Salir' : btn.label }}</div>
+    <div class="action-grid fade-in-up delay-2">
+      
+      <div class="action-card" *ngFor="let btn of buttons; let i = index" 
+           (click)="btn.path ? navigate(btn.path) : btn.onClick ? btn.onClick() : null"
+           [ngClass]="btn.colorClass">
+        
+        <div class="card-icon-wrapper">
+          <ion-icon [name]="btn.icon"></ion-icon>
+        </div>
+        
+        <div class="card-content">
+          <h4>{{ btn.label === 'Logout' ? 'Cerrar Sesión' : btn.label }}</h4>
+          <p>{{ btn.description }}</p>
+        </div>
+
+        <div class="card-arrow">
+          <ion-icon name="chevron-forward-outline"></ion-icon>
+        </div>
+      </div>
+
     </div>
   </div>
 </ion-content>

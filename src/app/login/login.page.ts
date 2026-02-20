@@ -3,7 +3,7 @@ import { TitleCasePipe, NgIf, CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AlertController, IonicModule } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
-import { AuthService, Role } from '../services/auth.service';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -14,8 +14,8 @@ import { AuthService, Role } from '../services/auth.service';
 })
 export class LoginPage {
 
+  username: string = '';
   password: string = '';
-  activeRole: Role | null = null;
   showPassword: boolean = false;
 
   // Variables Easter Egg
@@ -40,32 +40,31 @@ export class LoginPage {
     private renderer: Renderer2
   ) {}
 
-  selectRole(role: Role) {
-    if (this.activeRole === role) {
-      this.activeRole = null;
-      this.password = '';
-    } else {
-      this.activeRole = role;
-      this.password = '';
-    }
-  }
-
   toggleShowPassword() {
     this.showPassword = !this.showPassword;
   }
 
   async confirmLogin() {
-    if (!this.activeRole) return;
-    const success = await this.auth.login(this.activeRole, this.password);
+    if (!this.username.trim() || !this.password.trim()) {
+      const alert = await this.alertCtrl.create({
+        header: 'Campos vacíos',
+        message: 'Por favor, introduce tu usuario y contraseña.',
+        buttons: ['OK']
+      });
+      await alert.present();
+      return;
+    }
+
+    const success = await this.auth.login(this.username.trim(), this.password);
 
     if (success) {
+      this.username = '';
       this.password = '';
-      this.activeRole = null;
       this.router.navigateByUrl('/tabs/tab1');
     } else {
       const alert = await this.alertCtrl.create({
         header: 'Error',
-        message: 'Contraseña incorrecta',
+        message: 'Usuario o contraseña incorrectos.',
         buttons: ['Reintentar']
       });
       await alert.present();
@@ -103,47 +102,33 @@ export class LoginPage {
   }
 
   // --- LÓGICA DE ARRASTRE REAL ---
-
   dragStart(e: any) {
     if (!this.isZeroGravity) return;
     
-    // Buscamos el elemento flotante más cercano
     const target = e.target.closest('.float-item');
     if (!target) return;
 
     this.activeItem = target;
     
-    // Posición del toque
     const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
     const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
-
-    // Si ya lo habíamos movido antes, recuperamos su posición actual del transform
-    // Para simplificar, usamos getBoundingClientRect para "agarrarlo" visualmente donde está
-    // y calcular el offset relativo al centro del elemento o su esquina.
     
-    // TRUCO: Al iniciar el drag, calculamos la posición inicial relativa
-    // Asumimos que xOffset guarda la traslación previa si quisiéramos persistencia perfecta,
-    // pero aquí reseteamos para que el movimiento sea fluido desde donde tocamos.
-    
-    // Obtenemos la transformación actual si existe (matrix)
     if (!this.activeItem) return;
     const style = window.getComputedStyle(this.activeItem);
     const matrix = new WebKitCSSMatrix(style.transform);
     
-    // Guardamos la posición actual del elemento (X, Y)
     this.xOffset = matrix.m41; 
     this.yOffset = matrix.m42;
 
     this.initialX = clientX - this.xOffset;
     this.initialY = clientY - this.yOffset;
 
-    // Añadimos clase para detener animación CSS
     this.renderer.addClass(this.activeItem, 'is-dragging');
   }
 
   dragMove(e: any) {
     if (!this.activeItem) return;
-    e.preventDefault(); // Evita scroll
+    e.preventDefault();
 
     const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
     const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
@@ -157,7 +142,6 @@ export class LoginPage {
   dragEnd() {
     if (this.activeItem) {
       this.renderer.removeClass(this.activeItem, 'is-dragging');
-      // Guardamos la última posición como el nuevo offset
       this.xOffset = this.currentX;
       this.yOffset = this.currentY;
       
@@ -169,7 +153,6 @@ export class LoginPage {
     el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
   }
 
-  // Listeners HTML
   onTouchStart(e: any) { this.dragStart(e); }
   onTouchMove(e: any) { this.dragMove(e); }
   onDragEnd() { this.dragEnd(); }

@@ -28,10 +28,11 @@
         <ng-container *ngFor="let week of weeks">
           <div class="week-row">
             <div class="day" *ngFor="let day of week"
-              [class.empty]="!day"
-              [class.selected]="isSelected(day)"
-              [class.today]="isToday(day)"
-              (click)="select(day)">
+                 [class.empty]="!day"
+                 [class.selected]="isSelected(day)"
+                 [class.today]="isToday(day)"
+                 [ngClass]="getTurnoClass(day)"
+                 (click)="select(day)">
               <div class="day-inner" *ngIf="day">
                 <span class="day-number">{{ day }}</span>
                 
@@ -42,12 +43,21 @@
                      [class.completada]="isCompletada(day)" 
                      [class.pendiente]="isPendiente(day)">
                 </div>
-
               </div>
             </div>
           </div>
         </ng-container>
       </div>
+    </div>
+
+    <div class="shift-manager fade-in" *ngIf="selected">
+      <div class="shift-info">
+        <span class="shift-label">Tu turno el {{ selected.getDate() }}:</span>
+        <strong [ngClass]="getShiftColorClass()">{{ getShiftName() }}</strong>
+      </div>
+      <ion-button size="small" fill="clear" class="shift-edit-btn" (click)="openShiftSelector()">
+        <ion-icon slot="icon-only" name="create-outline"></ion-icon>
+      </ion-button>
     </div>
 
     <div class="reservas-list">

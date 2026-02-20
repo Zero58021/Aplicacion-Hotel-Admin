@@ -73,30 +73,29 @@ export class AuthService {
   }
 
   /**
-   * 🔐 LOGIN REAL CONTRA EL SERVIDOR
-   * Ahora es asíncrono porque tiene que esperar la respuesta del PC
+   * 🔐 LOGIN REAL CONTRA EL SERVIDOR POR USUARIO Y CONTRASEÑA
    */
-  async login(role: Role, password: string): Promise<boolean> {
+  async login(usuario: string, password: string): Promise<boolean> {
     try {
       // 1. Obtenemos la lista de empleados del db.json
       const empleados = await firstValueFrom(this.api.getEmpleados());
       
-      // 2. Buscamos el empleado que coincida con el rol y la contraseña
-      // Usamos toLowerCase() en el rol para evitar fallos de mayúsculas
+      // 2. Buscamos el empleado que coincida con el USUARIO y la CONTRASEÑA
       const userFound = empleados.find(emp => 
-        emp.rol.toLowerCase() === role.toLowerCase() && 
+        emp.usuario?.toLowerCase() === usuario.toLowerCase() && 
         emp.password === password
       );
 
-      if (userFound) {
-        // 3. Si existe, guardamos su rol y nombre
-        this.role = role;
-        localStorage.setItem('role', role);
+      if (userFound && userFound.rol) {
+        // 3. Si existe y tiene rol, guardamos su rol y nombre
+        const assignedRole = userFound.rol.toLowerCase() as Role;
+        this.role = assignedRole;
+        localStorage.setItem('role', assignedRole);
         localStorage.setItem('userName', userFound.nombre);
         return true;
       }
       
-      return false; // Contraseña o rol incorrecto
+      return false; // Credenciales incorrectas o usuario sin rol definido
     } catch (error) {
       console.error('Error conectando con el servidor en el login:', error);
       return false;
@@ -120,7 +119,7 @@ export class AuthService {
     return this.role !== null;
   }
 
-  // 🔎 Comprobar permiso (Usado en el HTML con *ngIf)
+  // 🔎 Comprobar permiso
   hasPermission(permission: Permission): boolean {
     if (!this.role) return false;
     return ROLE_PERMISSIONS[this.role]?.includes(permission) ?? false;

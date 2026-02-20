@@ -439,45 +439,51 @@ color: #fff !important;
 	}
 }
 
-/* Scroll-to-top button */
+/* =======================================
+   BOTÓN SUBIR ARRIBA (POSICIÓN DINÁMICA)
+   ======================================= */
+
 .scroll-top {
-	position: fixed;
-	/* place to the left of the Add FAB so they appear side-by-side */
-	right: 76px;
-	bottom: 16px;
-	width: 44px;
-	height: 44px;
-	border-radius: 22px;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	background: var(--ion-color-primary, #3880ff);
-	color: #fff;
-	box-shadow: 0 6px 14px rgba(0,0,0,0.18);
-	border: none;
-	z-index: 9999;
-	opacity: 0;
-	transform: translateY(12px) scale(.96);
-	transition: opacity 240ms cubic-bezier(.2,.8,.2,1), transform 240ms cubic-bezier(.2,.8,.2,1);
-}
-.scroll-top ion-icon {
-	font-size: 20px;
-	color: #fff !important;
-}
-.scroll-top.visible {
-	opacity: 1;
-	transform: translateY(0) scale(1);
-}
-
-/* when shown for recepcion/limpieza, place directly in the bottom-right corner */
-.scroll-top.bottom-right {
-	right: 16px;
+    position: fixed;
+    /* POSICIÓN POR DEFECTO (Para todos menos el Jefe): Abajo a la derecha */
+    right: 16px; 
+    bottom: 16px;
+    width: 44px;
+    height: 44px;
+    border-radius: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ion-color-primary, #3880ff);
+    color: #fff;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.18);
+    border: none;
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(12px) scale(.96);
+    /* Transición suave para todos los movimientos */
+    transition: opacity 240ms ease, transform 240ms ease, right 300ms ease;
+    
+    ion-icon {
+        font-size: 20px;
+        color: #fff !important;
+    }
+    
+    &.visible {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
+/* MAGIA: Si el usuario ES JEFE, el botón se desplaza a la izquierda */
+.scroll-top.shift-left {
+    right: 76px !important; 
+}
+
+/* Ajustes para móviles pequeños */
 @media (max-width: 480px) {
-	/* on narrow screens keep it aligned near the add FAB */
-	.scroll-top { right: 68px; bottom: 12px; }
-	.scroll-top.bottom-right { right: 12px; bottom: 12px; }
+    .scroll-top { bottom: 12px; right: 16px; }
+    .scroll-top.shift-left { right: 68px !important; }
 }
 
 /* =========================================

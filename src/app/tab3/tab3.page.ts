@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ApiService } from '../services/api'; 
 import { AuthService } from '../services/auth.service';
+import { ActionSheetController, ToastController } from '@ionic/angular'; // Añadido ToastController
 
 @Component({
   selector: 'app-tab3',
@@ -17,13 +18,19 @@ export class Tab3Page implements OnInit {
   weekdays = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'];
   selected: Date | null = null;
   
-  // Tipos específicos para controlar colores: 'entrada' (verde), 'salida' (rojo), etc.
   events: Record<string, 'entrada' | 'salida' | 'ambas' | 'completada' | 'pendiente'> = {};
   reservas: any[] = []; 
 
+  // --- VARIABLES PARA TURNOS Y BASE DE DATOS ---
+  userName: string = '';
+  currentEmployee: any = null; // Guardará el objeto completo del empleado
+  myShifts: Record<string, 'manana' | 'tarde'> = {};
+
   constructor(
     private api: ApiService, 
-    public auth: AuthService
+    public auth: AuthService,
+    private actionSheetCtrl: ActionSheetController,
+    private toastCtrl: ToastController
   ) {}
 
   ngOnInit(): void {
@@ -37,7 +44,24 @@ export class Tab3Page implements OnInit {
 
   cargarDatos() {
     const userRole = this.auth.getRole();
+    this.userName = localStorage.getItem('userName') || '';
     
+    // 1. CARGAR EMPLEADO Y SUS TURNOS DESDE LA BASE DE DATOS
+    if (this.userName) {
+      this.api.getEmpleados().subscribe({
+        next: (empleados) => {
+          // Buscamos al empleado logueado por su nombre
+          this.currentEmployee = empleados.find((e: any) => e.nombre === this.userName);
+          if (this.currentEmployee) {
+            // Si ya tiene turnos guardados en la BD, los cargamos. Si no, objeto vacío.
+            this.myShifts = this.currentEmployee.turnos || {};
+          }
+        },
+        error: (err) => console.error('Error cargando empleado:', err)
+      });
+    }
+    
+    // 2. CARGAR RESERVAS (Intacto)
     this.api.getReservas().subscribe({
       next: (list) => {
         const hoy = new Date();
@@ -80,6 +104,113 @@ export class Tab3Page implements OnInit {
     });
   }
 
+  // --- LÓGICA DE TURNOS PERSONALES ---
+  
+  getTurnoClass(day: number | null): string {
+    if (!day) return '';
+    const key = this.formatKey(day);
+    const turno = this.myShifts[key];
+    if (turno === 'manana') return 'turno-manana';
+    if (turno === 'tarde') return 'turno-tarde';
+    return '';
+  }
+
+  getShiftName(): string {
+    if (!this.selected) return '';
+    const key = `${this.selected.getFullYear()}-${(this.selected.getMonth() + 1).toString().padStart(2, '0')}-${this.selected.getDate().toString().padStart(2, '0')}`;
+    const turno = this.myShifts[key];
+    if (turno === 'manana') return '🌞 Mañana';
+    if (turno === 'tarde') return '🌜 Tarde';
+    return 'Día Libre';
+  }
+
+  getShiftColorClass(): string {
+    if (!this.selected) return '';
+    const key = `${this.selected.getFullYear()}-${(this.selected.getMonth() + 1).toString().padStart(2, '0')}-${this.selected.getDate().toString().padStart(2, '0')}`;
+    const turno = this.myShifts[key];
+    if (turno === 'manana') return 'color-manana';
+    if (turno === 'tarde') return 'color-tarde';
+    return 'color-libre';
+  }
+
+  async openShiftSelector() {
+    if (!this.selected || !this.currentEmployee) {
+      const toast = await this.toastCtrl.create({
+        message: 'No se ha podido cargar tu perfil para guardar turnos.',
+        duration: 2000, color: 'warning'
+      });
+      toast.present();
+      return;
+    }
+    
+    // Clave YYYY-MM-DD
+    const key = `${this.selected.getFullYear()}-${(this.selected.getMonth() + 1).toString().padStart(2, '0')}-${this.selected.getDate().toString().padStart(2, '0')}`;
+    
+    const actionSheet = await this.actionSheetCtrl.create({
+      header: `Turno del ${this.selected.toLocaleDateString()}`,
+      buttons: [
+        { 
+          text: '🌞 Turno de Mañana', 
+          handler: () => {
+            this.myShifts[key] = 'manana';
+            this.saveShiftsToDB();
+          } 
+        },
+        { 
+          text: '🌜 Turno de Tarde', 
+          handler: () => {
+            this.myShifts[key] = 'tarde';
+            this.saveShiftsToDB();
+          } 
+        },
+        { 
+          text: 'Eliminar Turno (Día Libre)', 
+          role: 'destructive', 
+          handler: () => {
+            delete this.myShifts[key];
+            this.saveShiftsToDB();
+          } 
+        },
+        { text: 'Cancelar', role: 'cancel' }
+      ]
+    });
+    await actionSheet.present();
+  }
+
+  // GUARDA DIRECTAMENTE EN LA BASE DE DATOS
+  private saveShiftsToDB() {
+    if (!this.currentEmployee) return;
+
+    // Actualizamos el objeto del empleado con los nuevos turnos
+    this.currentEmployee.turnos = this.myShifts;
+
+    // Enviamos el objeto actualizado a la API
+    this.api.editarEmpleado(this.currentEmployee.id, this.currentEmployee).subscribe({
+      next: async () => {
+        const toast = await this.toastCtrl.create({
+          message: 'Turno guardado correctamente',
+          duration: 1500,
+          position: 'top',
+          color: 'success',
+          icon: 'checkmark-circle-outline'
+        });
+        toast.present();
+      },
+      error: async (err) => {
+        console.error('Error al guardar el turno', err);
+        const toast = await this.toastCtrl.create({
+          message: 'Error de conexión. No se pudo guardar.',
+          duration: 2500,
+          position: 'top',
+          color: 'danger'
+        });
+        toast.present();
+      }
+    });
+  }
+
+  // --- RESTO DE FUNCIONES DEL CALENDARIO (Intactas) ---
+  
   private updateCalendar() {
     this.monthName = this.displayDate.toLocaleString('es-ES', { month: 'long' });
     this.year = this.displayDate.getFullYear();
@@ -125,6 +256,16 @@ export class Tab3Page implements OnInit {
   select(day: number | null) {
     if (!day) return;
     this.selected = new Date(this.displayDate.getFullYear(), this.displayDate.getMonth(), day);
+    
+    // Hace un scroll suave hacia abajo para mostrar los turnos/reservas
+    setTimeout(() => {
+      try {
+        const el = document.querySelector('.shift-manager') || document.querySelector('.reservas-list');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      } catch (e) { }
+    }, 100);
   }
 
   isSelected(day: number | null) {
@@ -146,7 +287,6 @@ export class Tab3Page implements OnInit {
     );
   }
 
-  // Helper para generar clave de fecha
   private formatKey(day: number) {
     const y = this.displayDate.getFullYear();
     const m = this.displayDate.getMonth() + 1;
@@ -156,7 +296,6 @@ export class Tab3Page implements OnInit {
     return `${y}-${mm}-${dd}`;
   }
 
-  // --- LOGICA PRINCIPAL DE PUNTOS ---
   private loadEventsFromReservas() {
     this.events = {};
     const role = this.auth.getRole();
@@ -167,7 +306,6 @@ export class Tab3Page implements OnInit {
       const di = new Date(r.fechaEntrada);
       const ds = new Date(r.fechaSalida);
 
-      // Claves de fecha string 'YYYY-MM-DD'
       let keyI = null;
       let keyS = null;
 
@@ -178,31 +316,25 @@ export class Tab3Page implements OnInit {
         keyS = `${ds.getFullYear()}-${(ds.getMonth() + 1).toString().padStart(2, '0')}-${ds.getDate().toString().padStart(2, '0')}`;
       }
 
-      // 1. COMPLETADA: Solo Entrada (GRIS)
       if (r.status === 'Completada') {
         if (keyI) this.events[keyI] = 'completada';
       } 
-      // 2. CONFIRMADA: Entrada (VERDE) y Salida (ROJO)
       else if (r.status === 'Confirmada') {
         if (keyI) {
-          // Si ya había una salida ese día, ahora es "ambas"
           if (this.events[keyI] === 'salida') this.events[keyI] = 'ambas';
           else this.events[keyI] = 'entrada';
         }
         if (keyS) {
-          // Si ya había una entrada ese día, ahora es "ambas"
           if (this.events[keyS] === 'entrada') this.events[keyS] = 'ambas';
           else this.events[keyS] = 'salida';
         }
       } 
-      // 3. PENDIENTE: Solo Entrada (NARANJA) - Solo para Jefe
       else if (r.status === 'Pendiente' && role === 'jefe') {
         if (keyI) this.events[keyI] = 'pendiente';
       }
     }
   }
 
-  // --- HELPERS PARA HTML ---
   hasEvent(day: number | null) {
     if (!day) return false;
     return !!this.events[this.formatKey(day)];
@@ -238,7 +370,6 @@ export class Tab3Page implements OnInit {
     return v === 'pendiente';
   }
 
-  // --- LISTADO INFERIOR ---
   get visibleReservas(): any[] {
     let pool = this.reservas;
     const role = this.auth.getRole();

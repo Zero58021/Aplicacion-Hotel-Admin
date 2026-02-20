@@ -1,152 +1,193 @@
+/* =========================================
+   DASHBOARD PREMIUM ESTILO HOTEL
+   ========================================= */
 
-.center-text {
-  min-height: 56vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 28px;
+.dashboard-page {
+  --background: #f4f6f9;
+}
+
+/* --- HEADER BANNER --- */
+.header-banner {
+  background: linear-gradient(135deg, var(--ion-color-primary, #10b981) 0%, #059669 100%);
+  padding: 40px 24px 60px 24px; /* Mucho padding abajo para superponer las tarjetas */
+  border-bottom-left-radius: 30px;
+  border-bottom-right-radius: 30px;
+  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.2);
+}
+
+.greeting-container {
+  color: white;
+  
+  .date-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    text-transform: capitalize;
+    backdrop-filter: blur(5px);
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .role-subtitle {
+    margin: 8px 0 0 0;
+    font-size: 1rem;
+    opacity: 0.9;
+    
+    strong {
+      background: rgba(255,255,255,0.9);
+      color: #059669;
+      padding: 2px 8px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+  }
+}
+
+/* --- CONTENEDOR PRINCIPAL --- */
+.dashboard-container {
+  margin-top: -30px; /* Sube hacia el header */
+  padding: 0 16px 40px 16px;
   position: relative;
-  z-index: 1;
-  border-radius: 18px;
-  background: radial-gradient(1200px 400px at 10% 10%, rgba(29,185,84,0.06), transparent 12%),
-              linear-gradient(180deg, rgba(15,157,88,0.02), rgba(255,255,255,0));
-  box-shadow: 0 20px 50px rgba(10,80,40,0.08), inset 0 1px 0 rgba(255,255,255,0.02);
+  z-index: 10;
 }
 
-.center-text .label {
-  display: inline-block;
-  font-size: clamp(36px, 8vw, 88px);
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  padding: 18px 28px;
-  border-radius: 12px;
-  background: linear-gradient(90deg, #0f9d58 0%, #1db954 45%, #62d89a 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  text-shadow: 0 6px 24px rgba(15,157,88,0.12);
-  transition: transform 240ms cubic-bezier(.2,.9,.2,1), box-shadow 240ms;
+.section-title {
+  margin-bottom: 20px;
+  padding-left: 8px;
+  
+  h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #1e293b;
+  }
+  
+  p {
+    margin: 4px 0 0 0;
+    font-size: 0.9rem;
+    color: #64748b;
+  }
 }
 
-.center-text .label:hover {
-  transform: translateY(-6px) scale(1.02);
-  text-shadow: 0 10px 36px rgba(15,157,88,0.18);
-}
-
-/* Small screens tweak */
-@media (max-width: 420px) {
-  .center-text, .center-text .label { font-size: 48px; padding: 14px 18px; }
-}
-
-/* Actions (4 buttons) */
-.actions {
-  margin-top: 28px;
-  display: flex;
-  gap: 18px;
-  justify-content: center;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  position: relative;
-  z-index: 3;
-}
-
-.action-item {
+/* --- CUADRÍCULA DE TARJETAS --- */
+.action-grid {
   display: flex;
   flex-direction: column;
+  gap: 14px;
+}
+
+.action-card {
+  display: flex;
   align-items: center;
-  width: 110px;
-  transition: transform 320ms cubic-bezier(.2,.9,.2,1);
-  pointer-events: auto !important;
+  background: #ffffff;
+  padding: 16px;
+  border-radius: 20px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.02);
+
+  &:active {
+    transform: scale(0.96);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+
+  /* Icono Izquierdo */
+  .card-icon-wrapper {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+    
+    ion-icon {
+      font-size: 26px;
+    }
+  }
+
+  /* Textos Centrales */
+  .card-content {
+    flex: 1;
+    
+    h4 {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    
+    p {
+      margin: 4px 0 0 0;
+      font-size: 0.85rem;
+      color: #64748b;
+      line-height: 1.2;
+    }
+  }
+
+  /* Flechita Derecha */
+  .card-arrow {
+    color: #cbd5e1;
+    ion-icon { font-size: 20px; }
+  }
 }
 
-.action-btn {
-  width: 76px !important;
-  height: 76px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  border-radius: 999px !important;
-  --border-radius: 999px;
-  --padding-start: 0px !important;
-  --padding-end: 0px !important;
-  --padding-top: 0px !important;
-  --padding-bottom: 0px !important;
-  min-width: unset !important;
-  padding: 0 !important;
-  overflow: hidden !important;
-  border: 2px solid rgba(15,157,88,0.14) !important;
-  background: transparent !important;
-  color: #0f9d58 !important;
-  box-shadow: 0 6px 18px rgba(15,157,88,0.06) !important;
-  transition: transform 160ms ease, box-shadow 160ms ease !important;
-  cursor: pointer !important;
-  pointer-events: auto !important;
+/* --- COLORES DE LAS TARJETAS --- */
+
+.card-blue {
+  .card-icon-wrapper { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+  &:hover { border-color: rgba(59, 130, 246, 0.3); }
 }
 
-.action-btn:active,
-.action-btn:focus {
-  transform: translateY(2px) scale(0.995);
+.card-purple {
+  .card-icon-wrapper { background: rgba(168, 85, 247, 0.1); color: #a855f7; }
+  &:hover { border-color: rgba(168, 85, 247, 0.3); }
 }
 
-.action-btn ion-icon {
-  width: 56px !important;
-  height: 56px !important;
-  font-size: 28px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  background: #0f9d58 !important;
-  color: #ffffff !important;
-  border-radius: 0 !important;
-  line-height: 1;
+.card-orange {
+  .card-icon-wrapper { background: rgba(249, 115, 22, 0.1); color: #f97316; }
+  &:hover { border-color: rgba(249, 115, 22, 0.3); }
 }
 
-/* Slight U shape: lower the two center items a bit to create a gentle curve */
-.actions .action-item:nth-child(2),
-.actions .action-item:nth-child(3) {
-  transform: translateY(10px);
-}
-.actions .action-item:nth-child(1),
-.actions .action-item:nth-child(4) {
-  transform: translateY(0);
+.card-green {
+  .card-icon-wrapper { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+  &:hover { border-color: rgba(16, 185, 129, 0.3); }
 }
 
-.action-label {
-  margin-top: 8px;
-  font-weight: 700;
-  color: #0f9d58 !important;
-  font-size: 14px;
-  text-align: center;
+.card-gray {
+  .card-icon-wrapper { background: rgba(100, 116, 139, 0.1); color: #64748b; }
+  &:hover { border-color: rgba(100, 116, 139, 0.3); }
 }
 
-@media (max-width: 420px) {
-  .action-item { width: 86px; }
-  .action-btn { width: 64px; height: 64px; }
-  .action-btn ion-icon { width:44px !important; height:44px !important; font-size: 22px !important; }
-  .action-label { font-size: 13px; }
-  .actions .action-item:nth-child(2), .actions .action-item:nth-child(3) { transform: translateY(8px); }
+/* --- ANIMACIONES DE ENTRADA --- */
+.fade-in-up {
+  opacity: 0;
+  animation: fadeInUp 0.4s ease-out forwards;
 }
 
-.action-link { display: inline-block; text-decoration: none; }
-.action-link ion-button { display: inline-block; }
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
 
-/* Ajustamos la curva según cantidad de botones */
-.actions .action-item {
-  transition: transform 0.3s ease;
-}
-
-/* La curva U: botones centrales un poco más bajos */
-.actions .action-item:nth-child(2),
-.actions .action-item:nth-child(3) {
-  transform: translateY(10px);
-}
-
-/* Móviles */
-@media (max-width: 420px) {
-  .actions .action-item:nth-child(2),
-  .actions .action-item:nth-child(3) {
-    transform: translateY(8px);
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
