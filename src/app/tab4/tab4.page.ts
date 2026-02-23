@@ -163,9 +163,19 @@ export class Tab4Page implements OnInit {
     this.editingIndex = i;
     const room = this.rooms[i];
     this.editModel = JSON.parse(JSON.stringify(room));
-    // Aseguramos arrays
+    // Aseguramos arrays y objetos anidados
     this.editModel.extras = Array.isArray(this.editModel.extras) ? this.editModel.extras : [];
     this.editModel.images = Array.isArray(this.editModel.images) ? this.editModel.images : [];
+    
+    // NUEVO: Aseguramos el objeto condiciones
+    if (!this.editModel.condiciones) {
+      this.editModel.condiciones = {
+        soloFinesDeSemana: false,
+        estanciaMinima: 1,
+        diasPermitidos: 'Todos',
+        bloqueadaTemporalmente: false
+      };
+    }
   }
   
   saveEdit() {
@@ -182,7 +192,8 @@ export class Tab4Page implements OnInit {
       precio: this.editModel.price,
       extras: this.editModel.extras,
       title: this.editModel.title,
-      images: this.editModel.images
+      images: this.editModel.images,
+      condiciones: this.editModel.condiciones
     };
 
     this.api.actualizarHabitacion(roomToUpdate.id, updatedData).subscribe(() => {
@@ -217,7 +228,8 @@ export class Tab4Page implements OnInit {
         estado: data.status,
         tipo: data.type,
         planta: data.floor,
-        precio: data.price
+        precio: data.price,
+        condiciones: data.condiciones
       };
       
       this.api.guardarNuevaHabitacion(newRoomPayload).subscribe(() => {

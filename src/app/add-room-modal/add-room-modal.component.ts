@@ -1,105 +1,79 @@
-import { Component } from '@angular/core';
-import { IonicModule, ModalController, ToastController } from '@ionic/angular';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { ModalController, IonicModule } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-add-room-modal',
   standalone: true,
-  imports: [IonicModule, CommonModule, FormsModule],
+  imports: [IonicModule, FormsModule, CommonModule],
   templateUrl: './add-room-modal.component.html',
   styleUrls: ['./add-room-modal.component.scss']
 })
-export class AddRoomModalComponent {
+export class AddRoomModalComponent implements OnInit {
   newRoom: any = {
     images: [],
     roomNumber: '',
-    status: 'Libre',
     title: '',
+    status: 'Libre',
     type: '',
     floor: '',
     extras: [],
     oldPrice: '',
     price: '',
     note: '',
-    reviews: []
+    condiciones: {
+      soloFinesDeSemana: false,
+      estanciaMinima: 1,
+      diasPermitidos: 'Todos',
+      bloqueadaTemporalmente: false
+    }
   };
 
   roomTypes = ['Individual', 'Doble', 'Doble individual', 'Triple', 'Suite', 'Familiar'];
   floors = ['Baja', 'Primera', 'Segunda', 'Tercera', 'Cuarta'];
   extrasOptions = ['Balcón', 'Bañera', 'Cuna', 'Ducha', 'Frigorífico', 'Televisión', 'Terraza', 'WiFi', 'Limpieza', 'Silla de ruedas', 'Toallas extras'];
 
-  constructor(
-    private modalCtrl: ModalController,
-    private toastCtrl: ToastController
-  ) {
-    this.newRoom.type = this.roomTypes[0];
-    this.newRoom.floor = this.floors[0];
+  constructor(private modalCtrl: ModalController) {}
+
+  ngOnInit(): void {}
+
+  hasExtra(ex: string) {
+    return Array.isArray(this.newRoom.extras) && this.newRoom.extras.includes(ex);
   }
 
-  // --- GESTIÓN DE FOTOS ---
-  addPhotoFile(event: any) {
-    const file = event?.target?.files && event.target.files[0];
-    if (!file) return;
+  toggleExtra(ex: string) {
+    if (!Array.isArray(this.newRoom.extras)) this.newRoom.extras = [];
+    const idx = this.newRoom.extras.indexOf(ex);
+    if (idx === -1) this.newRoom.extras.push(ex);
+    else this.newRoom.extras.splice(idx, 1);
+  }
+
+  addPhotoFile(ev: any) {
+    const f = ev?.target?.files?.[0];
+    if (!f) return;
     const reader = new FileReader();
-    reader.onload = () => {
-      if (!this.newRoom.images) this.newRoom.images = [];
-      this.newRoom.images.push(reader.result as string);
-      this.newRoom.images = [...this.newRoom.images];
-      
-      // Limpiar el input file para poder subir la misma foto 2 veces seguidas si se quiere
-      if (event.target) event.target.value = '';
+    reader.onload = (e: any) => {
+      this.newRoom.images.push(e.target.result);
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(f);
   }
 
-  removePhoto(index: number) {
-    if (!this.newRoom.images) return;
-    this.newRoom.images.splice(index, 1);
-    this.newRoom.images = [...this.newRoom.images];
+  removePhoto(idx: number) {
+    if (!Array.isArray(this.newRoom.images)) return;
+    this.newRoom.images.splice(idx, 1);
   }
 
-  // --- GESTIÓN DE EXTRAS (CHIPS) ---
-  hasExtra(opt: string): boolean {
-    return this.newRoom.extras && this.newRoom.extras.includes(opt);
+  formatPrice(val: any) {
+    if (val === null || val === undefined) return '';
+    const s = String(val).trim();
+    return s === '' ? '' : (s.includes('€') ? s : s + ' €');
   }
 
-  toggleExtra(opt: string) {
-    if (!this.newRoom || !Array.isArray(this.newRoom.extras)) this.newRoom.extras = [];
-    const idx = this.newRoom.extras.indexOf(opt);
-    if (idx >= 0) {
-      this.newRoom.extras.splice(idx, 1); // Quitar si ya está
-    } else {
-      this.newRoom.extras.push(opt); // Añadir si no está
-    }
-    this.newRoom.extras = [...this.newRoom.extras];
-  }
-
-  // --- ACCIONES PRINCIPALES ---
-  async save() {
-    // Pequeña validación básica
-    if (!this.newRoom.roomNumber || !this.newRoom.title || !this.newRoom.price) {
-      const toast = await this.toastCtrl.create({
-        message: 'Por favor, rellena al menos el Número, el Nombre y el Precio.',
-        duration: 3000,
-        color: 'danger',
-        position: 'top',
-        icon: 'warning-outline'
-      });
-      toast.present();
-      return;
-    }
-
+  save() {
     this.newRoom.price = this.formatPrice(this.newRoom.price);
     this.newRoom.oldPrice = this.formatPrice(this.newRoom.oldPrice);
     this.modalCtrl.dismiss(this.newRoom);
-  }
-
-  private formatPrice(val: any): string {
-    if (val === null || val === undefined) return '';
-    let s = val.toString().trim();
-    if (!s) return '';
-    return s;
   }
 
   cancel() {

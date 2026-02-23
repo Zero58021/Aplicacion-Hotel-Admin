@@ -18,6 +18,15 @@ export class Tab2Page implements OnInit {
   @ViewChild(IonContent, { static: false }) content!: IonContent;
   showScrollTop: boolean = false;
 
+  // PRECIOS BASE PARA EL TICKET DEL DASHBOARD
+  pensionPrices: any = {
+    'Sin pensión': 0,
+    'Alojamiento y Desayuno': 8,
+    'Media Pensión': 18,
+    'Pensión Completa': 30,
+    'Todo Incluido': 50
+  };
+
   constructor(
     private alertCtrl: AlertController, 
     private modalCtrl: ModalController, 
@@ -74,7 +83,8 @@ export class Tab2Page implements OnInit {
             numeroHabitaciones: r.habitaciones ?? r.numeroHabitaciones ?? '-',
             hasAllergies: !!((r.notas && r.notas !== '') || r.passengers?.some((p:any) => p.allergies && p.allergies !== '')),
             alergias: r.notas || (r.passengers?.find((p:any) => p.allergies)?.allergies) || 'No',
-            expanded: false
+            expanded: false,
+            showBreakdown: false // Control del ticket individual
           };
         });
 
@@ -86,7 +96,10 @@ export class Tab2Page implements OnInit {
 
   setFilter(filter: string) {
     this.statusFilter = filter;
-    this.reservas.forEach(x => x.expanded = false);
+    this.reservas.forEach(x => {
+      x.expanded = false;
+      x.showBreakdown = false; // Cerramos tickets si se cambia de filtro
+    });
   }
 
   get filteredReservas(): any[] {
@@ -100,7 +113,7 @@ export class Tab2Page implements OnInit {
 
     const results = pool.filter(r => {
       if (this.statusFilter === 'Todos') {
-        if (r.status === 'Completada' || r.status === 'Cancelada') return false;
+        if (r.status === 'Completada') return false; 
       } else {
         if (r.status !== this.statusFilter) return false;
       }
@@ -114,13 +127,67 @@ export class Tab2Page implements OnInit {
     return results;
   }
 
-  // --- ACCIONES ---
+  // ===============================================
+  // LÓGICA DEL TICKET DESPLEGABLE EN EL DASHBOARD
+  // ===============================================
+  
+  toggleBreakdown(r: any, ev: Event) {
+    ev.stopPropagation(); 
+    r.showBreakdown = !r.showBreakdown;
 
-  confirmReservation(r: any) {
-    this.api.updateReserva(r.id, { estado: 'Confirmada' }).subscribe(() => {
-      this.showToast('Reserva confirmada');
-      this.cargarDatos();
-    });
+    // Solo lo calculamos la primera vez que se abre
+    if (r.showBreakdown && !r.breakdownData) {
+      r.breakdownData = this.calculateBreakdown(r);
+    }
+  }
+
+  calculateBreakdown(r: any) {
+    const ci = new Date(r.fechaEntrada);
+    const co = new Date(r.fechaSalida);
+    let nights = Math.ceil((co.getTime() - ci.getTime()) / (1000 * 60 * 60 * 24));
+    if (nights <= 0 || isNaN(nights)) nights = 1;
+
+    const guests = (Number(r.adultos) || 0) + (Number(r.ninos) || 0);
+    const pensionName = r.pension || 'Sin pensión';
+    const pensionPxN = this.pensionPrices[pensionName] || 0;
+    const pensionTotal = pensionPxN * guests * nights;
+
+    let roomTotal = 0;
+    const roomsInfo: any[] = [];
+
+    if (r.selectedCategories && r.selectedCategories.length > 0) {
+      r.selectedCategories.forEach((cat: any) => {
+        const t = (cat.price || 0) * (cat.qty || 1) * nights;
+        roomTotal += t;
+        roomsInfo.push({ name: cat.name, qty: cat.qty || 1, price: cat.price || 0, total: t });
+      });
+    } else {
+      // Deducimos el precio si es una reserva manual a capón
+      const currentTotal = Number(r.precioTotal || 0);
+      let rp = (currentTotal - pensionTotal) / nights;
+      if (rp < 0) rp = 0;
+      roomTotal = rp * nights;
+      roomsInfo.push({ name: r.habitacion || 'Hab. asignada', qty: r.numeroHabitaciones || 1, price: rp, total: roomTotal });
+    }
+
+    const mathTotal = roomTotal + pensionTotal;
+
+    return { nights, guests, pensionName, pensionPxN, pensionTotal, roomsInfo, mathTotal };
+  }
+
+  // ===============================================
+  // --- ACCIONES ---
+  // ===============================================
+
+  async confirmReservation(r: any) {
+    if (r.status === 'Pendiente') {
+      this.openEditReservation(r);
+    } else {
+      this.api.updateReserva(r.id, { estado: 'Confirmada' }).subscribe(() => {
+        this.showToast('Reserva confirmada');
+        this.cargarDatos();
+      });
+    }
   }
 
   denyReservation(r: any) {
@@ -137,7 +204,6 @@ export class Tab2Page implements OnInit {
     });
   }
 
-  // NUEVO: Función para devolver a la vida una reserva cancelada
   reactivateReservation(r: any) {
     this.api.updateReserva(r.id, { estado: 'Confirmada' }).subscribe(() => {
       this.showToast('Reserva reactivada con éxito');
@@ -198,8 +264,16 @@ export class Tab2Page implements OnInit {
   }
 
   toggleExpand(r: any) {
-    this.reservas.forEach(x => { if (x !== r) x.expanded = false; });
+    // Al abrir otra tarjeta, cerramos las demás y sus tickets
+    this.reservas.forEach(x => { 
+      if (x !== r) {
+        x.expanded = false;
+        x.showBreakdown = false; 
+      }
+    });
+    
     r.expanded = !r.expanded;
+    if (!r.expanded) r.showBreakdown = false; // Cerramos el ticket si pliega
   }
 
   formatDate(dateStr: string): string {

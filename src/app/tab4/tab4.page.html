@@ -239,6 +239,54 @@
               </div>
             </div>
 
+            <div class="form-card compact">
+              <div class="card-header">
+                <ion-icon name="calendar-outline"></ion-icon>
+                <span>Reglas de Reserva (Opcional)</span>
+              </div>
+
+              <div class="form-row">
+                <div class="input-group half">
+                  <label>Solo Fines de Semana</label>
+                  <div class="toggle-container">
+                    <span>Viernes a Domingo</span>
+                    <ion-toggle [(ngModel)]="editModel.condiciones.soloFinesDeSemana" [attr.name]="'findes' + originalIndex(room)"></ion-toggle>
+                  </div>
+                </div>
+                
+                <div class="input-group half">
+                  <label>Mínimo Noches</label>
+                  <div class="custom-input price-input">
+                    <ion-icon name="moon-outline"></ion-icon>
+                    <input type="number" min="1" [(ngModel)]="editModel.condiciones.estanciaMinima" [attr.name]="'minNights' + originalIndex(room)">
+                  </div>
+                </div>
+              </div>
+
+              <div class="input-group mt-2">
+                <label>Días Permitidos</label>
+                <div class="chip-grid">
+                  <div class="chip-item" [class.active]="editModel.condiciones.diasPermitidos === 'Todos'" (click)="editModel.condiciones.diasPermitidos = 'Todos'">
+                    <span>Todos</span>
+                  </div>
+                  <div class="chip-item" [class.active]="editModel.condiciones.diasPermitidos === 'Pares'" (click)="editModel.condiciones.diasPermitidos = 'Pares'">
+                    <span>Solo Pares</span>
+                  </div>
+                  <div class="chip-item" [class.active]="editModel.condiciones.diasPermitidos === 'Impares'" (click)="editModel.condiciones.diasPermitidos = 'Impares'">
+                    <span>Solo Impares</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="input-group mt-2" style="background: rgba(239, 68, 68, 0.05); padding: 10px; border-radius: 12px; border: 1px solid rgba(239, 68, 68, 0.2);">
+                <label style="color: #ef4444; margin-bottom: 0;">Bloqueo Temporal</label>
+                <div class="toggle-container" style="margin-top: 6px;">
+                  <span style="font-size: 13px; color: #64748b;">Nadie podrá reservar esta habitación</span>
+                  <ion-toggle color="danger" [(ngModel)]="editModel.condiciones.bloqueadaTemporalmente" [attr.name]="'bloqueo' + originalIndex(room)"></ion-toggle>
+                </div>
+              </div>
+            </div>
+
             <div class="edit-actions-premium">
               <ion-button color="medium" fill="clear" (click)="cancelEdit()">Cancelar</ion-button>
               <div style="flex:1"></div>

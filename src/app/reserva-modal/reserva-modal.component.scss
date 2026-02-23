@@ -43,17 +43,91 @@ ion-datetime-button { --background: transparent; }
 .custom-toggle { --background: transparent; --padding-start: 16px; --inner-padding-end: 16px; --min-height: 54px; ion-icon { color: #94a3b8; font-size: 1.2rem; margin-right: 12px; } ion-label { font-size: 0.95rem; font-weight: 600; color: #334155; } }
 .custom-toggle:not(:last-child) { border-bottom: 1px solid #e2e8f0; }
 
-/* Cuadrícula interactiva (Chips) */
+/* Cuadrícula interactiva (Chips) de Estados y Pensiones */
 .chip-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
 .chip-item { display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: #f1f5f9; border-radius: 12px; font-size: 0.85rem; font-weight: 600; color: #64748b; cursor: pointer; border: 1px solid transparent; transition: all 0.2s;
   ion-icon { font-size: 1.1rem; color: #94a3b8; }
   
-  /* Color por defecto (Primario) */
+  /* Color por defecto (Primario para pensiones) */
   &.active { background: var(--ion-color-primary) !important; color: #ffffff !important; box-shadow: 0 4px 12px rgba(var(--ion-color-primary-rgb), 0.3) !important; transform: translateY(-2px); ion-icon { color: #ffffff !important; } span { color: #ffffff !important; } }
   
   /* Colores específicos para estados */
+  &.pendiente.active { background: #f59e0b !important; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important; }
   &.confirmada.active { background: var(--ion-color-success, #10b981) !important; box-shadow: 0 4px 12px rgba(16,185,129, 0.3) !important; }
   &.denegada.active { background: var(--ion-color-danger, #ef4444) !important; box-shadow: 0 4px 12px rgba(239,68,68, 0.3) !important; }
+  &.cancelada.active { background: #94a3b8 !important; box-shadow: 0 4px 12px rgba(148, 163, 184, 0.3) !important; }
+}
+
+/* =======================================
+   ESTILO DE TICKET DE COMPRA (RECEIPT)
+   ======================================= */
+.breakdown-toggle {
+  font-size: 0.75rem !important; color: var(--ion-color-primary, #27ae60) !important; font-weight: 700 !important;
+  cursor: pointer; display: flex; align-items: center; gap: 4px; margin-top: 4px; margin-bottom: 4px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  background: rgba(39, 174, 96, 0.1); padding: 6px 10px; border-radius: 6px;
+  width: fit-content; transition: opacity 0.2s;
+  &:active { opacity: 0.6; }
+}
+
+.receipt-ticket {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-top: 3px dashed #cbd5e1; /* Línea de corte de ticket */
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  padding: 18px 16px;
+  margin-top: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+  position: relative;
+  z-index: 1;
+}
+
+/* Efecto de agujeritos a los lados simulando papel continuo */
+.receipt-ticket::before, .receipt-ticket::after {
+  content: ''; position: absolute; top: -6px; width: 12px; height: 12px;
+  background: #ffffff; border-radius: 50%; border: 1px solid #e2e8f0; /* Color blanco para el modal */
+}
+.receipt-ticket::before { left: -7px; border-right-color: transparent; border-top-color: transparent; transform: rotate(45deg); }
+.receipt-ticket::after { right: -7px; border-left-color: transparent; border-top-color: transparent; transform: rotate(-45deg); }
+
+.receipt-header {
+  font-size: 0.85rem; color: #64748b; margin-bottom: 12px;
+}
+.receipt-row {
+  display: flex; justify-content: space-between; margin-bottom: 6px;
+  strong { color: #334155; }
+}
+
+.receipt-divider {
+  height: 1px; border-bottom: 1px dashed #cbd5e1; margin: 16px 0;
+}
+
+.receipt-item {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+}
+.item-info { display: flex; flex-direction: column; }
+.item-name { font-size: 0.95rem; font-weight: 700; color: #1e293b; margin-bottom: 2px; }
+.item-sub { font-size: 0.8rem; color: #94a3b8; }
+.item-total { font-size: 1.05rem; font-weight: 700; color: #0f172a; }
+
+.receipt-total {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 1.15rem; font-weight: 800; color: var(--ion-color-primary, #27ae60);
+  text-transform: uppercase; margin-top: 8px;
+}
+
+.receipt-alert {
+  margin-top: 16px; background: #fef2f2; color: #dc2626; padding: 10px;
+  border-radius: 8px; font-size: 0.8rem; font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+  ion-icon { font-size: 1.3rem; flex-shrink: 0; }
+}
+
+/* En el Modal, quitar el borde inferior del input cuando el ticket está abierto */
+.price-input.breakdown-open {
+  border-bottom-left-radius: 0; border-bottom-right-radius: 0;
+  border-color: #cbd5e1 !important; background: white; box-shadow: none !important;
 }
 
 /* Botones Inferiores */
@@ -62,5 +136,32 @@ ion-datetime-button { --background: transparent; }
   .main-btn { --box-shadow: 0 6px 16px rgba(var(--ion-color-primary-rgb), 0.3); flex: 2; } 
 }
 
-/* Espacio final dentro del modal para evitar que el contenido quede pegado al borde */
+/* Espacio final dentro del modal */
 .modal-end-space { height: 80px; width: 100%; }
+
+/* =======================================
+   LISTA DE HUÉSPEDES
+   ======================================= */
+.passengers-section {
+  margin-top: 16px; border-top: 1px dashed #cbd5e1; padding-top: 16px;
+}
+.section-label {
+  font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 10px; display: block; margin-left: 4px;
+}
+.passenger-item {
+  display: flex; justify-content: space-between; align-items: center;
+  background: #f8fafc; border-radius: 12px; padding: 10px 14px; margin-bottom: 8px; border: 1px solid #e2e8f0; transition: all 0.2s;
+  
+  &.is-primary { background: rgba(var(--ion-color-primary-rgb), 0.05); border-color: rgba(var(--ion-color-primary-rgb), 0.3); }
+}
+.p-info {
+  display: flex; align-items: center; gap: 12px;
+  ion-icon { font-size: 1.5rem; color: var(--ion-color-primary); }
+}
+.p-text { display: flex; flex-direction: column; }
+.p-name {
+  font-size: 0.95rem; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 6px;
+  ion-badge { font-size: 0.65rem; padding: 3px 6px; letter-spacing: 0.5px;}
+}
+.p-doc { font-size: 0.8rem; color: #64748b; margin-top: 2px; }
+.btn-remove-p { margin: 0; --padding-start: 6px; --padding-end: 6px; height: 32px; --border-radius: 8px; }
