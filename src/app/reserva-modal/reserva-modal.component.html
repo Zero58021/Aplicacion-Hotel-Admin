@@ -22,7 +22,7 @@
         <label>Titular de la reserva</label>
         <div class="custom-input" [class.disabled]="isRecepcion && !!initial?.numero">
           <ion-icon name="id-card-outline"></ion-icon>
-          <input type="text" placeholder="Nombre completo" [(ngModel)]="reserva.titular" [disabled]="isRecepcion && (!!initial?.numero)">
+          <input type="text" placeholder="Nombre completo" [(ngModel)]="reserva.titular" (input)="updateTitularFromInput($event)" [disabled]="isRecepcion && (!!initial?.numero)">
         </div>
       </div>
     </div>
@@ -30,24 +30,20 @@
     <div class="form-card" *ngIf="reserva.selectedCategories && reserva.selectedCategories.length > 0">
       <div class="card-header">
         <ion-icon name="bed-outline"></ion-icon>
-        <span>Asignación de Habitaciones Web</span>
+        <span>Habitaciones Web</span>
       </div>
-      <p style="font-size: 0.85rem; color: #666; margin-top: 0; margin-bottom: 12px;">
-        El cliente ha solicitado {{ reserva.numeroHabitaciones }} habitaciones. Selecciona cuáles están libres.
-      </p>
 
-      <div *ngFor="let cat of reserva.selectedCategories; let i = index" style="margin-bottom: 16px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; background: #fafafa;">
+      <div *ngFor="let cat of reserva.selectedCategories; let i = index; trackBy: trackByIndex" style="margin-bottom: 16px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; background: #fafafa;">
         <strong style="color: #2c3e50; font-size: 0.95rem; display: block; margin-bottom: 8px;">
           {{ cat.qty }}x {{ cat.name }} ({{ cat.type }})
         </strong>
         
-        <div *ngFor="let dummy of getArray(cat.qty); let j = index" class="input-group" style="margin-bottom: 8px;">
-          <label style="font-size: 0.75rem; color: #888;">Nº de Habitación (Huésped {{j+1}})</label>
+        <div *ngFor="let dummy of getArray(cat.qty); let j = index; trackBy: trackByIndex" class="input-group" style="margin-bottom: 8px;">
           <div class="custom-input">
             <ion-icon name="key-outline"></ion-icon>
-            <select class="native-select" [(ngModel)]="asignaciones[cat.type + '_' + j]" (change)="updateManualRooms()" style="width: 100%; border: none; background: transparent; outline: none; font-size: 0.95rem; font-weight: 600;">
+            <select class="native-select" [(ngModel)]="asignaciones[cat.type + '_' + j]" (ngModelChange)="updateRooms()" style="width: 100%; border: none; background: transparent; outline: none; font-size: 0.95rem; font-weight: 600;">
               <option value="" disabled selected>Elige habitación libre...</option>
-              <option *ngFor="let room of getAvailableRooms(cat.type)" [value]="room.numero">
+              <option *ngFor="let room of getAvailableRooms(cat.type, cat.type + '_' + j); trackBy: trackByRoom" [value]="room.numero">
                 Nº {{ room.numero }} - Planta {{ room.planta || 'N/A' }}
               </option>
             </select>
@@ -56,24 +52,23 @@
       </div>
     </div>
 
-    <div class="form-card" *ngIf="!reserva.selectedCategories || reserva.selectedCategories.length === 0">
+    <div class="form-card" *ngIf="asignacionesManuales.length > 0">
       <div class="card-header">
         <ion-icon name="bed-outline"></ion-icon>
-        <span>Habitación Asignada</span>
+        <span>{{ reserva.selectedCategories?.length ? 'Habitaciones Extra (Añadidas)' : 'Habitaciones Asignadas' }}</span>
       </div>
-      <p style="font-size: 0.85rem; color: #666; margin-top: 0; margin-bottom: 12px;">
-        Habitaciones requeridas: {{ reserva.numeroHabitaciones }}
-      </p>
 
-      <div *ngFor="let dummy of getArray(reserva.numeroHabitaciones); let i = index" class="input-group">
-        <label>Asignación Habitación {{ i + 1 }}</label>
+      <div *ngFor="let dummy of getArray(asignacionesManuales.length); let i = index; trackBy: trackByIndex" class="input-group" style="margin-bottom: 12px;">
+        <label>Habitación {{ reserva.selectedCategories?.length ? 'Extra ' : '' }}{{ i + 1 }}</label>
         <div class="custom-input">
           <ion-icon name="key-outline"></ion-icon>
-          <select class="native-select" [(ngModel)]="asignacionesManuales[i]" (change)="updateManualRooms()" style="width: 100%; border: none; background: transparent; outline: none; font-size: 0.95rem; font-weight: 600;">
-            <option value="" disabled selected>Elige habitación libre...</option>
-            <option *ngFor="let room of getAvailableRoomsManual(i)" [value]="room.numero">
-              Nº {{ room.numero }} ({{ room.tipo }})
-            </option>
+          <select class="native-select" [(ngModel)]="asignacionesManuales[i]" (ngModelChange)="updateRooms()" style="width: 100%; border: none; background: transparent; outline: none; font-size: 0.95rem; font-weight: 600;">
+            <option value="" disabled selected>Elige tipo y nº habitación...</option>
+            <optgroup *ngFor="let group of groupedAvailableRoomsManual(i); trackBy: trackByGroup" [label]="group.tipo + ' (' + group.precio + '€/n)'">
+              <option *ngFor="let room of group.rooms; trackBy: trackByRoom" [value]="room.numero">
+                Nº {{ room.numero }}
+              </option>
+            </optgroup>
           </select>
         </div>
       </div>
@@ -82,7 +77,7 @@
     <div class="form-card">
       <div class="card-header">
         <ion-icon name="calendar-outline"></ion-icon>
-        <span>Estancia y Huéspedes</span>
+        <span>Estancia y Cantidades</span>
       </div>
 
       <div class="form-row">
@@ -91,9 +86,7 @@
           <div class="custom-input date-input-wrapper">
             <ion-datetime-button datetime="entrada"></ion-datetime-button>
             <ion-modal [keepContentsMounted]="true">
-              <ng-template>
-                <ion-datetime id="entrada" presentation="date" [(ngModel)]="reserva.fechaEntrada" (ionChange)="recalculatePrice()"></ion-datetime>
-              </ng-template>
+              <ng-template><ion-datetime id="entrada" presentation="date" [(ngModel)]="reserva.fechaEntrada" (ionChange)="recalculatePrice()"></ion-datetime></ng-template>
             </ion-modal>
           </div>
         </div>
@@ -103,9 +96,7 @@
           <div class="custom-input date-input-wrapper">
             <ion-datetime-button datetime="salida"></ion-datetime-button>
             <ion-modal [keepContentsMounted]="true">
-              <ng-template>
-                <ion-datetime id="salida" presentation="date" [(ngModel)]="reserva.fechaSalida" (ionChange)="recalculatePrice()"></ion-datetime>
-              </ng-template>
+              <ng-template><ion-datetime id="salida" presentation="date" [(ngModel)]="reserva.fechaSalida" (ionChange)="recalculatePrice()"></ion-datetime></ng-template>
             </ion-modal>
           </div>
         </div>
@@ -114,55 +105,129 @@
       <div class="form-row mt-2">
         <div class="input-group third">
           <label>Habitaciones</label>
-          <div class="custom-input number-input">
-            <input type="number" min="1" [(ngModel)]="reserva.numeroHabitaciones" [disabled]="!!reserva.selectedCategories" (ngModelChange)="onRoomCountChange()">
+          <div class="stepper-input">
+            <ion-button fill="clear" (click)="changeRooms(-1)" [disabled]="reserva.numeroHabitaciones <= 1"><ion-icon name="remove"></ion-icon></ion-button>
+            <span>{{ reserva.numeroHabitaciones }}</span>
+            <ion-button fill="clear" (click)="changeRooms(1)"><ion-icon name="add"></ion-icon></ion-button>
           </div>
         </div>
         <div class="input-group third">
           <label>Adultos</label>
-          <div class="custom-input number-input">
-            <input type="number" min="1" [(ngModel)]="reserva.adultos" (ngModelChange)="recalculatePrice()">
+          <div class="stepper-input">
+            <ion-button fill="clear" (click)="changeGuests('adultos', -1)" [disabled]="reserva.adultos <= 1"><ion-icon name="remove"></ion-icon></ion-button>
+            <span>{{ reserva.adultos }}</span>
+            <ion-button fill="clear" (click)="changeGuests('adultos', 1)"><ion-icon name="add"></ion-icon></ion-button>
           </div>
         </div>
         <div class="input-group third">
           <label>Niños</label>
-          <div class="custom-input number-input">
-            <input type="number" min="0" [(ngModel)]="reserva.ninos" (ngModelChange)="recalculatePrice()">
+          <div class="stepper-input">
+            <ion-button fill="clear" (click)="changeGuests('ninos', -1)" [disabled]="reserva.ninos <= 0"><ion-icon name="remove"></ion-icon></ion-button>
+            <span>{{ reserva.ninos }}</span>
+            <ion-button fill="clear" (click)="changeGuests('ninos', 1)"><ion-icon name="add"></ion-icon></ion-button>
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="passengers-section slide-down" *ngIf="(reserva.passengers && reserva.passengers.length > 0) || (reserva.adultos + reserva.ninos) > (reserva.passengers?.length || 0)">
-        <label class="section-label">Detalle de Huéspedes Registrados</label>
+    <div class="form-card passengers-card shadow-card">
+      <div class="card-header">
+        <ion-icon name="people-outline"></ion-icon>
+        <span>Datos de los Ocupantes (Check-in)</span>
+      </div>
+
+      <div class="people-actions" *ngIf="!formVisible && canAddPassenger()">
+        <ion-button color="primary" expand="block" shape="round" fill="outline" (click)="togglePassengers()">
+          <ion-icon name="person-add-outline" slot="start"></ion-icon>
+          Añadir Información
+        </ion-button>
+      </div>
+
+      <div *ngIf="formVisible" class="passengers-form-container mt-3">
         
-        <div class="passenger-item" *ngFor="let p of reserva.passengers; let i = index" [class.is-primary]="p.isPrimary" style="flex-direction: column; align-items: stretch; gap: 10px;">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div class="p-info">
-              <ion-icon [name]="p.isPrimary ? 'star' : 'person'"></ion-icon>
-              <span class="p-name" style="font-size: 0.9rem;">
-                {{ p.isPrimary ? 'Titular' : 'Huésped ' + (i + 1) }}
-              </span>
+        <div *ngFor="let p of reserva.passengers; let i = index" class="passenger-form-wrapper" id="passenger-{{i}}">
+          <ng-container *ngIf="editingIndex === i">
+            <div class="form-box" [class.primary-box]="p.isPrimary" style="border: 2px solid var(--ion-color-primary); padding: 15px; border-radius: 12px; margin-bottom: 15px; background: white;">
+              
+              <div class="form-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div class="header-titles">
+                  <h3 style="margin: 0; font-size: 1.1rem; color: var(--ion-color-primary);">{{ p.isPrimary ? 'Titular' : ('Acompañante ' + i) }}</h3>
+                  <ion-badge [color]="p.isPrimary ? 'primary' : 'medium'">{{ p.type === 'adult' ? 'Adulto' : 'Niño' }}</ion-badge>
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <div class="input-group">
+                  <label>Nombre</label>
+                  <div class="custom-input" [class.border-danger]="passengersErrors[i]?.name"><input [(ngModel)]="p.name" placeholder="Ej. Juan"></div>
+                  <span style="color: red; font-size: 0.75rem;" *ngIf="passengersErrors[i]?.name">Requerido</span>
+                </div>
+                
+                <div class="input-group">
+                  <label>Apellidos</label>
+                  <div class="custom-input" [class.border-danger]="passengersErrors[i]?.lastName"><input [(ngModel)]="p.lastName" placeholder="Ej. Pérez"></div>
+                  <span style="color: red; font-size: 0.75rem;" *ngIf="passengersErrors[i]?.lastName">Requerido</span>
+                </div>
+
+                <div class="input-group full-width">
+                  <label>Documento (DNI/NIE)</label>
+                  <div class="custom-input" [class.border-danger]="passengersErrors[i]?.dni"><input [(ngModel)]="p.dni" placeholder="Ej. 12345678A"></div>
+                  <span style="color: red; font-size: 0.75rem;" *ngIf="passengersErrors[i]?.dni">Formato Inválido</span>
+                </div>
+
+                <ng-container *ngIf="p.isPrimary">
+                  <div class="input-group half" style="display: inline-block; width: 48%; margin-right: 2%;">
+                    <label>Teléfono</label>
+                    <div class="custom-input" [class.border-danger]="passengersErrors[i]?.phone"><input type="tel" [(ngModel)]="p.phone" placeholder="Ej. 600123456"></div>
+                    <span style="color: red; font-size: 0.75rem;" *ngIf="passengersErrors[i]?.phone">Inválido</span>
+                  </div>
+
+                  <div class="input-group half" style="display: inline-block; width: 48%;">
+                    <label>Correo Electrónico</label>
+                    <div class="custom-input" [class.border-danger]="passengersErrors[i]?.email"><input type="email" [(ngModel)]="p.email" placeholder="correo@mail.com"></div>
+                    <span style="color: red; font-size: 0.75rem;" *ngIf="passengersErrors[i]?.email">Inválido</span>
+                  </div>
+                </ng-container>
+
+                <div class="input-group full-width" *ngIf="!p.isPrimary">
+                   <label>Tipo de pasajero</label>
+                   <ion-segment [(ngModel)]="p.type" mode="ios">
+                    <ion-segment-button value="adult">Adulto</ion-segment-button>
+                    <ion-segment-button value="child">Niño</ion-segment-button>
+                  </ion-segment>
+                </div>
+              </div>
+
+              <div class="form-actions" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
+                <ion-button color="medium" fill="clear" size="small" (click)="closeEditing()">Cancelar</ion-button>
+                <ion-button color="danger" fill="clear" size="small" *ngIf="!p.isPrimary" (click)="removePassenger(i)">Eliminar</ion-button>
+                <ion-button color="success" size="small" (click)="savePassengers()">Guardar Pasajero</ion-button>
+              </div>
             </div>
-            <ion-button *ngIf="!p.isPrimary" fill="clear" color="danger" size="small" class="btn-remove-p" (click)="removePassenger(i)">
-              <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
-            </ion-button>
-          </div>
-          
-          <div style="display: flex; gap: 10px;">
-            <div class="custom-input" style="flex: 2; padding: 6px 12px; min-height: 40px;">
-              <input type="text" placeholder="Nombre completo" [(ngModel)]="p.name" style="width:100%; font-size:0.9rem;">
-            </div>
-            <div class="custom-input" style="flex: 1; padding: 6px 12px; min-height: 40px;">
-              <input type="text" placeholder="DNI" [(ngModel)]="p.dni" style="width:100%; font-size:0.9rem;">
-            </div>
-          </div>
+          </ng-container>
         </div>
 
-        <ion-button *ngIf="(reserva.adultos + reserva.ninos) > (reserva.passengers?.length || 0)" 
-                    fill="outline" color="primary" expand="block" style="margin-top: 10px; --border-radius: 8px;" (click)="addPassenger()">
-          <ion-icon name="add-circle-outline" slot="start"></ion-icon> 
-          Faltan datos de {{ (reserva.adultos + reserva.ninos) - (reserva.passengers?.length || 0) }} huésped(es)
-        </ion-button>
+        <div class="add-buttons" *ngIf="editingIndex === null" style="display: flex; gap: 10px; margin-top: 10px;">
+          <ion-button color="primary" fill="outline" (click)="addPrimary()" *ngIf="!hasPrimary()"><ion-icon name="add" slot="start"></ion-icon> Titular</ion-button>
+          <ion-button color="secondary" fill="outline" (click)="addPassenger()" *ngIf="hasPrimary() && canAddPassenger()"><ion-icon name="add" slot="start"></ion-icon> Acompañante</ion-button>
+        </div>
+
+      </div>
+
+      <div *ngIf="reserva.passengers && reserva.passengers.length > 0 && editingIndex === null" class="passengers-summary mt-3">
+        <div class="passenger-item" *ngFor="let p of reserva.passengers; let i = index" [class.is-primary]="p.isPrimary" style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border-radius: 12px; padding: 10px 14px; margin-bottom: 8px; border: 1px solid #e2e8f0;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <ion-icon [name]="p.isPrimary ? 'star' : 'person'" [color]="p.isPrimary ? 'primary' : 'medium'" style="font-size: 1.5rem;"></ion-icon>
+            <div>
+              <div style="font-weight: bold; color: #1e293b;">{{ p.name }} {{ p.lastName }}</div>
+              <div style="font-size: 0.8rem; color: #64748b;">{{ p.type === 'adult' ? 'Adulto' : 'Niño' }} • DNI: {{ p.dni || 'No especificado' }}</div>
+            </div>
+          </div>
+          <div>
+            <ion-button fill="clear" size="small" (click)="editPassenger(i)"><ion-icon name="pencil" slot="icon-only"></ion-icon></ion-button>
+            <ion-button *ngIf="!p.isPrimary" color="danger" fill="clear" size="small" (click)="removePassenger(i)"><ion-icon name="trash" slot="icon-only"></ion-icon></ion-button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -189,52 +254,27 @@
             {{ showBreakdown ? 'Ocultar' : 'Ver desglose' }}
           </span>
         </div>
-
         <div class="custom-input price-input" [class.breakdown-open]="showBreakdown">
-          <input type="number" placeholder="0.00" [(ngModel)]="reserva.precioTotal">
+          <input type="number" placeholder="0.00" [(ngModel)]="reserva.precioTotal" (ngModelChange)="recalculatePrice(false)">
           <span class="unit" style="color:var(--ion-color-success)">€</span>
         </div>
 
         <div class="receipt-ticket slide-down" *ngIf="showBreakdown">
            <div class="receipt-header">
-              <div class="receipt-row">
-                <span><strong>Entrada:</strong> {{ reserva.fechaEntrada | date:'dd/MM/yyyy' }}</span>
-                <span><strong>Salida:</strong> {{ reserva.fechaSalida | date:'dd/MM/yyyy' }}</span>
-              </div>
-              <div class="receipt-row">
-                <span><strong>Huéspedes:</strong> {{ reserva.adultos }} Ad, {{ reserva.ninos }} Ni</span>
-                <span><strong>Noches:</strong> {{ breakdown.nights }}</span>
-              </div>
+              <div class="receipt-row"><span><strong>Entrada:</strong> {{ reserva.fechaEntrada | date:'dd/MM/yyyy' }}</span><span><strong>Salida:</strong> {{ reserva.fechaSalida | date:'dd/MM/yyyy' }}</span></div>
+              <div class="receipt-row"><span><strong>Huéspedes:</strong> {{ reserva.adultos }} Ad, {{ reserva.ninos }} Ni</span><span><strong>Noches:</strong> {{ breakdown.nights }}</span></div>
            </div>
-           
            <div class="receipt-divider"></div>
-           
            <div class="receipt-item" *ngFor="let r of breakdown.rooms">
-              <div class="item-info">
-                 <span class="item-name">{{r.qty}}x {{ r.name }}</span>
-                 <span class="item-sub">{{r.price}}€ / noche</span>
-              </div>
-              <span class="item-total">{{ r.total }}€</span>
+              <div class="item-info"><span class="item-name">{{r.qty}}x {{ r.name }}</span><span class="item-sub">{{r.price}}€ / noche</span></div><span class="item-total">{{ r.total }}€</span>
            </div>
-           
            <div class="receipt-item" *ngIf="breakdown.pensionTotal > 0">
-              <div class="item-info">
-                 <span class="item-name">{{ reserva.pension }}</span>
-                 <span class="item-sub">{{breakdown.pensionPxN}}€ / pax / noche</span>
-              </div>
-              <span class="item-total">{{ breakdown.pensionTotal }}€</span>
+              <div class="item-info"><span class="item-name">{{ reserva.pension }}</span><span class="item-sub">{{breakdown.pensionPxN}}€ / pax / noche</span></div><span class="item-total">{{ breakdown.pensionTotal }}€</span>
            </div>
-           
            <div class="receipt-divider"></div>
-           
-           <div class="receipt-total">
-              <span>TOTAL SISTEMA</span>
-              <span>{{ breakdown.mathTotal }}€</span>
-           </div>
-
+           <div class="receipt-total"><span>TOTAL SISTEMA</span><span>{{ breakdown.mathTotal }}€</span></div>
            <div class="receipt-alert" *ngIf="breakdown.mathTotal !== reserva.precioTotal">
-             <ion-icon name="warning"></ion-icon>
-             El importe en caja ({{reserva.precioTotal}}€) no coincide con el cálculo.
+             <ion-icon name="warning"></ion-icon> El importe cobrado ({{reserva.precioTotal}}€) difiere del cálculo.
            </div>
         </div>
       </div>
@@ -252,7 +292,6 @@
           <ion-label>Viaja con Mascota</ion-label>
           <ion-toggle slot="end" color="primary" [(ngModel)]="reserva.mascota"></ion-toggle>
         </ion-item>
-
         <ion-item lines="none" class="custom-toggle">
           <ion-icon name="medical-outline" slot="start"></ion-icon>
           <ion-label>Tiene Alergias</ion-label>
@@ -287,17 +326,9 @@
     </div>
 
     <div class="action-buttons-bottom">
-      <ion-button expand="block" fill="clear" color="medium" class="cancel-btn" (click)="cancel()">
-        CERRAR
-      </ion-button>
-      
-      <ion-button *ngIf="isRecepcion && !!initial?.numero" expand="block" color="danger" fill="outline" class="client-cancel-btn" (click)="cancelAsClient()">
-        CANCELAR
-      </ion-button>
-
-      <ion-button expand="block" color="primary" class="main-btn" (click)="save()">
-        {{ (reserva.status === 'Pendiente') ? 'ASIGNAR Y CONFIRMAR' : 'GUARDAR' }}
-      </ion-button>
+      <ion-button expand="block" fill="clear" color="medium" class="cancel-btn" (click)="cancel()">CERRAR</ion-button>
+      <ion-button *ngIf="isRecepcion && !!initial?.numero" expand="block" color="danger" fill="outline" class="client-cancel-btn" (click)="cancelAsClient()">CANCELAR</ion-button>
+      <ion-button expand="block" color="primary" class="main-btn" (click)="save()">{{ (reserva.status === 'Pendiente') ? 'ASIGNAR Y CONFIRMAR' : 'GUARDAR' }}</ion-button>
     </div>
 
   </div>

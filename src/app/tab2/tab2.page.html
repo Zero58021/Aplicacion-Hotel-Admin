@@ -55,7 +55,7 @@
             <h2 class="res-titular">{{ r.titular }}</h2>
             <div class="res-room">
               <ion-icon name="bed-outline"></ion-icon> 
-              {{ r.selectedCategories?.length ? (r.numeroHabitaciones + ' habitaciones solicitadas') : (r.habitacion || 'Sin asignar') }}
+              {{ r.numeroHabitaciones }} habs. ({{ r.habitacion && r.habitacion !== 'Sin asignar' ? formatHabitacionesInfo(r.habitacion) : 'Sin asignar' }})
             </div>
           </div>
 
@@ -112,12 +112,16 @@
 
           </div>
 
-          <div class="cart-details" *ngIf="r.selectedCategories?.length">
-            <strong>Habitaciones:</strong>
+          <div class="cart-details" *ngIf="r.selectedCategories?.length || r.habitacion">
+            <strong>Habitaciones ({{ r.numeroHabitaciones }}):</strong>
             <ul>
               <li *ngFor="let cat of r.selectedCategories">
                 {{ cat.qty }}x {{ cat.name }} 
                 <span class="cart-price" *ngIf="auth.getRole() === 'jefe'">({{ cat.price }}€/n)</span>
+              </li>
+              <li *ngIf="r.habitacion" style="margin-top: 6px; padding: 6px; background: #e0f2fe; color: #0284c7; border-radius: 6px; font-weight: 600;">
+                <ion-icon name="key-outline" style="margin-right: 4px; vertical-align: bottom;"></ion-icon>
+                Asignadas: {{ formatHabitacionesInfo(r.habitacion) }}
               </li>
             </ul>
           </div>
@@ -183,6 +187,10 @@
           </div>
 
           <div class="res-actions">
+            
+            <ion-button fill="outline" color="dark" size="small" (click)="generarTicketPDF(r, $event)">
+              <ion-icon name="print-outline" slot="start"></ion-icon> Imprimir Ticket
+            </ion-button>
             
             <ion-button *ngIf="auth.hasPermission('reservas.confirm') && r.status === 'Pendiente'" size="small" color="success" (click)="confirmReservation(r); $event.stopPropagation()">
               <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon> Asignar

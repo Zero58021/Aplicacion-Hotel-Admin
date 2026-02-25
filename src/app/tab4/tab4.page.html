@@ -263,6 +263,16 @@
                 </div>
               </div>
 
+              <div class="form-row mt-2">
+                <div class="input-group full-width" style="flex: 1;">
+                  <label>Mascotas</label>
+                  <div class="toggle-container" style="background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2);">
+                    <span style="color: #059669;"><ion-icon name="paw-outline" style="margin-right: 6px; vertical-align: text-bottom;"></ion-icon>Permite Mascotas (Pet Friendly)</span>
+                    <ion-toggle color="success" [(ngModel)]="editModel.condiciones.permiteMascotas" [attr.name]="'mascotas' + originalIndex(room)"></ion-toggle>
+                  </div>
+                </div>
+              </div>
+
               <div class="input-group mt-2">
                 <label>Días Permitidos</label>
                 <div class="chip-grid">

@@ -167,14 +167,17 @@ export class Tab4Page implements OnInit {
     this.editModel.extras = Array.isArray(this.editModel.extras) ? this.editModel.extras : [];
     this.editModel.images = Array.isArray(this.editModel.images) ? this.editModel.images : [];
     
-    // NUEVO: Aseguramos el objeto condiciones
+    // NUEVO: Aseguramos el objeto condiciones y la variable permiteMascotas
     if (!this.editModel.condiciones) {
       this.editModel.condiciones = {
         soloFinesDeSemana: false,
         estanciaMinima: 1,
         diasPermitidos: 'Todos',
-        bloqueadaTemporalmente: false
+        bloqueadaTemporalmente: false,
+        permiteMascotas: false
       };
+    } else if (this.editModel.condiciones.permiteMascotas === undefined) {
+       this.editModel.condiciones.permiteMascotas = false;
     }
   }
   
@@ -368,4 +371,3 @@ export class Tab4Page implements OnInit {
     }
   }
 }
-
